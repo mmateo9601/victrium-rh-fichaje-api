@@ -11,6 +11,7 @@ import { EmployeesModule } from './modules/employees/employees.module';
 import { VacationsModule } from './modules/vacations/vacations.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { CalendarsModule } from './modules/calendars/calendars.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
 import { TimeEntriesModule } from './modules/time-entries/time-entries.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesGuard } from './common/auth/roles.guard';
@@ -27,6 +28,7 @@ import { RolesGuard } from './common/auth/roles.guard';
     VacationsModule,
     IncidentsModule,
     CalendarsModule,
+    PermissionsModule,
     TimeEntriesModule
   ],
   providers: [

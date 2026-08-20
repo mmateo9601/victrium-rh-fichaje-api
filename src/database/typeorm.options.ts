@@ -6,6 +6,7 @@ import { CalendarDayEntity } from './entities/calendar-day.entity';
 import { CalendarEntity } from './entities/calendar.entity';
 import { EmployeeEntity } from './entities/employee.entity';
 import { IncidentEntity } from './entities/incident.entity';
+import { PermissionEntity } from './entities/permission.entity';
 import { AuthSessionEntity } from './entities/auth-session.entity';
 import { RoleEntity } from './entities/role.entity';
 import { TimeEntryEntity } from './entities/time-entry.entity';
@@ -20,7 +21,7 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
     username: config.database.user,
     password: config.database.password,
     database: config.database.name,
-    entities: [UserEntity, EmployeeEntity, CompanyEntity, CalendarEntity, CalendarDayEntity, TimeEntryEntity, VacationEntity, IncidentEntity, RoleEntity, AuthSessionEntity],
+    entities: [UserEntity, EmployeeEntity, CompanyEntity, CalendarEntity, CalendarDayEntity, TimeEntryEntity, VacationEntity, IncidentEntity, PermissionEntity, RoleEntity, AuthSessionEntity],
     synchronize: false,
     logging: config.nodeEnv === 'development',
     autoLoadEntities: false,

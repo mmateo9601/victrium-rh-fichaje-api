@@ -12,6 +12,7 @@ import {
 import { CompanyEntity } from './company.entity';
 import { CalendarEntity } from './calendar.entity';
 import { UserEntity } from './user.entity';
+import { PermissionEntity } from './permission.entity';
 import { IncidentEntity } from './incident.entity';
 import { VacationEntity } from './vacation.entity';
 
@@ -72,6 +73,9 @@ export class EmployeeEntity {
 
   @OneToMany(() => IncidentEntity, (incident) => incident.employee)
   incidents!: IncidentEntity[];
+
+  @OneToMany(() => PermissionEntity, (permission) => permission.employee)
+  permissions!: PermissionEntity[];
 
   @ManyToOne(() => CalendarEntity, (calendar) => calendar.employees, {
     eager: true,
