@@ -3,6 +3,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AppConfig } from '../config/env.validation';
 import { CompanyEntity } from './entities/company.entity';
 import { EmployeeEntity } from './entities/employee.entity';
+import { IncidentEntity } from './entities/incident.entity';
 import { AuthSessionEntity } from './entities/auth-session.entity';
 import { RoleEntity } from './entities/role.entity';
 import { TimeEntryEntity } from './entities/time-entry.entity';
@@ -17,7 +18,7 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
     username: config.database.user,
     password: config.database.password,
     database: config.database.name,
-    entities: [UserEntity, EmployeeEntity, CompanyEntity, TimeEntryEntity, VacationEntity, RoleEntity, AuthSessionEntity],
+    entities: [UserEntity, EmployeeEntity, CompanyEntity, TimeEntryEntity, VacationEntity, IncidentEntity, RoleEntity, AuthSessionEntity],
     synchronize: false,
     logging: config.nodeEnv === 'development',
     autoLoadEntities: false,

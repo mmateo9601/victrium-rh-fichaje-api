@@ -11,6 +11,7 @@ import {
 
 import { CompanyEntity } from './company.entity';
 import { UserEntity } from './user.entity';
+import { IncidentEntity } from './incident.entity';
 import { VacationEntity } from './vacation.entity';
 
 @Entity({ name: 'employees' })
@@ -67,4 +68,7 @@ export class EmployeeEntity {
 
   @OneToMany(() => VacationEntity, (vacation) => vacation.employee)
   vacations!: VacationEntity[];
+
+  @OneToMany(() => IncidentEntity, (incident) => incident.employee)
+  incidents!: IncidentEntity[];
 }
