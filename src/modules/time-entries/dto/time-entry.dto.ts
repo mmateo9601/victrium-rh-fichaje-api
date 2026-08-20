@@ -17,6 +17,12 @@ export class TimeEntryDto {
   origen!: string;
 
   @ApiProperty()
+  version!: number;
+
+  @ApiProperty({ required: false, nullable: true })
+  updatedAt!: string | null;
+
+  @ApiProperty()
   usuarioId!: number;
 
   @ApiProperty()

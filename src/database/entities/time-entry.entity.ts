@@ -1,5 +1,6 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Index } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn, VersionColumn } from 'typeorm';
 
+import { TimeEntryAuditEntity } from './time-entry-audit.entity';
 import { UserEntity } from './user.entity';
 
 @Entity({ name: 'fichajes' })
@@ -20,7 +21,16 @@ export class TimeEntryEntity {
   @Column()
   origen!: string;
 
+  @VersionColumn()
+  version!: number;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt!: Date;
+
   @ManyToOne(() => UserEntity, (user) => user.timeEntries, { eager: true, nullable: false })
   @JoinColumn({ name: 'usuario_id' })
   usuario!: UserEntity;
+
+  @OneToMany(() => TimeEntryAuditEntity, (audit) => audit.timeEntry)
+  audits!: TimeEntryAuditEntity[];
 }

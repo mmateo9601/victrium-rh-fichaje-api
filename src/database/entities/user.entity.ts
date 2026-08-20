@@ -13,6 +13,7 @@ import {
 import { CompanyEntity } from './company.entity';
 import { EmployeeEntity } from './employee.entity';
 import { RoleEntity } from './role.entity';
+import { TimeEntryAuditEntity } from './time-entry-audit.entity';
 import { TimeEntryEntity } from './time-entry.entity';
 import { AuthSessionEntity } from './auth-session.entity';
 
@@ -79,6 +80,9 @@ export class UserEntity {
 
   @OneToMany(() => TimeEntryEntity, (entry) => entry.usuario)
   timeEntries!: TimeEntryEntity[];
+
+  @OneToMany(() => TimeEntryAuditEntity, (audit) => audit.correctedBy)
+  timeEntryAudits!: TimeEntryAuditEntity[];
 
   @OneToMany(() => AuthSessionEntity, (session) => session.user)
   sessions!: AuthSessionEntity[];

@@ -8,6 +8,7 @@ import { RolesGuard } from '../../common/auth/roles.guard';
 import { PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { ClockTimeEntryDto } from './dto/clock-time-entry.dto';
+import { CorrectTimeEntryDto } from './dto/correct-time-entry.dto';
 import { TimeEntriesService } from './time-entries.service';
 
 @ApiTags('time-entries')
@@ -45,8 +46,30 @@ export class TimeEntriesController {
   }
 
   @Get(':id')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  byId(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    return this.timeEntriesService.findVisibleById(id, this.tenantScope.toContext(user));
+  }
+
+  @Get(':id/audits')
   @Roles('ROLE_ADMIN', 'ROLE_RRHH')
-  byId(@Param('id', ParseIntPipe) id: number) {
-    return this.timeEntriesService.findById(id);
+  audits(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    return this.timeEntriesService.listAudits(id, this.tenantScope.toContext(user));
+  }
+
+  @Post(':id/correction')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  correct(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CorrectTimeEntryDto
+  ) {
+    return this.timeEntriesService.correct(id, dto, this.tenantScope.toContext(user));
   }
 }

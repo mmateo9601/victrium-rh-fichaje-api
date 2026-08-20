@@ -14,6 +14,9 @@
 | Fichajes clock | `FichajeController` | `POST /fichaje/now` | `POST /api/v1/time-entries/clock` | Fichajes | Fichajes | IMPLEMENTED | Alterna entrada/salida según estado |
 | Fichajes listados | `FichajeController` | `POST /fichaje/pagesFiltered` | `GET /api/v1/time-entries` | Fichajes | Fichajes | IMPLEMENTED | Paginación y filtros por empresa/empleado |
 | Fichajes propios | `FichajeController` | `POST /fichaje/listFiltered` | `GET /api/v1/time-entries/me` | Home | Dashboard | IMPLEMENTED | Filtro por usuario autenticado |
+| Fichaje detalle | `FichajeController` | `GET /fichaje/{id}` | `GET /api/v1/time-entries/:id` | Fichajes | Fichajes | IMPLEMENTED | Acceso controlado por usuario/tenant |
+| Fichaje corrección | `FichajeController` | `PUT /fichaje/{id}` | `POST /api/v1/time-entries/:id/correction` | Fichajes | Fichajes | IMPLEMENTED | Corrección explícita con control de versión |
+| Fichaje auditoría | N/D | N/D | `GET /api/v1/time-entries/:id/audits` | N/D | Fichajes | IMPLEMENTED | Historial de cambios con usuario y motivo |
 | Vacaciones | `VacacionesController` | `/vacaciones/*` | `/api/v1/vacations`, `/api/v1/vacations/me`, `/api/v1/vacations/:id`, `/api/v1/vacations/:id/approve`, `/api/v1/vacations/:id/deny` | Vacaciones | Vacations | IMPLEMENTED | Solicitudes propias y gestión RRHH |
 | Incidencias | `IncidenciaController` | `/incidencia/*` | `/api/v1/incidents`, `/api/v1/incidents/me`, `/api/v1/incidents/:id`, `/api/v1/incidents/:id/resolve`, `/api/v1/incidents/stats/*` | Incidencias | Incidents | IMPLEMENTED | Listados, edición y métricas |
 | Calendario | `CalendarioController` | `/calendario/*` | `GET /api/v1/calendars`, `GET /api/v1/calendars/list/dto`, `GET /api/v1/calendars/:id`, `POST /api/v1/calendars`, `PATCH /api/v1/calendars/:id`, `DELETE /api/v1/calendars/:id` | Calendario | Calendar | IMPLEMENTED | Calendarios y días laborables anidados |
