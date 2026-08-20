@@ -8,9 +8,11 @@ API NestJS para la migracion de `fichaje-main` a un backend modular y versionado
 - TypeORM + MySQL
 - `/api/v1`
 - Swagger en `/api/docs`
-- Auth con JWT access/refresh
+- Auth con JWT access/refresh y sesiones persistidas
 - Healthcheck real
-- Primer vertical slice de fichajes
+- Vertical slice de fichajes
+- Vertical slice de companies/users/employees
+- Tenant isolation centralizado
 - Paginacion base
 - Logging y error handling global
 - Sin Docker
@@ -75,6 +77,8 @@ npm run build
 
 - `src/modules/auth`
 - `src/modules/users`
+- `src/modules/companies`
+- `src/modules/employees`
 - `src/modules/time-entries`
 - `src/modules/health`
 - `src/common`
@@ -88,6 +92,21 @@ npm run build
 - `POST /api/v1/auth/refresh`
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/auth/me`
+- `GET /api/v1/users`
+- `GET /api/v1/users/me`
+- `GET /api/v1/users/:id`
+- `GET /api/v1/companies`
+- `GET /api/v1/companies/me`
+- `POST /api/v1/companies`
+- `GET /api/v1/companies/:id`
+- `PATCH /api/v1/companies/:id`
+- `GET /api/v1/employees`
+- `GET /api/v1/employees/me`
+- `GET /api/v1/employees/:id`
+- `POST /api/v1/employees`
+- `PATCH /api/v1/employees/:id`
+- `PATCH /api/v1/employees/:id/activate`
+- `PATCH /api/v1/employees/:id/deactivate`
 - `POST /api/v1/time-entries/clock`
 - `GET /api/v1/time-entries`
 - `GET /api/v1/time-entries/me`
@@ -98,6 +117,5 @@ npm run build
 
 - [Migration matrix](docs/MIGRATION_MATRIX.md)
 - [Nest/Next migration notes](docs/MIGRATION_NEST_NEXT.md)
-- [ADR ORM](docs/adr/001-orm.md)
-- [ADR authentication](docs/adr/002-authentication.md)
-- [ADR multi-tenancy](docs/adr/003-multi-tenancy.md)
+- [Organizational model](docs/ORGANIZATIONAL_MODEL.md)
+- [Tenant isolation ADR](docs/adr/004-tenant-isolation.md)

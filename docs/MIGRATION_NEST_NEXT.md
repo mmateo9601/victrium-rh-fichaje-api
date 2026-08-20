@@ -15,9 +15,14 @@
 
 - API versionada en `/api/v1`
 - Swagger en `/api/docs`
-- Autenticacion preparada para multiples clientes
+- Autenticacion con JWT access/refresh y sesiones persistidas
+- `User` representa identidad
+- `Employee` representa perfil laboral
+- `Company` representa tenant organizativo
+- El scope multiempresa se deriva del usuario autenticado, no del frontend
 - Sin Docker en los repos nuevos
 
 ## Estado
 
-Documento inicial de trabajo para la migracion. La implementacion funcional se ira completando por dominios.
+La base de auth, fichajes y el nuevo bloque organizativo `companies/users/employees` ya están conectados.
+Quedan por continuar los dominios funcionales de negocio que dependen de esa base.

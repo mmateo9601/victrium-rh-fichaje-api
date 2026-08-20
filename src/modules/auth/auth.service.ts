@@ -40,12 +40,16 @@ export class AuthService {
     );
 
     const roles = (user.roles ?? []).map((role) => role.rolNombre);
+    const companyId = user.company?.id ?? user.employee?.company?.id ?? null;
+    const employeeId = user.employee?.id ?? null;
     const accessToken = this.tokenService.signAccessToken({
       sub: user.id,
       numero: user.numero,
       nombreEmpleado: user.nombreEmpleado,
       roles,
-      sid: session.id
+      sid: session.id,
+      companyId,
+      employeeId
     });
 
     const refreshToken = this.tokenService.signRefreshToken({
@@ -86,12 +90,16 @@ export class AuthService {
     }
 
     const roles = (user.roles ?? []).map((role) => role.rolNombre);
+    const companyId = user.company?.id ?? user.employee?.company?.id ?? null;
+    const employeeId = user.employee?.id ?? null;
     const accessToken = this.tokenService.signAccessToken({
       sub: user.id,
       numero: user.numero,
       nombreEmpleado: user.nombreEmpleado,
       roles,
-      sid: session.id
+      sid: session.id,
+      companyId,
+      employeeId
     });
     const refreshToken = this.tokenService.signRefreshToken({
       sub: user.id,

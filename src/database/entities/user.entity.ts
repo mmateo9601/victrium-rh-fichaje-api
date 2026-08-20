@@ -1,12 +1,17 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn
 } from 'typeorm';
 
+import { CompanyEntity } from './company.entity';
+import { EmployeeEntity } from './employee.entity';
 import { RoleEntity } from './role.entity';
 import { TimeEntryEntity } from './time-entry.entity';
 import { AuthSessionEntity } from './auth-session.entity';
@@ -31,6 +36,14 @@ export class UserEntity {
   @Column({ unique: true })
   dni!: string;
 
+  @ManyToOne(() => CompanyEntity, (company) => company.users, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL'
+  })
+  @JoinColumn({ name: 'company_id' })
+  company?: CompanyEntity | null;
+
   @Column({ type: 'int', nullable: true })
   diasVacaciones?: number | null;
 
@@ -51,6 +64,14 @@ export class UserEntity {
 
   @Column({ nullable: true })
   ultimoFichaje?: string | null;
+
+  @OneToOne(() => EmployeeEntity, (employee) => employee.user, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL'
+  })
+  @JoinColumn({ name: 'employee_id' })
+  employee?: EmployeeEntity | null;
 
   @ManyToMany(() => RoleEntity, { eager: true })
   @JoinTable({ name: 'usuario_rol', joinColumn: { name: 'usuario_id' }, inverseJoinColumn: { name: 'rol_id' } })

@@ -8,6 +8,8 @@ export type AccessTokenPayload = {
   nombreEmpleado: string;
   roles: string[];
   sid: string;
+  companyId?: number | null;
+  employeeId?: number | null;
 };
 
 export type RefreshTokenPayload = {

@@ -10,6 +10,12 @@ export class PublicUserDto {
   @ApiProperty()
   nombreEmpleado!: string;
 
+  @ApiProperty({ required: false, nullable: true })
+  companyId?: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  employeeId?: number | null;
+
   @ApiProperty({ isArray: true, type: String })
   roles!: string[];
 
