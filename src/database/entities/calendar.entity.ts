@@ -10,13 +10,13 @@ export class CalendarEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ unique: true })
+  @Column()
   nombre!: string;
 
   @Column({ type: 'boolean', default: false })
   active!: boolean;
 
-  @Column({ type: 'int', unique: true })
+  @Column({ type: 'int' })
   year!: number;
 
   @Column({ name: 'minutos_mas_entrada', type: 'int' })

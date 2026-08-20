@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const optionalPositiveNumber = z.preprocess(
+  (value) => (value === '' ? undefined : value),
+  z.coerce.number().int().positive().optional()
+);
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
@@ -7,7 +12,7 @@ const envSchema = z.object({
   DB_PORT: z.coerce.number().int().positive().default(3306),
   DB_NAME: z.string().min(1),
   DB_USER: z.string().min(1),
-  DB_PASSWORD: z.string().min(32),
+  DB_PASSWORD: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: z.string().min(1).default('15m'),
@@ -15,7 +20,7 @@ const envSchema = z.object({
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
   TZ: z.string().default('Europe/Madrid'),
   SMTP_HOST: z.string().optional().or(z.literal('')),
-  SMTP_PORT: z.coerce.number().int().positive().optional(),
+  SMTP_PORT: optionalPositiveNumber,
   SMTP_USER: z.string().optional().or(z.literal('')),
   SMTP_PASSWORD: z.string().optional().or(z.literal('')),
   SMTP_FROM: z.string().optional().or(z.literal(''))

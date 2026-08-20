@@ -59,6 +59,32 @@ npm install
 npm run start:dev
 ```
 
+Para cargar datos de desarrollo:
+
+```bash
+npm run seed:dev
+```
+
+Si necesitas reinicializar los datos seed:
+
+```bash
+npm run seed:reset
+```
+
+## Credenciales de desarrollo
+
+Todas las cuentas seed usan la misma contraseña:
+
+`Victrium123!`
+
+| Email | Rol | Empresa |
+| --- | --- | --- |
+| `admin@victrium.local` | `ROLE_ADMIN` | `Victrium RH Demo` |
+| `rrhh@victrium.local` | `ROLE_RRHH` | `Victrium RH Demo` |
+| `laura@victrium.local` | `ROLE_USER` | `Victrium RH Demo` |
+| `carlos@victrium.local` | `ROLE_USER` | `Victrium RH Demo` |
+| `admin@acme.local` | `ROLE_ADMIN` | `Acme Industrial` |
+
 ## Produccion
 
 ```bash

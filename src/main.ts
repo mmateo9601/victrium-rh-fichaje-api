@@ -12,12 +12,13 @@ import { buildSwaggerDocument, setupSwagger } from './common/swagger/swagger.set
 import { createAppConfig } from './config/env.validation';
 
 async function bootstrap() {
-  const config = createAppConfig(process.env);
   const logger = new AppLogger();
   const app = await NestFactory.create(AppModule, {
     cors: false,
     logger
   });
+
+  const config = createAppConfig(process.env);
 
   app.enableShutdownHooks();
   app.setGlobalPrefix('api');

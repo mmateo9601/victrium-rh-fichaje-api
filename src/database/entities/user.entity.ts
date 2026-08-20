@@ -63,7 +63,7 @@ export class UserEntity {
   @Column({ type: 'boolean', nullable: true })
   admin?: boolean | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   ultimoFichaje?: string | null;
 
   @OneToOne(() => EmployeeEntity, (employee) => employee.user, {

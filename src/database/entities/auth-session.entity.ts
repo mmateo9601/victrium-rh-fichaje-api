@@ -23,9 +23,9 @@ export class AuthSessionEntity {
   @Column({ name: 'revoked_at', type: 'datetime', nullable: true })
   revokedAt?: Date | null;
 
-  @Column({ name: 'user_agent', nullable: true })
+  @Column({ name: 'user_agent', type: 'varchar', length: 255, nullable: true })
   userAgent?: string | null;
 
-  @Column({ name: 'device_name', nullable: true })
+  @Column({ name: 'device_name', type: 'varchar', length: 255, nullable: true })
   deviceName?: string | null;
 }

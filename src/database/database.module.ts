@@ -5,12 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { createAppConfig } from '../config/env.validation';
 import { createTypeOrmOptions } from './typeorm.options';
 
-const config = createAppConfig(process.env);
-
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, cache: true }),
-    TypeOrmModule.forRoot(createTypeOrmOptions(config))
+    ConfigModule.forRoot({ isGlobal: true, cache: true, envFilePath: '.env' }),
+    TypeOrmModule.forRootAsync({
+      useFactory: () => createTypeOrmOptions(createAppConfig(process.env))
+    })
   ],
   exports: [TypeOrmModule]
 })

@@ -50,7 +50,7 @@ export class EmployeeEntity {
   @Column({ name: 'de_baja', type: 'boolean', nullable: true })
   deBaja?: boolean | null;
 
-  @Column({ name: 'ultimo_fichaje', nullable: true })
+  @Column({ name: 'ultimo_fichaje', type: 'varchar', length: 255, nullable: true })
   ultimoFichaje?: string | null;
 
   @ManyToOne(() => CompanyEntity, (company) => company.employees, {
@@ -62,7 +62,6 @@ export class EmployeeEntity {
   company!: CompanyEntity;
 
   @OneToOne(() => UserEntity, (user) => user.employee, {
-    eager: true,
     nullable: true,
     onDelete: 'SET NULL'
   })
