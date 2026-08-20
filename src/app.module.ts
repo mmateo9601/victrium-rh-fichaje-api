@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { HealthModule } from './modules/health/health.module';
 import { EmployeesModule } from './modules/employees/employees.module';
+import { VacationsModule } from './modules/vacations/vacations.module';
 import { TimeEntriesModule } from './modules/time-entries/time-entries.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesGuard } from './common/auth/roles.guard';
@@ -21,6 +22,7 @@ import { RolesGuard } from './common/auth/roles.guard';
     AuthModule,
     CompaniesModule,
     EmployeesModule,
+    VacationsModule,
     TimeEntriesModule
   ],
   providers: [

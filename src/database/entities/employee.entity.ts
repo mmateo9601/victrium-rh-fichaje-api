@@ -4,12 +4,14 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn
 } from 'typeorm';
 
 import { CompanyEntity } from './company.entity';
 import { UserEntity } from './user.entity';
+import { VacationEntity } from './vacation.entity';
 
 @Entity({ name: 'employees' })
 @Index(['company', 'numero'], { unique: true })
@@ -62,4 +64,7 @@ export class EmployeeEntity {
     onDelete: 'SET NULL'
   })
   user?: UserEntity | null;
+
+  @OneToMany(() => VacationEntity, (vacation) => vacation.employee)
+  vacations!: VacationEntity[];
 }

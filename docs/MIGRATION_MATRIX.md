@@ -14,6 +14,6 @@
 | Fichajes clock | `FichajeController` | `POST /fichaje/now` | `POST /api/v1/time-entries/clock` | Fichajes | Fichajes | IMPLEMENTED | Alterna entrada/salida según estado |
 | Fichajes listados | `FichajeController` | `POST /fichaje/pagesFiltered` | `GET /api/v1/time-entries` | Fichajes | Fichajes | IN_PROGRESS | Paginación base activa |
 | Fichajes propios | `FichajeController` | `POST /fichaje/listFiltered` | `GET /api/v1/time-entries/me` | Home | Dashboard | IN_PROGRESS | Filtro por usuario autenticado |
-| Vacaciones | `VacacionesController` | `/vacaciones/*` | `/api/v1/vacations/*` | Vacaciones | Vacations | PENDING | Pendiente de migración completa |
+| Vacaciones | `VacacionesController` | `/vacaciones/*` | `/api/v1/vacations`, `/api/v1/vacations/me`, `/api/v1/vacations/:id`, `/api/v1/vacations/:id/approve`, `/api/v1/vacations/:id/deny` | Vacaciones | Vacations | IMPLEMENTED | Solicitudes propias y gestión RRHH |
 | Incidencias | `IncidenciaController` | `/incidencia/*` | `/api/v1/incidents/*` | Incidencias | Incidents | PENDING | Pendiente de migración completa |
 | Calendario | `CalendarioController` | `/calendario/*` | `/api/v1/calendars/*` | Calendario | Calendar | PENDING | Pendiente de migración completa |

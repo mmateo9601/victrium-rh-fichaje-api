@@ -24,5 +24,5 @@
 
 ## Estado
 
-La base de auth, fichajes y el nuevo bloque organizativo `companies/users/employees` ya están conectados.
+La base de auth, fichajes, `companies/users/employees` y `vacations` ya están conectadas.
 Quedan por continuar los dominios funcionales de negocio que dependen de esa base.

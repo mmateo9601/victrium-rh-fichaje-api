@@ -7,6 +7,7 @@ import { AuthSessionEntity } from './entities/auth-session.entity';
 import { RoleEntity } from './entities/role.entity';
 import { TimeEntryEntity } from './entities/time-entry.entity';
 import { UserEntity } from './entities/user.entity';
+import { VacationEntity } from './entities/vacation.entity';
 
 export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
   return {
@@ -16,7 +17,7 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
     username: config.database.user,
     password: config.database.password,
     database: config.database.name,
-    entities: [UserEntity, EmployeeEntity, CompanyEntity, TimeEntryEntity, RoleEntity, AuthSessionEntity],
+    entities: [UserEntity, EmployeeEntity, CompanyEntity, TimeEntryEntity, VacationEntity, RoleEntity, AuthSessionEntity],
     synchronize: false,
     logging: config.nodeEnv === 'development',
     autoLoadEntities: false,

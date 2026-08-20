@@ -12,6 +12,7 @@ API NestJS para la migracion de `fichaje-main` a un backend modular y versionado
 - Healthcheck real
 - Vertical slice de fichajes
 - Vertical slice de companies/users/employees
+- Vertical slice de vacations
 - Tenant isolation centralizado
 - Paginacion base
 - Logging y error handling global
@@ -111,6 +112,12 @@ npm run build
 - `GET /api/v1/time-entries`
 - `GET /api/v1/time-entries/me`
 - `GET /api/v1/time-entries/:id`
+- `GET /api/v1/vacations`
+- `GET /api/v1/vacations/me`
+- `GET /api/v1/vacations/:id`
+- `POST /api/v1/vacations`
+- `PATCH /api/v1/vacations/:id/approve`
+- `PATCH /api/v1/vacations/:id/deny`
 - `GET /api/v1/health`
 
 ## Documentacion
