@@ -24,5 +24,5 @@
 
 ## Estado
 
-La base de auth, fichajes, `companies/users/employees`, `vacations` e `incidents` ya están conectadas.
+La base de auth, fichajes, `companies/users/employees`, `vacations`, `incidents` y `calendars` ya están conectadas.
 Quedan por continuar los dominios funcionales de negocio que dependen de esa base.

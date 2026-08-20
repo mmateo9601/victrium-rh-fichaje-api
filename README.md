@@ -14,6 +14,7 @@ API NestJS para la migracion de `fichaje-main` a un backend modular y versionado
 - Vertical slice de companies/users/employees
 - Vertical slice de vacations
 - Vertical slice de incidents
+- Vertical slice de calendars
 - Tenant isolation centralizado
 - Paginacion base
 - Logging y error handling global
@@ -128,6 +129,12 @@ npm run build
 - `GET /api/v1/incidents/stats/months`
 - `GET /api/v1/incidents/stats/users`
 - `GET /api/v1/incidents/stats/top`
+- `GET /api/v1/calendars`
+- `GET /api/v1/calendars/list/dto`
+- `GET /api/v1/calendars/:id`
+- `POST /api/v1/calendars`
+- `PATCH /api/v1/calendars/:id`
+- `DELETE /api/v1/calendars/:id`
 - `GET /api/v1/health`
 
 ## Documentacion

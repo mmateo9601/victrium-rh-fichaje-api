@@ -10,6 +10,7 @@ import { HealthModule } from './modules/health/health.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { VacationsModule } from './modules/vacations/vacations.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
+import { CalendarsModule } from './modules/calendars/calendars.module';
 import { TimeEntriesModule } from './modules/time-entries/time-entries.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesGuard } from './common/auth/roles.guard';
@@ -25,6 +26,7 @@ import { RolesGuard } from './common/auth/roles.guard';
     EmployeesModule,
     VacationsModule,
     IncidentsModule,
+    CalendarsModule,
     TimeEntriesModule
   ],
   providers: [

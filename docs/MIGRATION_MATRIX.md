@@ -16,4 +16,4 @@
 | Fichajes propios | `FichajeController` | `POST /fichaje/listFiltered` | `GET /api/v1/time-entries/me` | Home | Dashboard | IN_PROGRESS | Filtro por usuario autenticado |
 | Vacaciones | `VacacionesController` | `/vacaciones/*` | `/api/v1/vacations`, `/api/v1/vacations/me`, `/api/v1/vacations/:id`, `/api/v1/vacations/:id/approve`, `/api/v1/vacations/:id/deny` | Vacaciones | Vacations | IMPLEMENTED | Solicitudes propias y gestión RRHH |
 | Incidencias | `IncidenciaController` | `/incidencia/*` | `/api/v1/incidents`, `/api/v1/incidents/me`, `/api/v1/incidents/:id`, `/api/v1/incidents/:id/resolve`, `/api/v1/incidents/stats/*` | Incidencias | Incidents | IMPLEMENTED | Listados, edición y métricas |
-| Calendario | `CalendarioController` | `/calendario/*` | `/api/v1/calendars/*` | Calendario | Calendar | PENDING | Pendiente de migración completa |
+| Calendario | `CalendarioController` | `/calendario/*` | `GET /api/v1/calendars`, `GET /api/v1/calendars/list/dto`, `GET /api/v1/calendars/:id`, `POST /api/v1/calendars`, `PATCH /api/v1/calendars/:id`, `DELETE /api/v1/calendars/:id` | Calendario | Calendar | IMPLEMENTED | Calendarios y días laborables anidados |

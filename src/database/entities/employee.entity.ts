@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 
 import { CompanyEntity } from './company.entity';
+import { CalendarEntity } from './calendar.entity';
 import { UserEntity } from './user.entity';
 import { IncidentEntity } from './incident.entity';
 import { VacationEntity } from './vacation.entity';
@@ -71,4 +72,12 @@ export class EmployeeEntity {
 
   @OneToMany(() => IncidentEntity, (incident) => incident.employee)
   incidents!: IncidentEntity[];
+
+  @ManyToOne(() => CalendarEntity, (calendar) => calendar.employees, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL'
+  })
+  @JoinColumn({ name: 'calendar_id' })
+  calendar?: CalendarEntity | null;
 }
