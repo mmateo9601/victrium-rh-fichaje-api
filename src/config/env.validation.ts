@@ -3,14 +3,13 @@ import { z } from 'zod';
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
-  DATABASE_URL: z.string().optional().or(z.literal('')),
-  DB_HOST: z.string().optional().or(z.literal('')),
+  DB_HOST: z.string().min(1),
   DB_PORT: z.coerce.number().int().positive().default(3306),
-  DB_NAME: z.string().optional().or(z.literal('')),
-  DB_USER: z.string().optional().or(z.literal('')),
-  DB_PASSWORD: z.string().optional().or(z.literal('')),
-  JWT_ACCESS_SECRET: z.string().min(1),
-  JWT_REFRESH_SECRET: z.string().min(1),
+  DB_NAME: z.string().min(1),
+  DB_USER: z.string().min(1),
+  DB_PASSWORD: z.string().min(32),
+  JWT_ACCESS_SECRET: z.string().min(32),
+  JWT_REFRESH_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: z.string().min(1).default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().min(1).default('7d'),
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
@@ -28,12 +27,11 @@ export type AppConfig = {
   corsOrigins: string[];
   tz: string;
   database: {
-    url?: string;
-    host?: string;
+    host: string;
     port: number;
-    name?: string;
-    user?: string;
-    password?: string;
+    name: string;
+    user: string;
+    password: string;
   };
   jwt: {
     accessSecret: string;
@@ -62,12 +60,11 @@ export function createAppConfig(env: NodeJS.ProcessEnv): AppConfig {
     corsOrigins,
     tz: parsed.TZ,
     database: {
-      url: parsed.DATABASE_URL || undefined,
-      host: parsed.DB_HOST || undefined,
+      host: parsed.DB_HOST,
       port: parsed.DB_PORT,
-      name: parsed.DB_NAME || undefined,
-      user: parsed.DB_USER || undefined,
-      password: parsed.DB_PASSWORD || undefined
+      name: parsed.DB_NAME,
+      user: parsed.DB_USER,
+      password: parsed.DB_PASSWORD
     },
     jwt: {
       accessSecret: parsed.JWT_ACCESS_SECRET,

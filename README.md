@@ -32,8 +32,6 @@ Obligatorias:
 
 Conexion MySQL:
 
-- `DATABASE_URL`
-  o
 - `DB_HOST`
 - `DB_PORT`
 - `DB_NAME`

@@ -8,7 +8,11 @@ function createConfig(): AppConfig {
     corsOrigins: ['http://localhost:3000'],
     tz: 'Europe/Madrid',
     database: {
-      port: 3306
+      host: 'localhost',
+      port: 3306,
+      name: 'fichaje',
+      user: 'fichaje',
+      password: 'test-password-test-password-test-0001'
     },
     jwt: {
       accessSecret: 'access-secret',

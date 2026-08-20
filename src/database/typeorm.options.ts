@@ -9,7 +9,6 @@ import { UserEntity } from './entities/user.entity';
 export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
   return {
     type: 'mysql',
-    url: config.database.url,
     host: config.database.host,
     port: config.database.port,
     username: config.database.user,
