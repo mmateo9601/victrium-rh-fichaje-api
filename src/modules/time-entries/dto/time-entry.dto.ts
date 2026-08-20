@@ -24,4 +24,10 @@ export class TimeEntryDto {
 
   @ApiProperty()
   usuarioNombre!: string;
+
+  @ApiProperty({ required: false, nullable: true })
+  companyId!: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  companyName!: string | null;
 }

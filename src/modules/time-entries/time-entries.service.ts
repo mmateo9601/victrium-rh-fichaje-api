@@ -4,6 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 
 import { AppError } from '../../common/errors/app-error';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
+import { PrincipalTenantContext } from '../../common/tenant/tenant-scope.service';
 import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
 import { UserEntity } from '../../database/entities/user.entity';
 import { UsersService } from '../users/users.service';
@@ -73,7 +74,10 @@ export class TimeEntriesService {
     });
   }
 
-  async list(query: PaginationQueryDto & { numeroUsuario?: string; tipo?: string; from?: string; to?: string }) {
+  async list(
+    query: PaginationQueryDto & { search?: string; numeroUsuario?: string; nombreUsuario?: string; tipo?: string; from?: string; to?: string },
+    context: PrincipalTenantContext
+  ) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 25;
     const allowedSortFields = new Set(['id', 'dia', 'hora', 'tipo', 'origen']);
@@ -82,10 +86,21 @@ export class TimeEntriesService {
 
     const qb = this.timeEntriesRepository
       .createQueryBuilder('fichaje')
-      .leftJoinAndSelect('fichaje.usuario', 'usuario');
+      .leftJoinAndSelect('fichaje.usuario', 'usuario')
+      .leftJoinAndSelect('usuario.company', 'company');
+
+    if (query.search) {
+      qb.andWhere(
+        '(usuario.numero LIKE :search OR usuario.nombreEmpleado LIKE :search OR usuario.email LIKE :search OR fichaje.origen LIKE :search)',
+        { search: `%${query.search}%` }
+      );
+    }
 
     if (query.numeroUsuario) {
       qb.andWhere('usuario.numero = :numeroUsuario', { numeroUsuario: query.numeroUsuario });
+    }
+    if (query.nombreUsuario) {
+      qb.andWhere('usuario.nombreEmpleado LIKE :nombreUsuario', { nombreUsuario: `%${query.nombreUsuario}%` });
     }
     if (query.tipo) {
       qb.andWhere('fichaje.tipo = :tipo', { tipo: query.tipo });
@@ -97,6 +112,14 @@ export class TimeEntriesService {
       qb.andWhere('fichaje.dia <= :to', { to: query.to });
     }
 
+    if (!context.canAccessAll) {
+      if (context.companyId !== null && context.companyId !== undefined) {
+        qb.andWhere('company.id = :companyId', { companyId: context.companyId });
+      } else {
+        qb.andWhere('1 = 0');
+      }
+    }
+
     qb.orderBy(`fichaje.${sortField}`, order.toUpperCase() as 'ASC' | 'DESC');
     qb.skip((page - 1) * pageSize).take(pageSize);
 
@@ -106,7 +129,14 @@ export class TimeEntriesService {
   }
 
   async findById(id: number) {
-    const entry = await this.timeEntriesRepository.findOne({ where: { id } });
+    const entry = await this.timeEntriesRepository.findOne({
+      where: { id },
+      relations: {
+        usuario: {
+          company: true
+        }
+      }
+    });
     if (!entry) {
       throw new AppError('TIME_ENTRY_NOT_FOUND', 'Fichaje no encontrado', 404);
     }
@@ -114,7 +144,7 @@ export class TimeEntriesService {
     return this.toDto(entry);
   }
 
-  async findMine(userId: number, query: PaginationQueryDto) {
+  async findMine(userId: number, query: PaginationQueryDto & { search?: string; tipo?: string; from?: string; to?: string }, context: PrincipalTenantContext) {
     const user = await this.usersService.findById(userId);
     if (!user) {
       throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
@@ -123,7 +153,7 @@ export class TimeEntriesService {
     return this.list({
       ...query,
       numeroUsuario: user.numero
-    });
+    }, context);
   }
 
   private toDto(entry: TimeEntryEntity): TimeEntryDto {
@@ -135,7 +165,9 @@ export class TimeEntriesService {
       origen: entry.origen,
       usuarioId: entry.usuario.id,
       usuarioNumero: entry.usuario.numero,
-      usuarioNombre: entry.usuario.nombreEmpleado
+      usuarioNombre: entry.usuario.nombreEmpleado,
+      companyId: entry.usuario.company?.id ?? null,
+      companyName: entry.usuario.company?.name ?? null
     };
   }
 }
