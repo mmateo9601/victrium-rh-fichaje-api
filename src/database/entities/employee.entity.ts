@@ -15,6 +15,8 @@ import { UserEntity } from './user.entity';
 import { PermissionEntity } from './permission.entity';
 import { IncidentEntity } from './incident.entity';
 import { VacationEntity } from './vacation.entity';
+import { ShiftAssignmentEntity } from './shift-assignment.entity';
+import { ShiftOverrideEntity } from './shift-override.entity';
 
 @Entity({ name: 'employees' })
 @Index(['company', 'numero'], { unique: true })
@@ -75,6 +77,12 @@ export class EmployeeEntity {
 
   @OneToMany(() => PermissionEntity, (permission) => permission.employee)
   permissions!: PermissionEntity[];
+
+  @OneToMany(() => ShiftAssignmentEntity, (assignment) => assignment.employee)
+  shiftAssignments!: ShiftAssignmentEntity[];
+
+  @OneToMany(() => ShiftOverrideEntity, (shiftOverride) => shiftOverride.employee)
+  shiftOverrides!: ShiftOverrideEntity[];
 
   @ManyToOne(() => CalendarEntity, (calendar) => calendar.employees, {
     eager: true,

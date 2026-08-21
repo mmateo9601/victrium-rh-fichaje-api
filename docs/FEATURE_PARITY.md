@@ -10,6 +10,7 @@ Este documento resume la paridad funcional entre el legado `fichaje-main` y la m
 | Employees / Users | `GET/POST/PATCH /api/v1/employees`, `GET /api/v1/users` | VERIFIED | Separación de identidad y perfil laboral |
 | Time entries | `clock`, listados, detalle, corrección, auditoría | VERIFIED | Flujo principal de fichaje ya operable |
 | Vacations / Permissions / Incidents / Calendars | Módulos NestJS equivalentes | VERIFIED | CRUD funcional con tenant isolation y Swagger |
+| Turnos / planificación | `GET/POST/PATCH /api/v1/shifts`, `/api/v1/shift-assignments`, `/api/v1/schedule` | VERIFIED | Asignaciones, excepciones y calendario mensual por empleado |
 | API Keys | `GET/POST/PATCH/DELETE /api/v1/api-keys*` | VERIFIED | Claves hasheadas y autenticación por `X-API-KEY` |
 | Profile / Cuenta | `GET /api/v1/auth/me`, `PATCH /api/v1/auth/password` | VERIFIED | La Web ya expone la cuenta y el cambio de contraseña autenticado |
 | Landing pública Angular | Home Next.js | SUPERSEDED | La landing pública se sustituyó por la portada de Next |

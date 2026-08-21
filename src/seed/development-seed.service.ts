@@ -13,6 +13,10 @@ import { PermissionEntity } from '../database/entities/permission.entity';
 import { PermissionStatus } from '../database/entities/permission-status.enum';
 import { RoleName } from '../database/entities/role-name.enum';
 import { RoleEntity } from '../database/entities/role.entity';
+import { ShiftAssignmentEntity } from '../database/entities/shift-assignment.entity';
+import { ShiftDayEntity } from '../database/entities/shift-day.entity';
+import { ShiftEntity } from '../database/entities/shift.entity';
+import { ShiftOverrideEntity } from '../database/entities/shift-override.entity';
 import { TimeEntryAuditEntity } from '../database/entities/time-entry-audit.entity';
 import { TimeEntryEntity } from '../database/entities/time-entry.entity';
 import { UserEntity } from '../database/entities/user.entity';
@@ -62,6 +66,9 @@ type SeedSummary = {
   calendars: number;
   users: number;
   employees: number;
+  shifts: number;
+  assignments: number;
+  overrides: number;
   timeEntries: number;
   audits: number;
   vacations: number;
@@ -302,7 +309,7 @@ function buildBusinessDays(count: number, endDate: Date) {
   return days.reverse();
 }
 
-function buildCalendarDays(year: number) {
+function buildCalendarDays(year: number, referenceDate: Date) {
   const days: { dia: string; horaInicio: string; horaFin: string }[] = [];
   const start = new Date(Date.UTC(year, 0, 5, 12, 0, 0));
   const end = new Date(Date.UTC(year, 0, 16, 12, 0, 0));
@@ -315,6 +322,14 @@ function buildCalendarDays(year: number) {
         horaFin: timeString(17, 0, 0)
       });
     }
+  }
+
+  for (const day of buildBusinessDays(12, referenceDate)) {
+    days.push({
+      dia: day,
+      horaInicio: timeString(8, 0, 0),
+      horaFin: timeString(17, 0, 0)
+    });
   }
 
   for (const dia of [`${year}-01-01`, `${year}-05-01`, `${year}-08-15`, `${year}-12-25`]) {
@@ -352,8 +367,9 @@ export class DevelopmentSeedService {
 
       const roles = await this.seedRoles(manager);
       const companies = await this.seedCompanies(manager);
-      const calendars = await this.seedCalendars(manager, companies);
+      const calendars = await this.seedCalendars(manager, companies, context);
       const users = await this.seedUsersAndEmployees(manager, companies, calendars, roles);
+      const shifts = await this.seedShifts(manager, users, context);
       const timeEntries = await this.seedTimeEntries(manager, users, context);
       const audits = await this.seedAudits(manager, users, timeEntries);
       const vacations = await this.seedVacations(manager, users, context);
@@ -365,6 +381,9 @@ export class DevelopmentSeedService {
         calendars: calendars.length,
         users: users.length,
         employees: users.length,
+        shifts: shifts.shifts,
+        assignments: shifts.assignments,
+        overrides: shifts.overrides,
         timeEntries: timeEntries.total,
         audits,
         vacations,
@@ -460,6 +479,11 @@ export class DevelopmentSeedService {
       await manager.createQueryBuilder().delete().from(EmployeeEntity).where('id IN (:...employeeIds)', { employeeIds }).execute();
     }
 
+    await manager.createQueryBuilder().delete().from(ShiftOverrideEntity).execute();
+    await manager.createQueryBuilder().delete().from(ShiftAssignmentEntity).execute();
+    await manager.createQueryBuilder().delete().from(ShiftDayEntity).execute();
+    await manager.createQueryBuilder().delete().from(ShiftEntity).execute();
+
     if (calendarIds.length) {
       await manager
         .createQueryBuilder()
@@ -517,7 +541,7 @@ export class DevelopmentSeedService {
     return companies;
   }
 
-  private async seedCalendars(manager: EntityManager, companies: CompanyEntity[]) {
+  private async seedCalendars(manager: EntityManager, companies: CompanyEntity[], context: SeedContext) {
     const repository = manager.getRepository(CalendarEntity);
     const dayRepository = manager.getRepository(CalendarDayEntity);
     const calendars: CalendarEntity[] = [];
@@ -538,7 +562,7 @@ export class DevelopmentSeedService {
         })
       );
 
-      const days = buildCalendarDays(fixture.year).map((day) =>
+      const days = buildCalendarDays(fixture.year, context.referenceDate).map((day) =>
         dayRepository.create({
           ...day,
           calendar: savedCalendar
@@ -617,6 +641,171 @@ export class DevelopmentSeedService {
     }
 
     return bundles;
+  }
+
+  private async seedShifts(manager: EntityManager, users: SeedUserBundle[], context: SeedContext) {
+    const shiftRepository = manager.getRepository(ShiftEntity);
+    const dayRepository = manager.getRepository(ShiftDayEntity);
+    const assignmentRepository = manager.getRepository(ShiftAssignmentEntity);
+    const overrideRepository = manager.getRepository(ShiftOverrideEntity);
+
+    const victrium = users.find((bundle) => bundle.user.company?.code === 'VICTRIUM');
+    if (!victrium) {
+      throw new AppError('COMPANY_NOT_FOUND', 'No se encontró la empresa Victrium para turnos', 404);
+    }
+
+    const company = victrium.user.company!;
+    const templateDays = [
+      { dayOfWeek: 1, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
+      { dayOfWeek: 2, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
+      { dayOfWeek: 3, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
+      { dayOfWeek: 4, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
+      { dayOfWeek: 5, working: true, startTime: timeString(8, 0, 0), endTime: timeString(14, 0, 0), breakMinutes: 0, workingMinutes: 360, crossesMidnight: false },
+      { dayOfWeek: 6, working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false },
+      { dayOfWeek: 0, working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false }
+    ];
+
+    const shiftFixtures = [
+      {
+        name: 'Mañana',
+        code: 'M',
+        color: '#0f766e',
+        description: 'Turno de mañana con jornada intensiva el viernes',
+        days: templateDays
+      },
+      {
+        name: 'Tarde',
+        code: 'T',
+        color: '#2f6fed',
+        description: 'Turno de tarde para cobertura extendida',
+        days: templateDays.map((day) =>
+          day.dayOfWeek === 6 || day.dayOfWeek === 0
+            ? day
+            : {
+                ...day,
+                startTime: timeString(14, 0, 0),
+                endTime: timeString(22, 0, 0),
+                breakMinutes: 30,
+                workingMinutes: 450
+              }
+        )
+      },
+      {
+        name: 'Noche',
+        code: 'N',
+        color: '#7c3aed',
+        description: 'Turno nocturno que cruza medianoche',
+        days: templateDays.map((day) =>
+          day.dayOfWeek === 6 || day.dayOfWeek === 0
+            ? day
+            : {
+                ...day,
+                startTime: timeString(22, 0, 0),
+                endTime: timeString(6, 0, 0),
+                breakMinutes: 30,
+                workingMinutes: 450,
+                crossesMidnight: true
+              }
+        )
+      }
+    ];
+
+    const shifts: ShiftEntity[] = [];
+    for (const fixture of shiftFixtures) {
+      const savedShift = await shiftRepository.save(
+        shiftRepository.create({
+          company,
+          name: fixture.name,
+          code: fixture.code,
+          description: fixture.description,
+          color: fixture.color,
+          active: true
+        })
+      );
+      shifts.push(savedShift);
+
+      const days = fixture.days.map((day) =>
+        dayRepository.create({
+          ...day,
+          shift: savedShift
+        })
+      );
+      await dayRepository.save(days);
+    }
+
+    const morning = shifts.find((shift) => shift.code === 'M');
+    const afternoon = shifts.find((shift) => shift.code === 'T');
+    const night = shifts.find((shift) => shift.code === 'N');
+    const laura = users.find((bundle) => bundle.user.email === 'laura@victrium.local');
+    const carlos = users.find((bundle) => bundle.user.email === 'carlos@victrium.local');
+    const rrhh = users.find((bundle) => bundle.user.email === 'rrhh@victrium.local');
+    if (!morning || !afternoon || !night || !laura || !carlos || !rrhh) {
+      throw new AppError('SHIFT_NOT_FOUND', 'No se pudieron preparar los turnos seed', 404);
+    }
+
+    const today = context.referenceDate;
+    const pastFrom = formatMadridDate(addDays(today, -14));
+    const futureFrom = formatMadridDate(addDays(today, 7));
+
+    await assignmentRepository.save([
+      assignmentRepository.create({
+        company,
+        employee: laura.employee,
+        shift: morning,
+        validFrom: pastFrom,
+        validTo: formatMadridDate(addDays(today, 6)),
+        notes: 'Turno principal de Laura'
+      }),
+      assignmentRepository.create({
+        company,
+        employee: laura.employee,
+        shift: afternoon,
+        validFrom: futureFrom,
+        validTo: null,
+        notes: 'Cambio futuro planificado de Laura'
+      }),
+      assignmentRepository.create({
+        company,
+        employee: carlos.employee,
+        shift: afternoon,
+        validFrom: pastFrom,
+        validTo: null,
+        notes: 'Turno estable de Carlos'
+      }),
+      assignmentRepository.create({
+        company,
+        employee: rrhh.employee,
+        shift: morning,
+        validFrom: pastFrom,
+        validTo: null,
+        notes: 'Turno RRHH'
+      })
+    ]);
+
+    await overrideRepository.save([
+      overrideRepository.create({
+        company,
+        employee: laura.employee,
+        shift: night,
+        date: formatMadridDate(addDays(today, 1)),
+        kind: 'SHIFT',
+        notes: 'Cobertura nocturna puntual'
+      }),
+      overrideRepository.create({
+        company,
+        employee: carlos.employee,
+        shift: null,
+        date: formatMadridDate(addDays(today, 2)),
+        kind: 'OFF',
+        notes: 'Descanso excepcional'
+      })
+    ]);
+
+    return {
+      shifts: shifts.length,
+      assignments: 4,
+      overrides: 2
+    };
   }
 
   private async seedTimeEntries(manager: EntityManager, users: SeedUserBundle[], context: SeedContext) {

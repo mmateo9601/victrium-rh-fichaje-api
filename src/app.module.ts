@@ -15,6 +15,7 @@ import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { TimeEntriesModule } from './modules/time-entries/time-entries.module';
 import { UsersModule } from './modules/users/users.module';
+import { ShiftsModule } from './modules/shifts/shifts.module';
 import { RolesGuard } from './common/auth/roles.guard';
 
 @Module({
@@ -31,7 +32,8 @@ import { RolesGuard } from './common/auth/roles.guard';
     CalendarsModule,
     ApiKeysModule,
     PermissionsModule,
-    TimeEntriesModule
+    TimeEntriesModule,
+    ShiftsModule
   ],
   providers: [
     JwtAuthGuard,
