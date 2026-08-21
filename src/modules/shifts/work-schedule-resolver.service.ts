@@ -12,7 +12,8 @@ import { ShiftOverrideEntity } from '../../database/entities/shift-override.enti
 import {
   ScheduleCellDto,
   ScheduleRowDto,
-  ShiftSummaryDto
+  ShiftSummaryDto,
+  WorkPolicyEvaluationDto
 } from './dto/shift.dto';
 
 type ResolverInput = {
@@ -75,6 +76,88 @@ function sameDate(a: string, b: string) {
   return a === b;
 }
 
+function toNumber(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function hasPolicyConfig(policy: Record<string, unknown> | null | undefined) {
+  if (!policy) {
+    return false;
+  }
+
+  return ['maxDailyMinutes', 'minimumBreakMinutes', 'lateThresholdMinutes'].some((key) => toNumber(policy[key]) !== null);
+}
+
+function calculateBreakMinutes(timeEntries: TimeEntryEntity[]) {
+  let total = 0;
+  let openEntry: TimeEntryEntity | null = null;
+  let previousExit: TimeEntryEntity | null = null;
+
+  for (const entry of timeEntries) {
+    if (entry.tipo === 'ENTRADA') {
+      if (previousExit) {
+        total += Math.max(0, (timeToMinutes(entry.hora) ?? 0) - (timeToMinutes(previousExit.hora) ?? 0));
+        previousExit = null;
+      }
+      openEntry = entry;
+      continue;
+    }
+
+    if (entry.tipo === 'SALIDA' && openEntry) {
+      openEntry = null;
+      previousExit = entry;
+    }
+  }
+
+  return total;
+}
+
+function buildPolicyEvaluation(
+  workPolicy: Record<string, unknown> | null | undefined,
+  shiftDay: { breakMinutes: number; workingMinutes?: number | null } | null,
+  dayEntries: TimeEntryEntity[],
+  workedMinutes: number,
+  lateMinutes: number
+): WorkPolicyEvaluationDto | null {
+  if (!hasPolicyConfig(workPolicy)) {
+    return null;
+  }
+
+  const maxDailyMinutes = toNumber(workPolicy?.maxDailyMinutes) ?? shiftDay?.workingMinutes ?? null;
+  const minimumBreakMinutes = toNumber(workPolicy?.minimumBreakMinutes) ?? shiftDay?.breakMinutes ?? null;
+  const lateThresholdMinutes = toNumber(workPolicy?.lateThresholdMinutes);
+  const actualBreakMinutes = calculateBreakMinutes(dayEntries);
+  const warnings: string[] = [];
+  const violations: string[] = [];
+
+  if (minimumBreakMinutes !== null && actualBreakMinutes < minimumBreakMinutes) {
+    violations.push(`Descanso insuficiente: ${actualBreakMinutes} min frente a ${minimumBreakMinutes} min configurados`);
+  }
+
+  if (maxDailyMinutes !== null && workedMinutes > maxDailyMinutes) {
+    violations.push(`Jornada diaria superada: ${workedMinutes} min frente a ${maxDailyMinutes} min permitidos`);
+  }
+
+  if (lateThresholdMinutes !== null && lateMinutes > lateThresholdMinutes) {
+    warnings.push(`Retraso superior al umbral configurado: ${lateMinutes} min frente a ${lateThresholdMinutes} min`);
+  }
+
+  if (shiftDay?.workingMinutes !== null && shiftDay?.workingMinutes !== undefined && workedMinutes < shiftDay.workingMinutes) {
+    warnings.push(`Horas trabajadas por debajo de lo previsto: ${workedMinutes} min frente a ${shiftDay.workingMinutes} min`);
+  }
+
+  return {
+    configured: true,
+    maxDailyMinutes,
+    minimumBreakMinutes,
+    lateThresholdMinutes,
+    expectedBreakMinutes: shiftDay?.breakMinutes ?? null,
+    actualBreakMinutes,
+    warnings,
+    violations
+  };
+}
+
 @Injectable()
 export class WorkScheduleResolverService {
   resolveShiftForDate(date: string, assignments: ShiftAssignmentEntity[], overrides: ShiftOverrideEntity[]) {
@@ -103,7 +186,7 @@ export class WorkScheduleResolverService {
   }
 
   resolveDay(input: ResolverInput): ScheduleCellDto {
-    const { date, assignments, overrides, calendarDay, vacations, permissions, incidents, timeEntries } = input;
+    const { employee, date, assignments, overrides, calendarDay, vacations, permissions, incidents, timeEntries } = input;
     const resolved = this.resolveShiftForDate(date, assignments, overrides);
     const shift = resolved.shift;
     const shiftDay = shift?.days?.find((day) => day.dayOfWeek === dayOfWeek(date)) ?? null;
@@ -141,6 +224,8 @@ export class WorkScheduleResolverService {
       statusLabel = shift.name;
     }
 
+    const policy = buildPolicyEvaluation(employee.company?.workPolicy ?? null, shiftDay, dayEntries, workedMinutes, lateMinutes);
+
     return {
       date,
       dayOfWeek: dayOfWeek(date),
@@ -164,7 +249,8 @@ export class WorkScheduleResolverService {
       permissionId: permission?.id ?? null,
       incidentId: incident?.id ?? null,
       firstEntry: firstEntry?.hora ?? null,
-      lastExit: lastExit?.hora ?? null
+      lastExit: lastExit?.hora ?? null,
+      policy
     };
   }
 

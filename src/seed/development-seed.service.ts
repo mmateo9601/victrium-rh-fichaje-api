@@ -32,6 +32,7 @@ type SeededCompany = {
   name: string;
   year: number;
   calendarName: string;
+  workPolicy: Record<string, unknown> | null;
 };
 
 type SeededUser = {
@@ -123,13 +124,23 @@ const SEED_COMPANIES: SeededCompany[] = [
     code: 'VICTRIUM',
     name: 'Victrium RH Demo',
     year: 2026,
-    calendarName: 'Victrium RH Demo 2026'
+    calendarName: 'Victrium RH Demo 2026',
+    workPolicy: {
+      maxDailyMinutes: 510,
+      minimumBreakMinutes: 30,
+      lateThresholdMinutes: 10
+    }
   },
   {
     code: 'ACME',
     name: 'Acme Industrial',
     year: 2027,
-    calendarName: 'Acme Industrial 2027'
+    calendarName: 'Acme Industrial 2027',
+    workPolicy: {
+      maxDailyMinutes: 480,
+      minimumBreakMinutes: 20,
+      lateThresholdMinutes: 5
+    }
   }
 ];
 
@@ -562,7 +573,8 @@ export class DevelopmentSeedService {
       const company = repository.create({
         name: fixture.name,
         code: fixture.code,
-        active: true
+        active: true,
+        workPolicy: fixture.workPolicy
       });
       companies.push(await repository.save(company));
     }

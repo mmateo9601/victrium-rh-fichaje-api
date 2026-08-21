@@ -19,7 +19,7 @@ This document compares the current product against an ideal, modern workforce pl
 | Employee mobility | Single company, single calendar | Historical location assignments | No movement history | P1 | High | Add employee-location assignment history | MISSING |
 | Scheduling | Shift templates, assignments, overrides, schedule views | Rotations, segments, publishable planning periods, multi-location planning | No segments, drafts, publish/publish workflow, or rotations | P1 | High | Extend shift model and add planning periods | PARTIAL |
 | Shift granularity | One start/end per day | Split shifts and planned breaks | Split segments missing | P1 | High | Add shift segments | MISSING |
-| Labor rules | Basic calendar thresholds and attendance flows | Configurable policy engine | No configurable policy engine | P1 | High | Add work time policy configuration | MISSING |
+| Labor rules | Basic calendar thresholds and attendance flows | Configurable policy engine | Policy data exists but runtime evaluation is still partial | P1 | High | Expand work time policy evaluation and alerts | PARTIAL |
 | Legal compliance | Daily register and retention already supported conceptually | Configurable compliance rules per company/convenio | Rules are partially hardcoded | P1 | High | Move compliance decisions into policy config | PARTIAL |
 | Timekeeping | Start/pause/resume/finish, audits | Plan vs actual, planned location, configurable geolocation | No planned vs actual comparison and no location context | P1 | High | Add planned location and policy-aware comparison | PARTIAL |
 | Absences | Vacations, permissions, incidents | Absences integrated into planning and coverage | Existing modules are not yet integrated into staffing calculations deeply enough | P1 | Medium | Feed absences into planning dashboards and conflict checks | PARTIAL |
@@ -35,4 +35,3 @@ This document compares the current product against an ideal, modern workforce pl
 - P0: role hierarchy, work locations, company/platform split, navigation, tenant-aware planning foundations
 - P1: location history, split shifts, policy engine, publishable planning, audit history for planning
 - P2: reporting and advanced staffing optimizations
-

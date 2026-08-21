@@ -71,6 +71,17 @@ export type UpdateShiftAssignmentDto = Partial<CreateShiftAssignmentDto>;
 
 export type ShiftOverrideKind = 'SHIFT' | 'OFF';
 
+export type WorkPolicyEvaluationDto = {
+  configured: boolean;
+  maxDailyMinutes: number | null;
+  minimumBreakMinutes: number | null;
+  lateThresholdMinutes: number | null;
+  expectedBreakMinutes: number | null;
+  actualBreakMinutes: number;
+  warnings: string[];
+  violations: string[];
+};
+
 export type ShiftOverrideDto = {
   id: number;
   companyId: number | null;
@@ -121,6 +132,7 @@ export type ScheduleCellDto = {
   incidentId: number | null;
   firstEntry: string | null;
   lastExit: string | null;
+  policy: WorkPolicyEvaluationDto | null;
 };
 
 export type ScheduleRowDto = {
