@@ -29,7 +29,7 @@ export class TenantScopeService {
       companyId: principal.companyId ?? null,
       employeeId: principal.employeeId ?? null,
       roles,
-      canAccessAll: roles.includes('ROLE_ADMIN')
+      canAccessAll: roles.includes('ROLE_SUPER_ADMIN')
     };
   }
 

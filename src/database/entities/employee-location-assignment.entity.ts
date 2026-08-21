@@ -1,23 +1,12 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn, Index } from 'typeorm';
 
 import { CompanyEntity } from './company.entity';
 import { EmployeeEntity } from './employee.entity';
 import { WorkLocationEntity } from './work-location.entity';
-import { ShiftEntity } from './shift.entity';
 
-@Entity({ name: 'turno_asignaciones' })
-@Index(['company', 'employee', 'validFrom', 'validTo'])
-@Index(['employee', 'validFrom'])
-export class ShiftAssignmentEntity {
+@Entity({ name: 'employee_location_assignments' })
+@Index(['employee', 'validFrom', 'validTo'])
+export class EmployeeLocationAssignmentEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -25,7 +14,7 @@ export class ShiftAssignmentEntity {
   @JoinColumn({ name: 'company_id' })
   company!: CompanyEntity;
 
-  @ManyToOne(() => EmployeeEntity, (employee) => employee.shiftAssignments, {
+  @ManyToOne(() => EmployeeEntity, (employee) => employee.locationAssignments, {
     eager: true,
     nullable: false,
     onDelete: 'CASCADE'
@@ -33,21 +22,13 @@ export class ShiftAssignmentEntity {
   @JoinColumn({ name: 'employee_id' })
   employee!: EmployeeEntity;
 
-  @ManyToOne(() => ShiftEntity, (shift) => shift.assignments, {
+  @ManyToOne(() => WorkLocationEntity, (location) => location.employeeAssignments, {
     eager: true,
     nullable: false,
     onDelete: 'RESTRICT'
   })
-  @JoinColumn({ name: 'shift_id' })
-  shift!: ShiftEntity;
-
-  @ManyToOne(() => WorkLocationEntity, (workLocation) => workLocation.shiftAssignments, {
-    eager: true,
-    nullable: true,
-    onDelete: 'SET NULL'
-  })
   @JoinColumn({ name: 'work_location_id' })
-  workLocation?: WorkLocationEntity | null;
+  workLocation!: WorkLocationEntity;
 
   @Column({ name: 'valid_from', type: 'date' })
   validFrom!: string;
@@ -55,11 +36,11 @@ export class ShiftAssignmentEntity {
   @Column({ name: 'valid_to', type: 'date', nullable: true })
   validTo?: string | null;
 
-  @Column({ type: 'text', nullable: true })
-  notes?: string | null;
+  @Column({ type: 'boolean', default: false })
+  primary!: boolean;
 
-  @Column({ type: 'boolean', default: true })
-  active!: boolean;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  notes?: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

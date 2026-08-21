@@ -28,7 +28,9 @@ export class CompaniesService {
       this.companiesRepository.create({
         name: dto.name,
         code: dto.code,
-        active: dto.active ?? true
+        active: dto.active ?? true,
+        timezone: dto.timezone ?? null,
+        workPolicy: dto.workPolicy ?? null
       })
     );
 
@@ -102,6 +104,12 @@ export class CompaniesService {
     if (dto.active !== undefined) {
       company.active = dto.active;
     }
+    if (dto.timezone !== undefined) {
+      company.timezone = dto.timezone;
+    }
+    if (dto.workPolicy !== undefined) {
+      company.workPolicy = dto.workPolicy;
+    }
     const saved = await this.companiesRepository.save(company);
     return this.toDto(saved);
   }
@@ -111,6 +119,8 @@ export class CompaniesService {
       id: company.id,
       name: company.name,
       code: company.code,
+      timezone: company.timezone ?? null,
+      workPolicy: company.workPolicy ?? null,
       active: company.active
     };
   }

@@ -1,7 +1,9 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { CalendarDayEntity } from './calendar-day.entity';
+import { CompanyEntity } from './company.entity';
 import { EmployeeEntity } from './employee.entity';
+import { WorkLocationEntity } from './work-location.entity';
 
 @Entity({ name: 'calendarios' })
 @Index(['nombre'], { unique: true })
@@ -12,6 +14,14 @@ export class CalendarEntity {
 
   @Column()
   nombre!: string;
+
+  @ManyToOne(() => CompanyEntity, (company) => company.calendars, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL'
+  })
+  @JoinColumn({ name: 'company_id' })
+  company?: CompanyEntity | null;
 
   @Column({ type: 'boolean', default: false })
   active!: boolean;
@@ -33,4 +43,7 @@ export class CalendarEntity {
 
   @OneToMany(() => EmployeeEntity, (employee) => employee.calendar)
   employees!: EmployeeEntity[];
+
+  @OneToMany(() => WorkLocationEntity, (workLocation) => workLocation.calendar)
+  workLocations!: WorkLocationEntity[];
 }

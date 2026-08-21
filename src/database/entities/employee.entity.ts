@@ -17,6 +17,7 @@ import { IncidentEntity } from './incident.entity';
 import { VacationEntity } from './vacation.entity';
 import { ShiftAssignmentEntity } from './shift-assignment.entity';
 import { ShiftOverrideEntity } from './shift-override.entity';
+import { EmployeeLocationAssignmentEntity } from './employee-location-assignment.entity';
 
 @Entity({ name: 'employees' })
 @Index(['company', 'numero'], { unique: true })
@@ -83,6 +84,9 @@ export class EmployeeEntity {
 
   @OneToMany(() => ShiftOverrideEntity, (shiftOverride) => shiftOverride.employee)
   shiftOverrides!: ShiftOverrideEntity[];
+
+  @OneToMany(() => EmployeeLocationAssignmentEntity, (assignment) => assignment.employee)
+  locationAssignments!: EmployeeLocationAssignmentEntity[];
 
   @ManyToOne(() => CalendarEntity, (calendar) => calendar.employees, {
     eager: true,

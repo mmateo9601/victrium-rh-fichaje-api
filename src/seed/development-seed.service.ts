@@ -13,10 +13,12 @@ import { PermissionEntity } from '../database/entities/permission.entity';
 import { PermissionStatus } from '../database/entities/permission-status.enum';
 import { RoleName } from '../database/entities/role-name.enum';
 import { RoleEntity } from '../database/entities/role.entity';
+import { EmployeeLocationAssignmentEntity } from '../database/entities/employee-location-assignment.entity';
 import { ShiftAssignmentEntity } from '../database/entities/shift-assignment.entity';
 import { ShiftDayEntity } from '../database/entities/shift-day.entity';
 import { ShiftEntity } from '../database/entities/shift.entity';
 import { ShiftOverrideEntity } from '../database/entities/shift-override.entity';
+import { WorkLocationEntity } from '../database/entities/work-location.entity';
 import { TimeEntryAuditEntity } from '../database/entities/time-entry-audit.entity';
 import { TimeEntryEntity } from '../database/entities/time-entry.entity';
 import { UserEntity } from '../database/entities/user.entity';
@@ -69,6 +71,8 @@ type SeedSummary = {
   shifts: number;
   assignments: number;
   overrides: number;
+  workLocations: number;
+  locationAssignments: number;
   timeEntries: number;
   audits: number;
   vacations: number;
@@ -107,7 +111,13 @@ type SeedTimeEntryBundle = {
 
 const PASSWORD = 'Victrium123!';
 const SEED_ORIGIN = 'seed:dev';
-const ROLE_NAMES: RoleName[] = [RoleName.ROLE_ADMIN, RoleName.ROLE_RRHH, RoleName.ROLE_USER];
+const ROLE_NAMES: RoleName[] = [
+  RoleName.ROLE_SUPER_ADMIN,
+  RoleName.ROLE_ADMIN,
+  RoleName.ROLE_COMPANY_ADMIN,
+  RoleName.ROLE_RRHH,
+  RoleName.ROLE_USER
+];
 const SEED_COMPANIES: SeededCompany[] = [
   {
     code: 'VICTRIUM',
@@ -124,6 +134,20 @@ const SEED_COMPANIES: SeededCompany[] = [
 ];
 
 const SEED_USERS: SeededUser[] = [
+  {
+    email: 'platform@victrium.local',
+    numero: 'VIC-PLT',
+    nombreEmpleado: 'Lucía Blanco Romero',
+    dni: '90000000Z',
+    roles: [RoleName.ROLE_SUPER_ADMIN],
+    admin: false,
+    companyCode: 'VICTRIUM',
+    diasVacaciones: 30,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false
+  },
   {
     email: 'admin@victrium.local',
     numero: 'VIC-ADM',
@@ -369,6 +393,7 @@ export class DevelopmentSeedService {
       const companies = await this.seedCompanies(manager);
       const calendars = await this.seedCalendars(manager, companies, context);
       const users = await this.seedUsersAndEmployees(manager, companies, calendars, roles);
+      const locations = await this.seedWorkLocations(manager, companies, calendars, users, context);
       const shifts = await this.seedShifts(manager, users, context);
       const timeEntries = await this.seedTimeEntries(manager, users, context);
       const audits = await this.seedAudits(manager, users, timeEntries);
@@ -381,6 +406,8 @@ export class DevelopmentSeedService {
         calendars: calendars.length,
         users: users.length,
         employees: users.length,
+        workLocations: locations.workLocations,
+        locationAssignments: locations.locationAssignments,
         shifts: shifts.shifts,
         assignments: shifts.assignments,
         overrides: shifts.overrides,
@@ -479,6 +506,8 @@ export class DevelopmentSeedService {
       await manager.createQueryBuilder().delete().from(EmployeeEntity).where('id IN (:...employeeIds)', { employeeIds }).execute();
     }
 
+    await manager.createQueryBuilder().delete().from(EmployeeLocationAssignmentEntity).execute();
+    await manager.createQueryBuilder().delete().from(WorkLocationEntity).execute();
     await manager.createQueryBuilder().delete().from(ShiftOverrideEntity).execute();
     await manager.createQueryBuilder().delete().from(ShiftAssignmentEntity).execute();
     await manager.createQueryBuilder().delete().from(ShiftDayEntity).execute();
@@ -554,6 +583,7 @@ export class DevelopmentSeedService {
 
       const savedCalendar = await repository.save(
         repository.create({
+          company,
           nombre: fixture.calendarName,
           year: fixture.year,
           minutosMasEntrada: 10,
@@ -641,6 +671,87 @@ export class DevelopmentSeedService {
     }
 
     return bundles;
+  }
+
+  private async seedWorkLocations(
+    manager: EntityManager,
+    companies: CompanyEntity[],
+    calendars: CalendarEntity[],
+    users: SeedUserBundle[],
+    context: SeedContext
+  ) {
+    const locationRepository = manager.getRepository(WorkLocationEntity);
+    const assignmentRepository = manager.getRepository(EmployeeLocationAssignmentEntity);
+
+    const victrium = companies.find((company) => company.code === 'VICTRIUM');
+    const acme = companies.find((company) => company.code === 'ACME');
+    if (!victrium || !acme) {
+      throw new AppError('COMPANY_NOT_FOUND', 'No se pudieron preparar los centros seed', 404);
+    }
+
+    const victriumCalendar = calendars.find((calendar) => calendar.company?.code === 'VICTRIUM') ?? null;
+    const acmeCalendar = calendars.find((calendar) => calendar.company?.code === 'ACME') ?? null;
+
+    const fixtures = [
+      { company: victrium, calendar: victriumCalendar, code: 'MAD-CENTRO', name: 'Madrid Centro', city: 'Madrid', province: 'Madrid', timezone: 'Europe/Madrid', address: 'Calle Gran Vía 1', postalCode: '28013' },
+      { company: victrium, calendar: victriumCalendar, code: 'MAD-ALC', name: 'Alcobendas', city: 'Alcobendas', province: 'Madrid', timezone: 'Europe/Madrid', address: 'Avenida de Europa 12', postalCode: '28108' },
+      { company: victrium, calendar: victriumCalendar, code: 'MAD-BCN', name: 'Barcelona', city: 'Barcelona', province: 'Barcelona', timezone: 'Europe/Madrid', address: 'Carrer de Balmes 44', postalCode: '08007' },
+      { company: victrium, calendar: victriumCalendar, code: 'MAD-TFE', name: 'Tenerife', city: 'Santa Cruz de Tenerife', province: 'Santa Cruz de Tenerife', timezone: 'Atlantic/Canary', address: 'Avenida Tres de Mayo 20', postalCode: '38005' },
+      { company: acme, calendar: acmeCalendar, code: 'ACM-SEV', name: 'Sevilla', city: 'Sevilla', province: 'Sevilla', timezone: 'Europe/Madrid', address: 'Calle Sierpes 10', postalCode: '41004' },
+      { company: acme, calendar: acmeCalendar, code: 'ACM-VLC', name: 'Valencia', city: 'Valencia', province: 'Valencia', timezone: 'Europe/Madrid', address: 'Carrer de Colón 8', postalCode: '46004' }
+    ];
+
+    const locations: WorkLocationEntity[] = [];
+    for (const fixture of fixtures) {
+      const location = await locationRepository.save(
+        locationRepository.create({
+          company: fixture.company,
+          calendar: fixture.calendar,
+          name: fixture.name,
+          code: fixture.code,
+          city: fixture.city,
+          province: fixture.province,
+          timezone: fixture.timezone,
+          address: fixture.address,
+          postalCode: fixture.postalCode,
+          active: true
+        })
+      );
+      locations.push(location);
+    }
+
+    const locationMap = new Map(locations.map((location) => [`${location.company.code}:${location.code}`, location]));
+    const employeeMap = new Map(users.map((bundle) => [bundle.user.email, bundle]));
+    const validFrom = formatMadridDate(addDays(context.referenceDate, -30));
+    const validTo = null;
+
+    const assignments = [
+      { employee: employeeMap.get('platform@victrium.local'), location: locationMap.get('VICTRIUM:MAD-CENTRO'), primary: true },
+      { employee: employeeMap.get('admin@victrium.local'), location: locationMap.get('VICTRIUM:MAD-CENTRO'), primary: true },
+      { employee: employeeMap.get('rrhh@victrium.local'), location: locationMap.get('VICTRIUM:MAD-CENTRO'), primary: true },
+      { employee: employeeMap.get('laura@victrium.local'), location: locationMap.get('VICTRIUM:MAD-CENTRO'), primary: true },
+      { employee: employeeMap.get('carlos@victrium.local'), location: locationMap.get('VICTRIUM:MAD-ALC'), primary: true },
+      { employee: employeeMap.get('admin@acme.local'), location: locationMap.get('ACME:ACM-SEV'), primary: true }
+    ].filter((item): item is { employee: SeedUserBundle; location: WorkLocationEntity; primary: boolean } => Boolean(item.employee && item.location));
+
+    await assignmentRepository.save(
+      assignments.map((item) =>
+        assignmentRepository.create({
+          company: item.employee.user.company!,
+          employee: item.employee.employee,
+          workLocation: item.location,
+          validFrom,
+          validTo,
+          primary: item.primary,
+          notes: 'Asignación seed'
+        })
+      )
+    );
+
+    return {
+      workLocations: locations.length,
+      locationAssignments: assignments.length
+    };
   }
 
   private async seedShifts(manager: EntityManager, users: SeedUserBundle[], context: SeedContext) {

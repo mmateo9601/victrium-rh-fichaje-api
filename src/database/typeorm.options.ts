@@ -6,6 +6,7 @@ import { CompanyEntity } from './entities/company.entity';
 import { CalendarDayEntity } from './entities/calendar-day.entity';
 import { CalendarEntity } from './entities/calendar.entity';
 import { EmployeeEntity } from './entities/employee.entity';
+import { EmployeeLocationAssignmentEntity } from './entities/employee-location-assignment.entity';
 import { IncidentEntity } from './entities/incident.entity';
 import { PermissionEntity } from './entities/permission.entity';
 import { AuthSessionEntity } from './entities/auth-session.entity';
@@ -20,9 +21,12 @@ import { TimeEntryEntity } from './entities/time-entry.entity';
 import { TimeEntrySessionEntity } from './entities/time-entry-session.entity';
 import { UserEntity } from './entities/user.entity';
 import { VacationEntity } from './entities/vacation.entity';
+import { WorkLocationEntity } from './entities/work-location.entity';
 import { CreateApiKeysTable1724172000000 } from './migrations/1724172000000-CreateApiKeysTable';
 import { CreateTimeEntrySessionsTable1724172100000 } from './migrations/1724172100000-CreateTimeEntrySessionsTable';
 import { CreateShiftsTables1724172200000 } from './migrations/1724172200000-CreateShiftsTables';
+import { CreateWorkLocationsTables1724172300000 } from './migrations/1724172300000-CreateWorkLocationsTables';
+import { AddWorkLocationToShiftAssignments1724172400000 } from './migrations/1724172400000-AddWorkLocationToShiftAssignments';
 
 export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
   return {
@@ -51,9 +55,17 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
       ShiftEntity,
       ShiftDayEntity,
       ShiftAssignmentEntity,
-      ShiftOverrideEntity
+      ShiftOverrideEntity,
+      WorkLocationEntity,
+      EmployeeLocationAssignmentEntity
     ],
-    migrations: [CreateApiKeysTable1724172000000, CreateTimeEntrySessionsTable1724172100000, CreateShiftsTables1724172200000],
+    migrations: [
+      CreateApiKeysTable1724172000000,
+      CreateTimeEntrySessionsTable1724172100000,
+      CreateShiftsTables1724172200000,
+      CreateWorkLocationsTables1724172300000,
+      AddWorkLocationToShiftAssignments1724172400000
+    ],
     migrationsRun: true,
     synchronize: false,
     logging: config.nodeEnv === 'development',

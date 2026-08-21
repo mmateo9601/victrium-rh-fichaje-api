@@ -82,7 +82,13 @@ export class UsersService {
 
   isRrhhOrAdmin(user: UserEntity) {
     const roles = (user.roles ?? []).map((role) => role.rolNombre);
-    return roles.includes(RoleName.ROLE_ADMIN) || roles.includes(RoleName.ROLE_RRHH) || Boolean(user.admin);
+    return (
+      roles.includes(RoleName.ROLE_SUPER_ADMIN) ||
+      roles.includes(RoleName.ROLE_ADMIN) ||
+      roles.includes(RoleName.ROLE_COMPANY_ADMIN) ||
+      roles.includes(RoleName.ROLE_RRHH) ||
+      Boolean(user.admin)
+    );
   }
 
   async list(query: UsersListQuery, context: PrincipalTenantContext) {
