@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 
@@ -8,7 +9,7 @@ import { ApiKeysService } from '../../modules/api-keys/api-keys.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly apiKeysService: ApiKeysService) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request & { user?: unknown }>();
@@ -30,7 +31,12 @@ export class JwtAuthGuard implements CanActivate {
     const apiKeyHeader = request.headers['x-api-key'];
     const apiKey = Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader;
     if (typeof apiKey === 'string' && apiKey.trim()) {
-      const principal = await this.apiKeysService.authenticate(apiKey.trim());
+      const apiKeysService = this.moduleRef.get(ApiKeysService, { strict: false });
+      if (!apiKeysService) {
+        throw new AppError('INTERNAL_ERROR', 'API key service unavailable', 500);
+      }
+
+      const principal = await apiKeysService.authenticate(apiKey.trim());
       if (!principal) {
         throw new AppError('UNAUTHORIZED', 'Invalid or expired API key', 401);
       }
