@@ -5,6 +5,7 @@ import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { PrincipalTenantContext, TenantScopeService } from '../../common/tenant/tenant-scope.service';
+import { EmployeeEntity } from '../../database/entities/employee.entity';
 import { TimeEntryAuditEntity } from '../../database/entities/time-entry-audit.entity';
 import { TimeEntryBreakEntity } from '../../database/entities/time-entry-break.entity';
 import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
@@ -112,7 +113,7 @@ export class TimeEntriesService {
         })
       );
 
-      user.working = true;
+      await this.syncWorkingState(manager, user, true);
       user.ultimoFichaje = `${formatMadridDate(now)} ${formatMadridTime(now)} - ENTRADA`;
       await manager.getRepository(UserEntity).save(user);
 
@@ -152,6 +153,8 @@ export class TimeEntriesService {
 
       session.state = 'PAUSED';
       await manager.getRepository(TimeEntrySessionEntity).save(session);
+      const user = await this.lockUser(manager, session.usuario.id);
+      await this.syncWorkingState(manager, user, false);
 
       const refreshed = await this.findSessionByIdOrFail(session.id, manager);
       return this.toCurrentSessionDto(refreshed, breakItem);
@@ -193,6 +196,8 @@ export class TimeEntriesService {
 
       session.state = 'WORKING';
       await manager.getRepository(TimeEntrySessionEntity).save(session);
+      const user = await this.lockUser(manager, session.usuario.id);
+      await this.syncWorkingState(manager, user, true);
 
       const refreshed = await this.findSessionByIdOrFail(session.id, manager);
       return this.toCurrentSessionDto(refreshed);
@@ -232,7 +237,7 @@ export class TimeEntriesService {
       await manager.getRepository(TimeEntrySessionEntity).save(session);
 
       const user = await this.lockUser(manager, session.usuario.id);
-      user.working = false;
+      await this.syncWorkingState(manager, user, false);
       user.ultimoFichaje = `${formatMadridDate(session.finishedAt)} ${formatMadridTime(session.finishedAt)} - SALIDA`;
       await manager.getRepository(UserEntity).save(user);
 
@@ -469,6 +474,16 @@ export class TimeEntriesService {
     }
 
     return user;
+  }
+
+  private async syncWorkingState(manager: EntityManager, user: UserEntity, working: boolean) {
+    user.working = working;
+    await manager.getRepository(UserEntity).save(user);
+
+    if (user.employee) {
+      user.employee.working = working;
+      await manager.getRepository(EmployeeEntity).save(user.employee);
+    }
   }
 
   private async findActiveSession(userId: number, manager?: EntityManager) {

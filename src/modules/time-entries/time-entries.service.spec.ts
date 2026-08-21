@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 
 import { TimeEntryAuditEntity } from '../../database/entities/time-entry-audit.entity';
 import { TimeEntryBreakEntity } from '../../database/entities/time-entry-break.entity';
+import { EmployeeEntity } from '../../database/entities/employee.entity';
 import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
 import { TimeEntrySessionEntity } from '../../database/entities/time-entry-session.entity';
 import { UserEntity } from '../../database/entities/user.entity';
@@ -26,7 +27,16 @@ describe('TimeEntriesService', () => {
       dni: '12345678A',
       timeEntries: [],
       sessions: [],
-      company: { id: 7, name: 'Victrium' }
+      company: { id: 7, name: 'Victrium' },
+      employee: {
+        id: 21,
+        numero: 'EMP001',
+        nombreEmpleado: 'Ada Lovelace',
+        email: 'ada@example.com',
+        dni: '12345678A',
+        company: { id: 7, name: 'Victrium' },
+        working: false
+      }
     } as unknown as UserEntity;
 
     const entry = {
@@ -61,6 +71,10 @@ describe('TimeEntriesService', () => {
     const breakRepo = {
       create: jest.fn().mockImplementation((value) => value),
       findOne: jest.fn().mockResolvedValue(null),
+      save: jest.fn().mockImplementation(async (value) => value)
+    };
+
+    const employeeRepo = {
       save: jest.fn().mockImplementation(async (value) => value)
     };
 
@@ -100,6 +114,9 @@ describe('TimeEntriesService', () => {
         if (entity === TimeEntryBreakEntity) {
           return breakRepo;
         }
+        if (entity === EmployeeEntity) {
+          return employeeRepo;
+        }
         throw new Error('Unexpected entity');
       })
     };
@@ -126,7 +143,7 @@ describe('TimeEntriesService', () => {
       tenantScope
     );
 
-    return { service, dataSource, timeEntryRepo, auditRepo, sessionRepo, breakRepo, userRepo, manager, user, entry, correctedBy };
+    return { service, dataSource, timeEntryRepo, auditRepo, sessionRepo, breakRepo, employeeRepo, userRepo, manager, user, entry, correctedBy };
   }
 
   it('creates a clock in entry and toggles user state', async () => {
@@ -136,6 +153,44 @@ describe('TimeEntriesService', () => {
 
     expect(result.tipo).toBe('ENTRADA');
     expect(user.working).toBe(true);
+  });
+
+  it('pauses a session and marks the user as not working', async () => {
+    const session = {
+      id: 11,
+      usuario: {
+        id: 1,
+        company: { id: 7, name: 'Victrium' }
+      },
+      startedAt: new Date('2026-08-21T06:00:00.000Z'),
+      finishedAt: null,
+      state: 'WORKING',
+      source: 'web',
+      breaks: [],
+      version: 1
+    } as unknown as TimeEntrySessionEntity;
+
+    const { service, sessionRepo, breakRepo, employeeRepo, userRepo, user } = createService();
+    sessionRepo.findOne.mockResolvedValueOnce(session);
+    sessionRepo.findOne.mockResolvedValueOnce({
+      ...session,
+      breaks: [
+        {
+          id: 90,
+          startedAt: new Date('2026-08-21T06:30:00.000Z'),
+          endedAt: null
+        }
+      ]
+    });
+
+    const result = await service.pauseSession(11);
+
+    expect(result.state).toBe('PAUSED');
+    expect(user.working).toBe(false);
+    expect(user.employee?.working).toBe(false);
+    expect(breakRepo.save).toHaveBeenCalledTimes(1);
+    expect(employeeRepo.save).toHaveBeenCalledTimes(1);
+    expect(userRepo.save).toHaveBeenCalled();
   });
 
   it('returns a visible entry for the authenticated owner', async () => {
