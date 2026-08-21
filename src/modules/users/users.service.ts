@@ -39,6 +39,19 @@ export class UsersService {
     });
   }
 
+  async findByNumeroOrEmail(identifier: string) {
+    return this.usersRepository.findOne({
+      where: [{ numero: identifier }, { email: identifier }],
+      relations: {
+        roles: true,
+        company: true,
+        employee: {
+          company: true
+        }
+      }
+    });
+  }
+
   async findById(id: number) {
     return this.usersRepository.findOne({
       where: { id },
@@ -54,6 +67,14 @@ export class UsersService {
 
   async findByNumeroOrFail(numero: string) {
     const user = await this.findByNumero(numero);
+    if (!user) {
+      throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
+    }
+    return user;
+  }
+
+  async findByNumeroOrEmailOrFail(identifier: string) {
+    const user = await this.findByNumeroOrEmail(identifier);
     if (!user) {
       throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
     }
