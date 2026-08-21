@@ -122,11 +122,17 @@ export class AuthService {
     const payload = this.tokenService.verifyRefreshToken(refreshToken);
     const session = await this.sessionsRepository.findOne({ where: { id: payload.sid } });
     if (!session) {
-      return;
+      return {
+        message: 'Sesion cerrada correctamente'
+      };
     }
 
     session.revokedAt = new Date();
     await this.sessionsRepository.save(session);
+
+    return {
+      message: 'Sesion cerrada correctamente'
+    };
   }
 
   async me(userId: number): Promise<PublicUserDto> {
