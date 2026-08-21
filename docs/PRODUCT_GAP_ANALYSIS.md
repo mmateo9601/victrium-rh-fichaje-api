@@ -23,12 +23,12 @@ This document compares the current product against an ideal, modern workforce pl
 | Legal compliance | Daily register and retention already supported conceptually | Configurable compliance rules per company/convenio | Rules are partially hardcoded | P1 | High | Move compliance decisions into policy config | PARTIAL |
 | Timekeeping | Start/pause/resume/finish, audits | Plan vs actual, planned location, configurable geolocation | No planned vs actual comparison and no location context | P1 | High | Add planned location and policy-aware comparison | PARTIAL |
 | Absences | Vacations, permissions, incidents | Absences integrated into planning and coverage | Existing modules are not yet integrated into staffing calculations deeply enough | P1 | Medium | Feed absences into planning dashboards and conflict checks | PARTIAL |
-| Auditing | Time entry audit, session state | Append-only operational audit and planning history | Planning changes are not audited consistently | P1 | Medium | Add audit log for planning and configuration changes | MISSING |
-| Reports | Basic summaries | Workforce reports, planned vs actual, compliance reports | No dedicated reporting module | P2 | Medium | Add reporting endpoints and views | MISSING |
-| Super admin UX | None | SaaS platform dashboard and tenant switching | No platform-level UI | P0 | High | Add platform area in web app | MISSING |
+| Auditing | Time entry audit, session state | Append-only operational audit and planning history | Planning period create/update/publish/unpublish changes are now audited | P1 | Medium | Extend audit coverage to the remaining configuration domains | PARTIAL |
+| Reports | Basic summaries | Workforce reports, planned vs actual, compliance reports | Summary reporting endpoint and dashboard views available | P2 | Medium | Expand reports with planned-vs-actual and compliance breakdowns | PARTIAL |
+| Super admin UX | None | SaaS platform dashboard and tenant switching | Platform dashboard available with tenant-level summary data | P0 | High | Continue refining the platform area and tenant switching flows | PARTIAL |
 | Company admin UX | Existing admin-style areas | Company-scoped operations and configuration | Still centered on legacy roles and modules | P0 | High | Clarify nav and permissions by role | PARTIAL |
 | Mobile/Desktop UX | Existing responsive app | Role-specific navigation and scheduling views | No platform/company split in navigation | P0 | High | Update navigation to reflect hierarchy | PARTIAL |
-| Tests | Good coverage on existing domains | Coverage for planning, locations, policy engine and tenant boundaries | Missing tests for new domains | P0 | High | Add service/controller tests and e2e flows | MISSING |
+| Tests | Good coverage on existing domains | Coverage for planning, locations, policy engine and tenant boundaries | Planning periods, reporting summary and platform UI are covered with tests | P0 | High | Continue extending service/controller tests and e2e flows | PARTIAL |
 
 ## Priority summary
 

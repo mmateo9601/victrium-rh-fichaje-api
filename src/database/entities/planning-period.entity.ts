@@ -1,5 +1,6 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
+import { PlanningPeriodAuditEntity } from './planning-period-audit.entity';
 import { CompanyEntity } from './company.entity';
 import { UserEntity } from './user.entity';
 
@@ -42,6 +43,9 @@ export class PlanningPeriodEntity {
 
   @Column({ type: 'text', nullable: true })
   notes?: string | null;
+
+  @OneToMany(() => PlanningPeriodAuditEntity, (audit) => audit.planningPeriod)
+  audits!: PlanningPeriodAuditEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

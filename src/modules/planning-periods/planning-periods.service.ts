@@ -6,9 +6,15 @@ import { AppError } from '../../common/errors/app-error';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { PrincipalTenantContext, TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { CompanyEntity } from '../../database/entities/company.entity';
+import { PlanningPeriodAuditEntity, PlanningPeriodAuditAction } from '../../database/entities/planning-period-audit.entity';
 import { PlanningPeriodEntity } from '../../database/entities/planning-period.entity';
 import { UserEntity } from '../../database/entities/user.entity';
-import { CreatePlanningPeriodDto, PlanningPeriodDto, UpdatePlanningPeriodDto } from './dto/planning-period.dto';
+import {
+  CreatePlanningPeriodDto,
+  PlanningPeriodAuditDto,
+  PlanningPeriodDto,
+  UpdatePlanningPeriodDto
+} from './dto/planning-period.dto';
 
 type PlanningPeriodListQuery = Partial<PaginationQueryDto> & {
   search?: string;
@@ -29,6 +35,8 @@ export class PlanningPeriodsService {
   constructor(
     @InjectRepository(PlanningPeriodEntity)
     private readonly planningPeriodsRepository: Repository<PlanningPeriodEntity>,
+    @InjectRepository(PlanningPeriodAuditEntity)
+    private readonly planningPeriodAuditsRepository: Repository<PlanningPeriodAuditEntity>,
     @InjectRepository(CompanyEntity)
     private readonly companiesRepository: Repository<CompanyEntity>,
     @InjectRepository(UserEntity)
@@ -115,11 +123,26 @@ export class PlanningPeriodsService {
       })
     );
 
+    await this.recordAudit(
+      period,
+      'CREATE',
+      null,
+      period.status,
+      null,
+      period.version,
+      await this.resolveCurrentUser(context),
+      null,
+      this.serializePeriod(period)
+    );
+
     return this.toDto(period);
   }
 
   async update(id: number, dto: UpdatePlanningPeriodDto, context: PrincipalTenantContext) {
     const period = await this.findByIdOrFail(id, context);
+    const previousSnapshot = this.serializePeriod(period);
+    const previousStatus = period.status;
+    const previousVersion = period.version;
 
     if (period.status === 'PUBLISHED' && (dto.name !== undefined || dto.startDate !== undefined || dto.endDate !== undefined || dto.companyId !== undefined)) {
       throw new AppError('PLANNING_PERIOD_LOCKED', 'El periodo publicado debe volver a borrarse antes de editar sus fechas o nombre', 409);
@@ -156,6 +179,26 @@ export class PlanningPeriodsService {
     }
 
     const saved = await this.planningPeriodsRepository.save(period);
+    if (
+      saved.name !== previousSnapshot.name ||
+      saved.startDate !== previousSnapshot.startDate ||
+      saved.endDate !== previousSnapshot.endDate ||
+      saved.notes !== previousSnapshot.notes ||
+      (saved.company?.id ?? null) !== previousSnapshot.companyId
+    ) {
+      await this.recordAudit(
+        saved,
+        'UPDATE',
+        previousStatus,
+        saved.status,
+        previousVersion,
+        saved.version,
+        await this.resolveCurrentUser(context),
+        null,
+        this.serializePeriod(saved),
+        previousSnapshot
+      );
+    }
     return this.toDto(saved);
   }
 
@@ -165,12 +208,25 @@ export class PlanningPeriodsService {
       return this.toDto(period);
     }
 
+    const previousSnapshot = this.serializePeriod(period);
     period.status = 'PUBLISHED';
     period.publishedAt = new Date();
     period.version += 1;
     period.publishedBy = await this.resolveCurrentUser(context);
 
     const saved = await this.planningPeriodsRepository.save(period);
+    await this.recordAudit(
+      saved,
+      'PUBLISH',
+      previousSnapshot.status,
+      saved.status,
+      previousSnapshot.version,
+      saved.version,
+      saved.publishedBy ?? null,
+      null,
+      this.serializePeriod(saved),
+      previousSnapshot
+    );
     return this.toDto(saved);
   }
 
@@ -180,11 +236,37 @@ export class PlanningPeriodsService {
       return this.toDto(period);
     }
 
+    const previousSnapshot = this.serializePeriod(period);
     period.status = 'DRAFT';
     period.version += 1;
+    period.publishedAt = null;
+    period.publishedBy = null;
 
     const saved = await this.planningPeriodsRepository.save(period);
+    await this.recordAudit(
+      saved,
+      'UNPUBLISH',
+      previousSnapshot.status,
+      saved.status,
+      previousSnapshot.version,
+      saved.version,
+      await this.resolveCurrentUser(context),
+      null,
+      this.serializePeriod(saved),
+      previousSnapshot
+    );
     return this.toDto(saved);
+  }
+
+  async listAudits(id: number, context: PrincipalTenantContext): Promise<PlanningPeriodAuditDto[]> {
+    const period = await this.findByIdOrFail(id, context);
+    const audits = await this.planningPeriodAuditsRepository.find({
+      where: { planningPeriod: { id: period.id } },
+      relations: { planningPeriod: true, changedBy: true },
+      order: { createdAt: 'DESC', id: 'DESC' }
+    });
+
+    return audits.map((audit) => this.toAuditDto(audit));
   }
 
   private async resolveCurrentUser(context: PrincipalTenantContext) {
@@ -210,6 +292,34 @@ export class PlanningPeriodsService {
     }
   }
 
+  private async recordAudit(
+    period: PlanningPeriodEntity,
+    action: PlanningPeriodAuditAction,
+    previousStatus: string | null,
+    nextStatus: string,
+    previousVersion: number | null,
+    nextVersion: number,
+    changedBy: UserEntity | null,
+    reason: string | null,
+    nextSnapshot: Record<string, unknown>,
+    previousSnapshot: Record<string, unknown> | null = null
+  ) {
+    await this.planningPeriodAuditsRepository.save(
+      this.planningPeriodAuditsRepository.create({
+        planningPeriod: period,
+        action,
+        previousStatus,
+        nextStatus,
+        previousVersion,
+        nextVersion,
+        previousSnapshot,
+        nextSnapshot,
+        reason,
+        changedBy
+      })
+    );
+  }
+
   private toDto(period: PlanningPeriodEntity): PlanningPeriodDto {
     return {
       id: period.id,
@@ -227,6 +337,46 @@ export class PlanningPeriodsService {
       notes: period.notes ?? null,
       createdAt: period.createdAt?.toISOString?.() ?? new Date().toISOString(),
       updatedAt: period.updatedAt?.toISOString?.() ?? new Date().toISOString()
+    };
+  }
+
+  private serializePeriod(period: PlanningPeriodEntity) {
+    return {
+      id: period.id,
+      companyId: period.company?.id ?? null,
+      companyName: period.company?.name ?? null,
+      name: period.name,
+      startDate: period.startDate,
+      endDate: period.endDate,
+      status: period.status,
+      version: period.version,
+      publishedAt: period.publishedAt?.toISOString?.() ?? null,
+      publishedById: period.publishedBy?.id ?? null,
+      publishedByNumero: period.publishedBy?.numero ?? null,
+      publishedByNombre: period.publishedBy?.nombreEmpleado ?? null,
+      notes: period.notes ?? null,
+      createdAt: period.createdAt?.toISOString?.() ?? new Date().toISOString(),
+      updatedAt: period.updatedAt?.toISOString?.() ?? new Date().toISOString()
+    };
+  }
+
+  private toAuditDto(audit: PlanningPeriodAuditEntity): PlanningPeriodAuditDto {
+    return {
+      id: audit.id,
+      planningPeriodId: audit.planningPeriod.id,
+      planningPeriodName: audit.planningPeriod.name,
+      action: audit.action,
+      previousStatus: audit.previousStatus ?? null,
+      nextStatus: audit.nextStatus,
+      previousVersion: audit.previousVersion ?? null,
+      nextVersion: audit.nextVersion,
+      previousSnapshot: audit.previousSnapshot ?? null,
+      nextSnapshot: audit.nextSnapshot,
+      reason: audit.reason ?? null,
+      changedById: audit.changedBy?.id ?? null,
+      changedByNumero: audit.changedBy?.numero ?? null,
+      changedByNombre: audit.changedBy?.nombreEmpleado ?? null,
+      createdAt: audit.createdAt.toISOString()
     };
   }
 }

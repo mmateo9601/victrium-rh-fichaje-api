@@ -79,3 +79,21 @@ export type PlanningPeriodDto = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type PlanningPeriodAuditDto = {
+  id: number;
+  planningPeriodId: number;
+  planningPeriodName: string;
+  action: 'CREATE' | 'UPDATE' | 'PUBLISH' | 'UNPUBLISH';
+  previousStatus: string | null;
+  nextStatus: string;
+  previousVersion: number | null;
+  nextVersion: number;
+  previousSnapshot: Record<string, unknown> | null;
+  nextSnapshot: Record<string, unknown>;
+  reason: string | null;
+  changedById: number | null;
+  changedByNumero: string | null;
+  changedByNombre: string | null;
+  createdAt: string;
+};

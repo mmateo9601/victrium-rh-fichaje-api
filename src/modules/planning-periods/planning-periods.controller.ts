@@ -61,4 +61,10 @@ export class PlanningPeriodsController {
   unpublish(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Param('id', ParseIntPipe) id: number) {
     return this.planningPeriodsService.unpublish(id, this.tenantScope.toContext(user));
   }
+
+  @Get(':id/audits')
+  @Roles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  audits(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Param('id', ParseIntPipe) id: number) {
+    return this.planningPeriodsService.listAudits(id, this.tenantScope.toContext(user));
+  }
 }

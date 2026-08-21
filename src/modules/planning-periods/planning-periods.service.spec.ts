@@ -52,6 +52,12 @@ describe('PlanningPeriodsService', () => {
       })
     };
 
+    const auditRepo = {
+      create: jest.fn().mockImplementation((value) => value),
+      save: jest.fn().mockImplementation(async (value) => value),
+      find: jest.fn().mockResolvedValue([])
+    };
+
     const userRepo = {
       findOne: jest.fn().mockResolvedValue(overrides.currentUser === null ? null : currentUser)
     };
@@ -63,16 +69,17 @@ describe('PlanningPeriodsService', () => {
 
     const service = new PlanningPeriodsService(
       periodRepo as never,
+      auditRepo as never,
       companyRepo as never,
       userRepo as never,
       tenantScope
     );
 
-    return { service, periodRepo, companyRepo, userRepo, tenantScope, period, company, currentUser };
+    return { service, periodRepo, auditRepo, companyRepo, userRepo, tenantScope, period, company, currentUser };
   }
 
   it('creates a planning period in draft state', async () => {
-    const { service, periodRepo, company } = createService({ findOneResult: null });
+    const { service, periodRepo, auditRepo, company } = createService({ findOneResult: null });
 
     const result = await service.create(
       {
@@ -92,12 +99,13 @@ describe('PlanningPeriodsService', () => {
     );
 
     expect(periodRepo.save).toHaveBeenCalled();
+    expect(auditRepo.save).toHaveBeenCalled();
     expect(result.status).toBe('DRAFT');
     expect(result.name).toBe('Planificación septiembre');
   });
 
   it('publishes a draft period and stores the publisher', async () => {
-    const { service, periodRepo } = createService();
+    const { service, periodRepo, auditRepo } = createService();
 
     const result = await service.publish(11, {
       userId: 1,
@@ -108,6 +116,7 @@ describe('PlanningPeriodsService', () => {
     });
 
     expect(periodRepo.save).toHaveBeenCalled();
+    expect(auditRepo.save).toHaveBeenCalled();
     expect(result.status).toBe('PUBLISHED');
     expect(result.publishedByNumero).toBe('EMP001');
   });
