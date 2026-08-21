@@ -7,6 +7,16 @@ export type ShiftSegmentDto = {
   crossesMidnight: boolean;
 };
 
+export type ShiftRotationStepDto = {
+  id: number;
+  working: boolean;
+  startTime: string | null;
+  endTime: string | null;
+  breakMinutes: number;
+  workingMinutes: number | null;
+  crossesMidnight: boolean;
+};
+
 export type ShiftDayDto = {
   id: number;
   dayOfWeek: number;
@@ -29,6 +39,8 @@ export type ShiftSummaryDto = {
 export type ShiftDto = ShiftSummaryDto & {
   description: string | null;
   active: boolean;
+  rotationStartDate: string | null;
+  rotationPattern: ShiftRotationStepDto[];
   companyId: number | null;
   companyName: string | null;
   days: ShiftDayDto[];
@@ -41,6 +53,8 @@ export type CreateShiftDayDto = Omit<ShiftDayDto, 'id' | 'segments'> & {
   segments?: Array<Omit<ShiftSegmentDto, 'id'>>;
 };
 
+export type CreateShiftRotationStepDto = Omit<ShiftRotationStepDto, 'id'>;
+
 export type CreateShiftDto = {
   companyId?: number;
   name: string;
@@ -49,6 +63,8 @@ export type CreateShiftDto = {
   color?: string | null;
   active?: boolean;
   days: CreateShiftDayDto[];
+  rotationStartDate?: string | null;
+  rotationPattern?: CreateShiftRotationStepDto[];
 };
 
 export type UpdateShiftDto = Partial<CreateShiftDto>;

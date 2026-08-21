@@ -66,6 +66,12 @@ function diffMinutes(start: string | null | undefined, end: string | null | unde
   return Math.max(0, crossesMidnight || endMinutes <= startMinutes ? endMinutes + 24 * 60 - startMinutes : endMinutes - startMinutes);
 }
 
+function dayDiff(from: string, to: string) {
+  const fromDate = new Date(`${from}T12:00:00.000Z`).getTime();
+  const toDate = new Date(`${to}T12:00:00.000Z`).getTime();
+  return Math.floor((toDate - fromDate) / 86400000);
+}
+
 function resolveShiftDay(shiftDay: ShiftEntity['days'][number] | null): ResolvedShiftDay | null {
   if (!shiftDay) {
     return null;
@@ -101,6 +107,30 @@ function resolveShiftDay(shiftDay: ShiftEntity['days'][number] | null): Resolved
     breakMinutes: shiftDay.breakMinutes,
     workingMinutes: shiftDay.workingMinutes ?? null,
     crossesMidnight: shiftDay.crossesMidnight,
+    segments: []
+  };
+}
+
+function resolveRotationDay(shift: ShiftEntity | null | undefined, date: string): ResolvedShiftDay | null {
+  if (!shift?.rotationPattern?.length || !shift.rotationStartDate) {
+    return null;
+  }
+
+  const cycleLength = shift.rotationPattern.length;
+  const offset = dayDiff(shift.rotationStartDate, date);
+  const index = ((offset % cycleLength) + cycleLength) % cycleLength;
+  const step = shift.rotationPattern[index];
+  if (!step) {
+    return null;
+  }
+
+  return {
+    working: step.working,
+    startTime: step.startTime ?? null,
+    endTime: step.endTime ?? null,
+    breakMinutes: step.breakMinutes,
+    workingMinutes: step.workingMinutes ?? null,
+    crossesMidnight: step.crossesMidnight,
     segments: []
   };
 }
@@ -238,7 +268,7 @@ export class WorkScheduleResolverService {
     const { employee, date, assignments, overrides, calendarDay, vacations, permissions, incidents, timeEntries } = input;
     const resolved = this.resolveShiftForDate(date, assignments, overrides);
     const shift = resolved.shift;
-    const shiftDay = resolveShiftDay(shift?.days?.find((day) => day.dayOfWeek === dayOfWeek(date)) ?? null);
+    const shiftDay = resolveRotationDay(shift, date) ?? resolveShiftDay(shift?.days?.find((day) => day.dayOfWeek === dayOfWeek(date)) ?? null);
     const vacation = vacations.find((item) => item.inicio <= date && item.fin >= date) ?? null;
     const permission = permissions.find((item) => item.dia === date) ?? null;
     const incident = incidents.find((item) => item.dia === date) ?? null;

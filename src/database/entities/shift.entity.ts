@@ -15,6 +15,15 @@ import { ShiftAssignmentEntity } from './shift-assignment.entity';
 import { ShiftDayEntity } from './shift-day.entity';
 import { ShiftOverrideEntity } from './shift-override.entity';
 
+export type ShiftRotationStepValue = {
+  working: boolean;
+  startTime: string | null;
+  endTime: string | null;
+  breakMinutes: number;
+  workingMinutes: number | null;
+  crossesMidnight: boolean;
+};
+
 @Entity({ name: 'turnos' })
 @Index(['company', 'code'], { unique: true })
 @Index(['company', 'name'], { unique: true })
@@ -36,6 +45,12 @@ export class ShiftEntity {
 
   @Column({ type: 'boolean', default: true })
   active!: boolean;
+
+  @Column({ name: 'rotation_start_date', type: 'date', nullable: true })
+  rotationStartDate?: string | null;
+
+  @Column({ name: 'rotation_pattern', type: 'json', nullable: true })
+  rotationPattern?: ShiftRotationStepValue[] | null;
 
   @ManyToOne(() => CompanyEntity, { eager: true, nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'company_id' })

@@ -33,6 +33,43 @@ describe('WorkScheduleResolverService', () => {
     } as ShiftEntity;
   }
 
+  function createRotationShift() {
+    return {
+      id: 11,
+      name: 'Rotación',
+      code: 'ROT',
+      color: '#654321',
+      rotationStartDate: '2026-08-24',
+      rotationPattern: [
+        {
+          working: true,
+          startTime: '06:00:00',
+          endTime: '14:00:00',
+          breakMinutes: 30,
+          workingMinutes: 450,
+          crossesMidnight: false
+        },
+        {
+          working: true,
+          startTime: '14:00:00',
+          endTime: '22:00:00',
+          breakMinutes: 30,
+          workingMinutes: 450,
+          crossesMidnight: false
+        },
+        {
+          working: false,
+          startTime: null,
+          endTime: null,
+          breakMinutes: 0,
+          workingMinutes: 0,
+          crossesMidnight: false
+        }
+      ],
+      days: []
+    } as unknown as ShiftEntity;
+  }
+
   function createEmployee(workPolicy: Record<string, unknown> | null = null) {
     return {
       id: 21,
@@ -119,5 +156,37 @@ describe('WorkScheduleResolverService', () => {
         'Jornada diaria superada: 515 min frente a 480 min permitidos'
       ])
     );
+  });
+
+  it('resolves rotation patterns before weekly shift days', () => {
+    const resolver = createResolver();
+    const result = resolver.resolveDay({
+      employee: createEmployee(),
+      date: '2026-08-25',
+      assignments: [
+        {
+          id: 2,
+          employee: createEmployee(),
+          shift: createRotationShift(),
+          validFrom: '2026-08-24',
+          validTo: null,
+          active: true
+        } as unknown as never
+      ],
+      overrides: [],
+      calendarDay: null,
+      vacations: [],
+      permissions: [],
+      incidents: [],
+      timeEntries: [
+        createEntry(1, '2026-08-25', '14:00:00', 'ENTRADA'),
+        createEntry(2, '2026-08-25', '22:00:00', 'SALIDA')
+      ]
+    });
+
+    expect(result.status).toBe('WORKING');
+    expect(result.expectedStart).toBe('14:00:00');
+    expect(result.expectedEnd).toBe('22:00:00');
+    expect(result.expectedMinutes).toBe(450);
   });
 });

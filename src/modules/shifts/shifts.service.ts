@@ -13,7 +13,7 @@ import { PermissionEntity } from '../../database/entities/permission.entity';
 import { ShiftAssignmentEntity } from '../../database/entities/shift-assignment.entity';
 import { ShiftDayEntity } from '../../database/entities/shift-day.entity';
 import { ShiftSegmentValue } from '../../database/entities/shift-day.entity';
-import { ShiftEntity } from '../../database/entities/shift.entity';
+import { ShiftRotationStepValue, ShiftEntity } from '../../database/entities/shift.entity';
 import { ShiftOverrideEntity } from '../../database/entities/shift-override.entity';
 import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
 import { VacationEntity } from '../../database/entities/vacation.entity';
@@ -59,6 +59,17 @@ function normalizeSegment(segment: { startTime: string | null; endTime: string |
     breakMinutes: segment.breakMinutes,
     workingMinutes: segment.workingMinutes,
     crossesMidnight: segment.crossesMidnight
+  };
+}
+
+function normalizeRotationStep(step: { working: boolean; startTime: string | null; endTime: string | null; breakMinutes: number; workingMinutes: number | null; crossesMidnight: boolean }): ShiftRotationStepValue {
+  return {
+    working: step.working,
+    startTime: step.startTime,
+    endTime: step.endTime,
+    breakMinutes: step.breakMinutes,
+    workingMinutes: step.workingMinutes,
+    crossesMidnight: step.crossesMidnight
   };
 }
 
@@ -150,7 +161,9 @@ export class ShiftsService {
         code: dto.code,
         description: dto.description ?? null,
         color: dto.color ?? null,
-        active: dto.active ?? true
+        active: dto.active ?? true,
+        rotationStartDate: dto.rotationStartDate ?? null,
+        rotationPattern: dto.rotationPattern?.map((step) => normalizeRotationStep(step)) ?? null
       });
       const saved = await manager.getRepository(ShiftEntity).save(shift);
       const dayRepository = manager.getRepository(ShiftDayEntity);
@@ -199,6 +212,10 @@ export class ShiftsService {
       if (dto.description !== undefined) shift.description = dto.description;
       if (dto.color !== undefined) shift.color = dto.color;
       if (dto.active !== undefined) shift.active = dto.active;
+      if (dto.rotationStartDate !== undefined) shift.rotationStartDate = dto.rotationStartDate;
+      if (dto.rotationPattern !== undefined) {
+        shift.rotationPattern = dto.rotationPattern?.map((step) => normalizeRotationStep(step)) ?? null;
+      }
       if (dto.days) {
         const dayRepository = manager.getRepository(ShiftDayEntity);
         if (shift.days?.length) {
@@ -763,6 +780,16 @@ export class ShiftsService {
       description: shift.description ?? null,
       color: shift.color ?? null,
       active: shift.active,
+      rotationStartDate: shift.rotationStartDate ?? null,
+      rotationPattern: (shift.rotationPattern ?? []).map((step, index) => ({
+        id: index + 1,
+        working: step.working,
+        startTime: step.startTime ?? null,
+        endTime: step.endTime ?? null,
+        breakMinutes: step.breakMinutes,
+        workingMinutes: step.workingMinutes ?? null,
+        crossesMidnight: step.crossesMidnight
+      })),
       companyId: shift.company?.id ?? null,
       companyName: shift.company?.name ?? null,
       days: (shift.days ?? []).map((day) => ({
