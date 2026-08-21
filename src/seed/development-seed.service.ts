@@ -217,7 +217,7 @@ const SEED_USERS: SeededUser[] = [
     companyCode: 'VICTRIUM',
     diasVacaciones: 28,
     horasGeneradas: 0,
-    working: true,
+    working: false,
     enVacaciones: false,
     deBaja: false
   },
@@ -286,7 +286,7 @@ const SEED_EMPLOYEES: SeededEmployee[] = [
     calendarYear: 2026,
     diasVacaciones: 28,
     horasGeneradas: 0,
-    working: true,
+    working: false,
     enVacaciones: false,
     deBaja: false
   },
@@ -330,6 +330,17 @@ function formatMadridDate(date: Date) {
     month: '2-digit',
     day: '2-digit'
   }).format(date);
+}
+
+function startOfMadridWeek(date: Date) {
+  const copy = new Date(date);
+  const day = copy.getUTCDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  return addDays(copy, offset);
+}
+
+function endOfYearDate(year: number) {
+  return formatMadridDate(new Date(Date.UTC(year, 11, 31, 12, 0, 0)));
 }
 
 function isMadridWeekend(date: Date) {
@@ -744,7 +755,7 @@ export class DevelopmentSeedService {
     const locationMap = new Map(locations.map((location) => [`${location.company.code}:${location.code}`, location]));
     const employeeMap = new Map(users.map((bundle) => [bundle.user.email, bundle]));
     const validFrom = formatMadridDate(addDays(context.referenceDate, -30));
-    const validTo = null;
+    const validTo = formatMadridDate(addDays(context.referenceDate, 120));
 
     const assignments = [
       { employee: employeeMap.get('platform@victrium.local'), location: locationMap.get('VICTRIUM:MAD-CENTRO'), primary: true },
@@ -845,14 +856,27 @@ export class DevelopmentSeedService {
     }
 
     const company = victrium.user.company!;
+    const rotationStartDate = formatMadridDate(startOfMadridWeek(context.referenceDate));
+    const morningSegments = [
+      { startTime: timeString(8, 0, 0), endTime: timeString(12, 0, 0), breakMinutes: 0, workingMinutes: 240, crossesMidnight: false },
+      { startTime: timeString(13, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 0, workingMinutes: 240, crossesMidnight: false }
+    ];
+    const afternoonSegments = [
+      { startTime: timeString(14, 0, 0), endTime: timeString(18, 0, 0), breakMinutes: 0, workingMinutes: 240, crossesMidnight: false },
+      { startTime: timeString(18, 30, 0), endTime: timeString(22, 0, 0), breakMinutes: 0, workingMinutes: 210, crossesMidnight: false }
+    ];
+    const nightSegments = [
+      { startTime: timeString(22, 0, 0), endTime: timeString(2, 0, 0), breakMinutes: 0, workingMinutes: 240, crossesMidnight: true },
+      { startTime: timeString(3, 0, 0), endTime: timeString(6, 0, 0), breakMinutes: 0, workingMinutes: 180, crossesMidnight: false }
+    ];
     const templateDays = [
-      { dayOfWeek: 1, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
-      { dayOfWeek: 2, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
-      { dayOfWeek: 3, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
-      { dayOfWeek: 4, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false },
-      { dayOfWeek: 5, working: true, startTime: timeString(8, 0, 0), endTime: timeString(14, 0, 0), breakMinutes: 0, workingMinutes: 360, crossesMidnight: false },
-      { dayOfWeek: 6, working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false },
-      { dayOfWeek: 0, working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false }
+      { dayOfWeek: 1, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false, segments: morningSegments },
+      { dayOfWeek: 2, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false, segments: morningSegments },
+      { dayOfWeek: 3, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false, segments: morningSegments },
+      { dayOfWeek: 4, working: true, startTime: timeString(8, 0, 0), endTime: timeString(17, 0, 0), breakMinutes: 60, workingMinutes: 480, crossesMidnight: false, segments: morningSegments },
+      { dayOfWeek: 5, working: true, startTime: timeString(8, 0, 0), endTime: timeString(14, 0, 0), breakMinutes: 0, workingMinutes: 360, crossesMidnight: false, segments: [{ startTime: timeString(8, 0, 0), endTime: timeString(14, 0, 0), breakMinutes: 0, workingMinutes: 360, crossesMidnight: false }] },
+      { dayOfWeek: 6, working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false, segments: [] },
+      { dayOfWeek: 0, working: false, startTime: null, endTime: null, breakMinutes: 0, workingMinutes: 0, crossesMidnight: false, segments: [] }
     ];
 
     const shiftFixtures = [
@@ -861,6 +885,15 @@ export class DevelopmentSeedService {
         code: 'M',
         color: '#0f766e',
         description: 'Turno de mañana con jornada intensiva el viernes',
+        rotationStartDate,
+        rotationPattern: templateDays.map((day) => ({
+          working: day.working,
+          startTime: day.startTime,
+          endTime: day.endTime,
+          breakMinutes: day.breakMinutes,
+          workingMinutes: day.workingMinutes,
+          crossesMidnight: day.crossesMidnight
+        })),
         days: templateDays
       },
       {
@@ -868,6 +901,25 @@ export class DevelopmentSeedService {
         code: 'T',
         color: '#2f6fed',
         description: 'Turno de tarde para cobertura extendida',
+        rotationStartDate,
+        rotationPattern: templateDays.map((day) => ({
+          working: day.working,
+          startTime:
+            day.dayOfWeek === 6 || day.dayOfWeek === 0
+              ? null
+              : day.dayOfWeek === 5
+                ? timeString(14, 0, 0)
+                : timeString(14, 0, 0),
+          endTime:
+            day.dayOfWeek === 6 || day.dayOfWeek === 0
+              ? null
+              : day.dayOfWeek === 5
+                ? timeString(20, 0, 0)
+                : timeString(22, 0, 0),
+          breakMinutes: day.dayOfWeek === 5 ? 0 : 30,
+          workingMinutes: day.dayOfWeek === 5 ? 360 : 450,
+          crossesMidnight: false
+        })),
         days: templateDays.map((day) =>
           day.dayOfWeek === 6 || day.dayOfWeek === 0
             ? day
@@ -876,7 +928,8 @@ export class DevelopmentSeedService {
                 startTime: timeString(14, 0, 0),
                 endTime: timeString(22, 0, 0),
                 breakMinutes: 30,
-                workingMinutes: 450
+                workingMinutes: 450,
+                segments: day.dayOfWeek === 5 ? [{ startTime: timeString(14, 0, 0), endTime: timeString(20, 0, 0), breakMinutes: 0, workingMinutes: 360, crossesMidnight: false }] : afternoonSegments
               }
         )
       },
@@ -885,6 +938,15 @@ export class DevelopmentSeedService {
         code: 'N',
         color: '#7c3aed',
         description: 'Turno nocturno que cruza medianoche',
+        rotationStartDate,
+        rotationPattern: templateDays.map((day) => ({
+          working: day.working,
+          startTime: day.dayOfWeek === 6 || day.dayOfWeek === 0 ? null : timeString(22, 0, 0),
+          endTime: day.dayOfWeek === 6 || day.dayOfWeek === 0 ? null : timeString(6, 0, 0),
+          breakMinutes: 30,
+          workingMinutes: day.dayOfWeek === 6 || day.dayOfWeek === 0 ? 0 : 450,
+          crossesMidnight: day.dayOfWeek === 6 || day.dayOfWeek === 0 ? false : true
+        })),
         days: templateDays.map((day) =>
           day.dayOfWeek === 6 || day.dayOfWeek === 0
             ? day
@@ -894,7 +956,8 @@ export class DevelopmentSeedService {
                 endTime: timeString(6, 0, 0),
                 breakMinutes: 30,
                 workingMinutes: 450,
-                crossesMidnight: true
+                crossesMidnight: true,
+                segments: nightSegments
               }
         )
       }
@@ -909,7 +972,9 @@ export class DevelopmentSeedService {
           code: fixture.code,
           description: fixture.description,
           color: fixture.color,
-          active: true
+          active: true,
+          rotationStartDate: fixture.rotationStartDate ?? null,
+          rotationPattern: fixture.rotationPattern ?? null
         })
       );
       shifts.push(savedShift);
@@ -936,6 +1001,8 @@ export class DevelopmentSeedService {
     const today = context.referenceDate;
     const pastFrom = formatMadridDate(addDays(today, -14));
     const futureFrom = formatMadridDate(addDays(today, 7));
+    const currentYearEnd = endOfYearDate(today.getUTCFullYear());
+    const nextYearEnd = endOfYearDate(today.getUTCFullYear() + 1);
 
     await assignmentRepository.save([
       assignmentRepository.create({
@@ -951,15 +1018,15 @@ export class DevelopmentSeedService {
         employee: laura.employee,
         shift: afternoon,
         validFrom: futureFrom,
-        validTo: null,
+        validTo: currentYearEnd,
         notes: 'Cambio futuro planificado de Laura'
       }),
       assignmentRepository.create({
         company,
         employee: carlos.employee,
-        shift: afternoon,
+        shift: morning,
         validFrom: pastFrom,
-        validTo: null,
+        validTo: currentYearEnd,
         notes: 'Turno estable de Carlos'
       }),
       assignmentRepository.create({
@@ -967,7 +1034,7 @@ export class DevelopmentSeedService {
         employee: rrhh.employee,
         shift: morning,
         validFrom: pastFrom,
-        validTo: null,
+        validTo: nextYearEnd,
         notes: 'Turno RRHH'
       })
     ]);
@@ -1040,26 +1107,6 @@ export class DevelopmentSeedService {
       recordsByEmail.set(bundle.user.email, records);
     };
 
-    const createOpenEntry = async (bundle: SeedUserBundle, dia: string, hora: string, recordDayIndex: number) => {
-      const entrada = await repository.save(
-        repository.create({
-          dia,
-          hora,
-          tipo: 'ENTRADA',
-          origen: SEED_ORIGIN,
-          usuario: bundle.user
-        })
-      );
-
-      total += 1;
-      const records = recordsByEmail.get(bundle.user.email) ?? [];
-      records[recordDayIndex] = {
-        dia,
-        entrada
-      };
-      recordsByEmail.set(bundle.user.email, records);
-    };
-
     const laura = bundles.get('laura@victrium.local');
     const carlos = bundles.get('carlos@victrium.local');
     const acmeAdmin = bundles.get('admin@acme.local');
@@ -1077,7 +1124,7 @@ export class DevelopmentSeedService {
 
     for (let index = 20; index < context.carlosDays.length; index += 1) {
       const offset = index - 20;
-      await createOpenEntry(carlos, context.carlosDays[index], addMinutes('12:15:00', offset), index);
+      await createPair(carlos, context.carlosDays[index], addMinutes('08:15:00', offset), addMinutes('17:15:00', offset), index);
     }
 
     for (let index = 0; index < context.acmeDays.length; index += 1) {
@@ -1086,8 +1133,8 @@ export class DevelopmentSeedService {
 
     laura.user.working = false;
     laura.user.ultimoFichaje = `${context.lauraDays[context.lauraDays.length - 1]} ${addMinutes('17:10:00', (context.lauraDays.length - 1) % 12)} - SALIDA`;
-    carlos.user.working = true;
-    carlos.user.ultimoFichaje = `${context.carlosDays[context.carlosDays.length - 1]} ${addMinutes('12:15:00', context.carlosDays.length - 21)} - ENTRADA`;
+    carlos.user.working = false;
+    carlos.user.ultimoFichaje = `${context.carlosDays[context.carlosDays.length - 1]} ${addMinutes('17:15:00', context.carlosDays.length - 21)} - SALIDA`;
     acmeAdmin.user.working = false;
     acmeAdmin.user.ultimoFichaje = `${context.acmeDays[context.acmeDays.length - 1]} ${addMinutes('18:00:00', (context.acmeDays.length - 1) % 9)} - SALIDA`;
 
