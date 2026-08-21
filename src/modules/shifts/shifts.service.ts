@@ -12,6 +12,7 @@ import { IncidentEntity } from '../../database/entities/incident.entity';
 import { PermissionEntity } from '../../database/entities/permission.entity';
 import { ShiftAssignmentEntity } from '../../database/entities/shift-assignment.entity';
 import { ShiftDayEntity } from '../../database/entities/shift-day.entity';
+import { ShiftSegmentValue } from '../../database/entities/shift-day.entity';
 import { ShiftEntity } from '../../database/entities/shift.entity';
 import { ShiftOverrideEntity } from '../../database/entities/shift-override.entity';
 import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
@@ -49,6 +50,16 @@ function assignmentOverlaps(leftFrom: string, leftTo: string | null | undefined,
   const leftEnd = leftTo ?? '9999-12-31';
   const rightEnd = rightTo ?? '9999-12-31';
   return leftFrom <= rightEnd && rightFrom <= leftEnd;
+}
+
+function normalizeSegment(segment: { startTime: string | null; endTime: string | null; breakMinutes: number; workingMinutes: number | null; crossesMidnight: boolean }): ShiftSegmentValue {
+  return {
+    startTime: segment.startTime,
+    endTime: segment.endTime,
+    breakMinutes: segment.breakMinutes,
+    workingMinutes: segment.workingMinutes,
+    crossesMidnight: segment.crossesMidnight
+  };
 }
 
 @Injectable()
@@ -659,7 +670,16 @@ export class ShiftsService {
   }
 
   private buildShiftDays(
-    days: Array<{ dayOfWeek: number; working: boolean; startTime: string | null; endTime: string | null; breakMinutes: number; workingMinutes: number | null; crossesMidnight: boolean }>,
+    days: Array<{
+      dayOfWeek: number;
+      working: boolean;
+      startTime: string | null;
+      endTime: string | null;
+      breakMinutes: number;
+      workingMinutes: number | null;
+      crossesMidnight: boolean;
+      segments?: ShiftSegmentValue[] | Array<{ startTime: string | null; endTime: string | null; breakMinutes: number; workingMinutes: number | null; crossesMidnight: boolean }>;
+    }>,
     existing: ShiftEntity
   ) {
     return days.map((day) => {
@@ -671,6 +691,7 @@ export class ShiftsService {
       entity.breakMinutes = day.breakMinutes;
       entity.workingMinutes = day.workingMinutes;
       entity.crossesMidnight = day.crossesMidnight;
+      entity.segments = day.segments?.map((segment) => normalizeSegment(segment)) ?? null;
       entity.shift = existing;
       return entity;
     });
@@ -752,7 +773,15 @@ export class ShiftsService {
         endTime: day.endTime ?? null,
         breakMinutes: day.breakMinutes,
         workingMinutes: day.workingMinutes ?? null,
-        crossesMidnight: day.crossesMidnight
+        crossesMidnight: day.crossesMidnight,
+        segments: (day.segments ?? []).map((segment, index) => ({
+          id: index + 1,
+          startTime: segment.startTime ?? null,
+          endTime: segment.endTime ?? null,
+          breakMinutes: segment.breakMinutes,
+          workingMinutes: segment.workingMinutes ?? null,
+          crossesMidnight: segment.crossesMidnight
+        }))
       })),
       assignmentsCount: shift.assignments?.length ?? 0,
       createdAt: shift.createdAt?.toISOString?.() ?? new Date().toISOString(),

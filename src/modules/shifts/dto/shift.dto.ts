@@ -1,3 +1,12 @@
+export type ShiftSegmentDto = {
+  id: number;
+  startTime: string | null;
+  endTime: string | null;
+  breakMinutes: number;
+  workingMinutes: number | null;
+  crossesMidnight: boolean;
+};
+
 export type ShiftDayDto = {
   id: number;
   dayOfWeek: number;
@@ -7,6 +16,7 @@ export type ShiftDayDto = {
   breakMinutes: number;
   workingMinutes: number | null;
   crossesMidnight: boolean;
+  segments: ShiftSegmentDto[];
 };
 
 export type ShiftSummaryDto = {
@@ -27,7 +37,9 @@ export type ShiftDto = ShiftSummaryDto & {
   updatedAt: string;
 };
 
-export type CreateShiftDayDto = Omit<ShiftDayDto, 'id'>;
+export type CreateShiftDayDto = Omit<ShiftDayDto, 'id' | 'segments'> & {
+  segments?: Array<Omit<ShiftSegmentDto, 'id'>>;
+};
 
 export type CreateShiftDto = {
   companyId?: number;

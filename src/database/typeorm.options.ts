@@ -31,6 +31,7 @@ import { CreateWorkLocationsTables1724172300000 } from './migrations/17241723000
 import { AddWorkLocationToShiftAssignments1724172400000 } from './migrations/1724172400000-AddWorkLocationToShiftAssignments';
 import { CreatePlanningPeriodsTable1724172500000 } from './migrations/1724172500000-CreatePlanningPeriodsTable';
 import { CreatePlanningPeriodAuditsTable1724172600000 } from './migrations/1724172600000-CreatePlanningPeriodAuditsTable';
+import { AddShiftDaySegments1724172700000 } from './migrations/1724172700000-AddShiftDaySegments';
 
 export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
   return {
@@ -72,7 +73,8 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
       CreateWorkLocationsTables1724172300000,
       AddWorkLocationToShiftAssignments1724172400000,
       CreatePlanningPeriodsTable1724172500000,
-      CreatePlanningPeriodAuditsTable1724172600000
+      CreatePlanningPeriodAuditsTable1724172600000,
+      AddShiftDaySegments1724172700000
     ],
     migrationsRun: true,
     synchronize: false,

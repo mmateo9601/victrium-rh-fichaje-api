@@ -28,6 +28,16 @@ type ResolverInput = {
   timeEntries: TimeEntryEntity[];
 };
 
+type ResolvedShiftDay = {
+  working: boolean;
+  startTime: string | null;
+  endTime: string | null;
+  breakMinutes: number;
+  workingMinutes: number | null;
+  crossesMidnight: boolean;
+  segments: Array<{ startTime: string | null; endTime: string | null; breakMinutes: number; workingMinutes: number | null; crossesMidnight: boolean }>;
+};
+
 function dayLabel(date: string) {
   return new Intl.DateTimeFormat('es-ES', {
     timeZone: 'Europe/Madrid',
@@ -54,6 +64,45 @@ function diffMinutes(start: string | null | undefined, end: string | null | unde
   const endMinutes = timeToMinutes(end);
   if (startMinutes === null || endMinutes === null) return 0;
   return Math.max(0, crossesMidnight || endMinutes <= startMinutes ? endMinutes + 24 * 60 - startMinutes : endMinutes - startMinutes);
+}
+
+function resolveShiftDay(shiftDay: ShiftEntity['days'][number] | null): ResolvedShiftDay | null {
+  if (!shiftDay) {
+    return null;
+  }
+
+  if (shiftDay.segments?.length) {
+    const segments = shiftDay.segments.map((segment) => ({
+      startTime: segment.startTime ?? null,
+      endTime: segment.endTime ?? null,
+      breakMinutes: segment.breakMinutes,
+      workingMinutes: segment.workingMinutes ?? null,
+      crossesMidnight: segment.crossesMidnight
+    }));
+    const firstSegment = segments[0] ?? null;
+    const lastSegment = segments[segments.length - 1] ?? null;
+    return {
+      working: shiftDay.working,
+      startTime: firstSegment?.startTime ?? shiftDay.startTime ?? null,
+      endTime: lastSegment?.endTime ?? shiftDay.endTime ?? null,
+      breakMinutes: segments.reduce((total, segment) => total + segment.breakMinutes, shiftDay.breakMinutes),
+      workingMinutes:
+        shiftDay.workingMinutes ??
+        segments.reduce((total, segment) => total + (segment.workingMinutes ?? diffMinutes(segment.startTime, segment.endTime, segment.crossesMidnight)), 0),
+      crossesMidnight: Boolean(segments.some((segment) => segment.crossesMidnight)),
+      segments
+    };
+  }
+
+  return {
+    working: shiftDay.working,
+    startTime: shiftDay.startTime ?? null,
+    endTime: shiftDay.endTime ?? null,
+    breakMinutes: shiftDay.breakMinutes,
+    workingMinutes: shiftDay.workingMinutes ?? null,
+    crossesMidnight: shiftDay.crossesMidnight,
+    segments: []
+  };
 }
 
 function buildShiftSummary(shift: ShiftEntity | null | undefined): ShiftSummaryDto | null {
@@ -189,7 +238,7 @@ export class WorkScheduleResolverService {
     const { employee, date, assignments, overrides, calendarDay, vacations, permissions, incidents, timeEntries } = input;
     const resolved = this.resolveShiftForDate(date, assignments, overrides);
     const shift = resolved.shift;
-    const shiftDay = shift?.days?.find((day) => day.dayOfWeek === dayOfWeek(date)) ?? null;
+    const shiftDay = resolveShiftDay(shift?.days?.find((day) => day.dayOfWeek === dayOfWeek(date)) ?? null);
     const vacation = vacations.find((item) => item.inicio <= date && item.fin >= date) ?? null;
     const permission = permissions.find((item) => item.dia === date) ?? null;
     const incident = incidents.find((item) => item.dia === date) ?? null;
@@ -198,7 +247,7 @@ export class WorkScheduleResolverService {
     const lastExit = [...dayEntries].reverse().find((entry) => entry.tipo === 'SALIDA') ?? null;
     const workedMinutes = this.calculateWorkedMinutes(dayEntries);
     const isHoliday = Boolean(calendarDay && calendarDay.horaInicio === '00:00:00' && calendarDay.horaFin === '00:00:00');
-    const workingDay = vacation ? false : permission ? false : isHoliday ? false : Boolean(shiftDay?.working ?? false);
+    const workingDay = vacation ? false : permission ? false : isHoliday ? false : Boolean(shiftDay?.working);
     const expectedMinutes = workingDay && shiftDay ? shiftDay.workingMinutes ?? diffMinutes(shiftDay.startTime, shiftDay.endTime, shiftDay.crossesMidnight) : 0;
     const lateMinutes =
       workingDay && shiftDay && firstEntry

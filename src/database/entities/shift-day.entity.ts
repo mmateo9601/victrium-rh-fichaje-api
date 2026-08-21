@@ -2,6 +2,14 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 
 import { ShiftEntity } from './shift.entity';
 
+export type ShiftSegmentValue = {
+  startTime: string | null;
+  endTime: string | null;
+  breakMinutes: number;
+  workingMinutes: number | null;
+  crossesMidnight: boolean;
+};
+
 @Entity({ name: 'turno_dias' })
 @Index(['shift', 'dayOfWeek'])
 export class ShiftDayEntity {
@@ -28,6 +36,9 @@ export class ShiftDayEntity {
 
   @Column({ name: 'crosses_midnight', type: 'boolean', default: false })
   crossesMidnight!: boolean;
+
+  @Column({ name: 'segments', type: 'json', nullable: true })
+  segments?: ShiftSegmentValue[] | null;
 
   @ManyToOne(() => ShiftEntity, (shift) => shift.days, {
     eager: false,
