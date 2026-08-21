@@ -16,6 +16,7 @@ import { RoleEntity } from './role.entity';
 import { TimeEntryAuditEntity } from './time-entry-audit.entity';
 import { TimeEntryEntity } from './time-entry.entity';
 import { AuthSessionEntity } from './auth-session.entity';
+import { ApiKeyEntity } from './api-key.entity';
 
 @Entity({ name: 'usuarios' })
 export class UserEntity {
@@ -86,4 +87,7 @@ export class UserEntity {
 
   @OneToMany(() => AuthSessionEntity, (session) => session.user)
   sessions!: AuthSessionEntity[];
+
+  @OneToMany(() => ApiKeyEntity, (apiKey) => apiKey.user)
+  apiKeys!: ApiKeyEntity[];
 }

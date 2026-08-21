@@ -13,6 +13,8 @@ export type PrincipalTenantContext = {
 
 export type PrincipalLike = {
   sub?: number;
+  numero?: string;
+  nombreEmpleado?: string;
   companyId?: number | null;
   employeeId?: number | null;
   roles?: string[];

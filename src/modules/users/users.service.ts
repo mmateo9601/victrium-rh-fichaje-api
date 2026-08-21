@@ -156,4 +156,8 @@ export class UsersService {
     user.roles = roles;
     return this.usersRepository.save(user);
   }
+
+  async save(user: UserEntity) {
+    return this.usersRepository.save(user);
+  }
 }

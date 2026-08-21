@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/jwt.guard';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { RefreshRequestDto } from './dto/refresh-request.dto';
 import { AuthService } from './auth.service';
@@ -32,5 +33,12 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: { sub: number }) {
     return this.authService.me(user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Patch('password')
+  changePassword(@CurrentUser() user: { sub: number }, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(user.sub, dto);
   }
 }

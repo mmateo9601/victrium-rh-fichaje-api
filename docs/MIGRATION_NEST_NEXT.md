@@ -24,6 +24,6 @@
 
 ## Estado
 
-La base de auth, fichajes, `companies/users/employees`, `vacations`, `incidents` y `calendars` ya están conectadas.
+La base de auth, fichajes, `companies/users/employees`, `vacations`, `incidents`, `calendars` y `api keys` ya están conectadas.
 El ciclo de fichajes ha avanzado hasta `clock -> listado -> detalle -> corrección -> auditoría` con control de versión y tenant.
 Quedan por continuar los dominios funcionales de negocio que dependen de esa base.

@@ -9,6 +9,7 @@ import { AuthSessionEntity } from '../../database/entities/auth-session.entity';
 import { PublicUserDto } from '../users/dto/public-user.dto';
 import { UsersService } from '../users/users.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { RefreshRequestDto } from './dto/refresh-request.dto';
 import { TokenService } from '../../common/auth/token.service';
@@ -135,5 +136,30 @@ export class AuthService {
     }
 
     return this.usersService.toPublicUser(user);
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new AppError('PASSWORD_CONFIRMATION_MISMATCH', 'La confirmacion no coincide', 400);
+    }
+
+    const user = await this.usersService.findByIdOrFail(userId);
+    const passwordMatches = await bcrypt.compare(dto.currentPassword, user.password);
+    if (!passwordMatches) {
+      throw new AppError('INVALID_CREDENTIALS', 'Credenciales invalidas', 401);
+    }
+
+    user.password = await bcrypt.hash(dto.newPassword, 10);
+    await this.sessionsRepository
+      .createQueryBuilder()
+      .update()
+      .set({ revokedAt: new Date() })
+      .where('user_id = :userId', { userId: user.id })
+      .execute();
+    await this.usersService.save(user);
+
+    return {
+      message: 'Password actualizado correctamente'
+    };
   }
 }

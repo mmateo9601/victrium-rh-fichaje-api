@@ -1,6 +1,7 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 import { AppConfig } from '../config/env.validation';
+import { ApiKeyEntity } from './entities/api-key.entity';
 import { CompanyEntity } from './entities/company.entity';
 import { CalendarDayEntity } from './entities/calendar-day.entity';
 import { CalendarEntity } from './entities/calendar.entity';
@@ -13,6 +14,7 @@ import { TimeEntryAuditEntity } from './entities/time-entry-audit.entity';
 import { TimeEntryEntity } from './entities/time-entry.entity';
 import { UserEntity } from './entities/user.entity';
 import { VacationEntity } from './entities/vacation.entity';
+import { CreateApiKeysTable1724172000000 } from './migrations/1724172000000-CreateApiKeysTable';
 
 export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
   return {
@@ -22,7 +24,9 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
     username: config.database.user,
     password: config.database.password,
     database: config.database.name,
-    entities: [UserEntity, EmployeeEntity, CompanyEntity, CalendarEntity, CalendarDayEntity, TimeEntryEntity, TimeEntryAuditEntity, VacationEntity, IncidentEntity, PermissionEntity, RoleEntity, AuthSessionEntity],
+    entities: [UserEntity, EmployeeEntity, CompanyEntity, CalendarEntity, CalendarDayEntity, TimeEntryEntity, TimeEntryAuditEntity, VacationEntity, IncidentEntity, PermissionEntity, RoleEntity, AuthSessionEntity, ApiKeyEntity],
+    migrations: [CreateApiKeysTable1724172000000],
+    migrationsRun: true,
     synchronize: false,
     logging: config.nodeEnv === 'development',
     autoLoadEntities: false,
