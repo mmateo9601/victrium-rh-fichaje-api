@@ -37,6 +37,7 @@ import { WorkScheduleResolverService } from './work-schedule-resolver.service';
     ])
   ],
   controllers: [ShiftsController, ShiftAssignmentsController, ScheduleController, EmployeeScheduleController],
-  providers: [ShiftsService, WorkScheduleResolverService, TenantScopeService]
+  providers: [ShiftsService, WorkScheduleResolverService, TenantScopeService],
+  exports: [ShiftsService]
 })
 export class ShiftsModule {}

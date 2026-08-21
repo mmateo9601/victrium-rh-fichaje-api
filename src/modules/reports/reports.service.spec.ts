@@ -11,6 +11,7 @@ import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
 import { UserEntity } from '../../database/entities/user.entity';
 import { VacationEntity } from '../../database/entities/vacation.entity';
 import { WorkLocationEntity } from '../../database/entities/work-location.entity';
+import { ShiftsService } from '../shifts/shifts.service';
 
 describe('ReportsService', () => {
   function createQueryBuilder(count: number) {
@@ -35,7 +36,13 @@ describe('ReportsService', () => {
       vacationsPending: 1,
       permissionsPending: 2,
       incidentsOpen: 1,
-      activeSessions: 3
+      activeSessions: 3,
+      currentMonthPlannedMinutes: 1440,
+      currentMonthWorkedMinutes: 1390,
+      currentMonthCoverageRate: 96.5,
+      currentMonthAbsenceDays: 2,
+      currentMonthIncidentDays: 1,
+      currentMonthUnplannedDays: 1
     };
 
     const companyRepo = {
@@ -76,6 +83,20 @@ describe('ReportsService', () => {
     const incidentsRepo = {
       createQueryBuilder: jest.fn().mockReturnValue(createQueryBuilder(counts.incidentsOpen))
     };
+    const shiftsService = {
+      getSchedule: jest.fn().mockResolvedValue({
+        rows: [
+          {
+            days: [
+              { workingDay: true, expectedMinutes: 480, workedMinutes: 450, status: 'WORKING', incidentId: null, assignmentId: 1 },
+              { workingDay: true, expectedMinutes: 480, workedMinutes: 480, status: 'VACATION', incidentId: null, assignmentId: 1 },
+              { workingDay: false, expectedMinutes: 0, workedMinutes: 0, status: 'HOLIDAY', incidentId: 10, assignmentId: null },
+              { workingDay: true, expectedMinutes: 480, workedMinutes: 460, status: 'PERMISSION', incidentId: null, assignmentId: null }
+            ]
+          }
+        ]
+      })
+    } as unknown as ShiftsService;
 
     const tenantScope = {
       applyCompanyScope: jest.fn((qb) => qb)
@@ -93,6 +114,7 @@ describe('ReportsService', () => {
       vacationsRepo as never,
       permissionsRepo as never,
       incidentsRepo as never,
+      shiftsService,
       tenantScope
     );
 
@@ -115,5 +137,8 @@ describe('ReportsService', () => {
     expect(result.publishedPlanningPeriods).toBe(counts.publishedPlanningPeriods);
     expect(result.timeEntries).toBe(counts.timeEntries);
     expect(result.activeSessions).toBe(counts.activeSessions);
+    expect(result.currentMonthPlannedMinutes).toBe(counts.currentMonthPlannedMinutes);
+    expect(result.currentMonthWorkedMinutes).toBe(counts.currentMonthWorkedMinutes);
+    expect(result.currentMonthCoverageRate).toBe(counts.currentMonthCoverageRate);
   });
 });

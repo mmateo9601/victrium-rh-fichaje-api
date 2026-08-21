@@ -14,6 +14,7 @@ import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
 import { VacationEntity } from '../../database/entities/vacation.entity';
 import { WorkLocationEntity } from '../../database/entities/work-location.entity';
 import { UserEntity } from '../../database/entities/user.entity';
+import { ShiftsService } from '../shifts/shifts.service';
 import { ReportsSummaryDto } from './dto/reports.dto';
 
 @Injectable()
@@ -41,6 +42,7 @@ export class ReportsService {
     private readonly permissionsRepository: Repository<PermissionEntity>,
     @InjectRepository(IncidentEntity)
     private readonly incidentsRepository: Repository<IncidentEntity>,
+    private readonly shiftsService: ShiftsService,
     private readonly tenantScope: TenantScopeService
   ) {}
 
@@ -62,6 +64,7 @@ export class ReportsService {
     );
     const incidentsOpen = await this.count(this.incidentsRepository, 'incident', context, (qb) => qb.andWhere('incident.resuelta = :resolved', { resolved: false }));
     const activeSessions = await this.countActiveSessions(context);
+    const operational = await this.buildOperationalMetrics(context);
 
     return {
       companies,
@@ -75,8 +78,43 @@ export class ReportsService {
       vacationsPending,
       permissionsPending,
       incidentsOpen,
-      activeSessions
+      activeSessions,
+      ...operational
     };
+  }
+
+  private async buildOperationalMetrics(context: PrincipalTenantContext) {
+    const { from, to } = this.currentMonthRange();
+    const schedule = await this.shiftsService.getSchedule({ from, to }, context);
+    const cells = schedule.rows.flatMap((row) => row.days);
+    const workingCells = cells.filter((cell) => cell.workingDay);
+
+    const currentMonthPlannedMinutes = workingCells.reduce((total, cell) => total + cell.expectedMinutes, 0);
+    const currentMonthWorkedMinutes = workingCells.reduce((total, cell) => total + cell.workedMinutes, 0);
+    const currentMonthCoverageRate = currentMonthPlannedMinutes > 0 ? Number(((currentMonthWorkedMinutes / currentMonthPlannedMinutes) * 100).toFixed(1)) : 0;
+    const currentMonthAbsenceDays = cells.filter((cell) => cell.status === 'VACATION' || cell.status === 'PERMISSION').length;
+    const currentMonthIncidentDays = cells.filter((cell) => cell.incidentId !== null).length;
+    const currentMonthUnplannedDays = workingCells.filter((cell) => cell.status === 'NO_SHIFT' || cell.assignmentId === null).length;
+
+    return {
+      currentMonthFrom: from,
+      currentMonthTo: to,
+      currentMonthPlannedMinutes,
+      currentMonthWorkedMinutes,
+      currentMonthCoverageRate,
+      currentMonthAbsenceDays,
+      currentMonthIncidentDays,
+      currentMonthUnplannedDays
+    };
+  }
+
+  private currentMonthRange() {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth();
+    const from = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
+    const to = new Date(Date.UTC(year, month + 1, 0)).toISOString().slice(0, 10);
+    return { from, to };
   }
 
   private async count<T extends ObjectLiteral>(

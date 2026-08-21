@@ -11,4 +11,12 @@ export type ReportsSummaryDto = {
   permissionsPending: number;
   incidentsOpen: number;
   activeSessions: number;
+  currentMonthFrom: string;
+  currentMonthTo: string;
+  currentMonthPlannedMinutes: number;
+  currentMonthWorkedMinutes: number;
+  currentMonthCoverageRate: number;
+  currentMonthAbsenceDays: number;
+  currentMonthIncidentDays: number;
+  currentMonthUnplannedDays: number;
 };

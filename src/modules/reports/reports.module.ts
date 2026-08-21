@@ -15,9 +15,11 @@ import { VacationEntity } from '../../database/entities/vacation.entity';
 import { WorkLocationEntity } from '../../database/entities/work-location.entity';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
+import { ShiftsModule } from '../shifts/shifts.module';
 
 @Module({
   imports: [
+    ShiftsModule,
     TypeOrmModule.forFeature([
       CompanyEntity,
       UserEntity,
