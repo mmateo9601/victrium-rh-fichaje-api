@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
+import { AppController } from './app.controller';
 import { JwtAuthGuard } from './common/auth/jwt.guard';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -22,6 +23,7 @@ import { WorkLocationsModule } from './modules/work-locations/work-locations.mod
 import { RolesGuard } from './common/auth/roles.guard';
 
 @Module({
+  controllers: [AppController],
   imports: [
     DatabaseModule,
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),

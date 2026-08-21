@@ -384,7 +384,7 @@ function buildCalendarDays(year: number, referenceDate: Date) {
     }
   }
 
-  for (const day of buildBusinessDays(12, endOfYearDate(year))) {
+  for (const day of buildBusinessDays(12, new Date(Date.UTC(year, 11, 31, 12, 0, 0)))) {
     pushDay(day, timeString(8, 0, 0), timeString(17, 0, 0));
   }
 
