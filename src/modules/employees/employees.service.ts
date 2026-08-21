@@ -31,6 +31,19 @@ export class EmployeesService {
     private readonly tenantScope: TenantScopeService
   ) {}
 
+  private assertAssignableRoles(roles: RoleName[], context: PrincipalTenantContext) {
+    const normalizedRoles = [...new Set(roles)];
+
+    if (
+      !context.roles.includes(RoleName.ROLE_SUPER_ADMIN) &&
+      normalizedRoles.includes(RoleName.ROLE_SUPER_ADMIN)
+    ) {
+      throw new AppError('FORBIDDEN_ROLE_ASSIGNMENT', 'No puedes asignar el rol superadministrador', 403);
+    }
+
+    return normalizedRoles;
+  }
+
   async create(dto: CreateEmployeeDto, context: PrincipalTenantContext): Promise<EmployeeResponseDto> {
     return this.dataSource.transaction(async (manager) => {
       const companyId = dto.companyId ?? context.companyId;
@@ -52,10 +65,12 @@ export class EmployeesService {
         throw new AppError('EMPLOYEE_ALREADY_EXISTS', 'El empleado o su cuenta ya existen', 409);
       }
 
+      const assignableRoles = this.assertAssignableRoles(dto.roles, context);
+
       const roleEntities = await manager.getRepository(RoleEntity).find({
-        where: dto.roles.map((role) => ({ rolNombre: role as RoleName }))
+        where: assignableRoles.map((role) => ({ rolNombre: role as RoleName }))
       });
-      if (roleEntities.length !== dto.roles.length) {
+      if (roleEntities.length !== assignableRoles.length) {
         throw new AppError('ROLE_NOT_FOUND', 'Alguno de los roles no existe', 404);
       }
 
