@@ -363,33 +363,33 @@ function buildBusinessDays(count: number, endDate: Date) {
 
 function buildCalendarDays(year: number, referenceDate: Date) {
   const days: { dia: string; horaInicio: string; horaFin: string }[] = [];
+  const seen = new Set<string>();
+  const pushDay = (dia: string, horaInicio: string, horaFin: string) => {
+    if (seen.has(dia)) {
+      return;
+    }
+    seen.add(dia);
+    days.push({
+      dia,
+      horaInicio,
+      horaFin
+    });
+  };
   const start = new Date(Date.UTC(year, 0, 5, 12, 0, 0));
   const end = new Date(Date.UTC(year, 0, 16, 12, 0, 0));
 
   for (let cursor = start; cursor <= end; cursor = addDays(cursor, 1)) {
     if (!isMadridWeekend(cursor)) {
-      days.push({
-        dia: formatMadridDate(cursor),
-        horaInicio: timeString(8, 0, 0),
-        horaFin: timeString(17, 0, 0)
-      });
+      pushDay(formatMadridDate(cursor), timeString(8, 0, 0), timeString(17, 0, 0));
     }
   }
 
-  for (const day of buildBusinessDays(12, referenceDate)) {
-    days.push({
-      dia: day,
-      horaInicio: timeString(8, 0, 0),
-      horaFin: timeString(17, 0, 0)
-    });
+  for (const day of buildBusinessDays(12, endOfYearDate(year))) {
+    pushDay(day, timeString(8, 0, 0), timeString(17, 0, 0));
   }
 
   for (const dia of [`${year}-01-01`, `${year}-05-01`, `${year}-08-15`, `${year}-12-25`]) {
-    days.push({
-      dia,
-      horaInicio: timeString(0, 0, 0),
-      horaFin: timeString(0, 0, 0)
-    });
+    pushDay(dia, timeString(0, 0, 0), timeString(0, 0, 0));
   }
 
   return days;
@@ -549,7 +549,7 @@ export class DevelopmentSeedService {
         .createQueryBuilder()
         .delete()
         .from(CalendarDayEntity)
-        .where('calendar_id IN (:...calendarIds)', { calendarIds })
+        .where('calendario_id IN (:...calendarIds)', { calendarIds })
         .execute();
       await manager
         .createQueryBuilder()

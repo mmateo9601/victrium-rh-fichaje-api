@@ -12,7 +12,7 @@ const config = createAppConfig(process.env);
     ConfigModule.forRoot({ isGlobal: true, cache: true }),
     TypeOrmModule.forRoot({
       ...createTypeOrmOptions(config),
-      synchronize: true,
+      synchronize: false,
       logging: ['error', 'warn']
     })
   ],
