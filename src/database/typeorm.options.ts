@@ -11,10 +11,13 @@ import { PermissionEntity } from './entities/permission.entity';
 import { AuthSessionEntity } from './entities/auth-session.entity';
 import { RoleEntity } from './entities/role.entity';
 import { TimeEntryAuditEntity } from './entities/time-entry-audit.entity';
+import { TimeEntryBreakEntity } from './entities/time-entry-break.entity';
 import { TimeEntryEntity } from './entities/time-entry.entity';
+import { TimeEntrySessionEntity } from './entities/time-entry-session.entity';
 import { UserEntity } from './entities/user.entity';
 import { VacationEntity } from './entities/vacation.entity';
 import { CreateApiKeysTable1724172000000 } from './migrations/1724172000000-CreateApiKeysTable';
+import { CreateTimeEntrySessionsTable1724172100000 } from './migrations/1724172100000-CreateTimeEntrySessionsTable';
 
 export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
   return {
@@ -24,8 +27,8 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
     username: config.database.user,
     password: config.database.password,
     database: config.database.name,
-    entities: [UserEntity, EmployeeEntity, CompanyEntity, CalendarEntity, CalendarDayEntity, TimeEntryEntity, TimeEntryAuditEntity, VacationEntity, IncidentEntity, PermissionEntity, RoleEntity, AuthSessionEntity, ApiKeyEntity],
-    migrations: [CreateApiKeysTable1724172000000],
+    entities: [UserEntity, EmployeeEntity, CompanyEntity, CalendarEntity, CalendarDayEntity, TimeEntryEntity, TimeEntryAuditEntity, TimeEntrySessionEntity, TimeEntryBreakEntity, VacationEntity, IncidentEntity, PermissionEntity, RoleEntity, AuthSessionEntity, ApiKeyEntity],
+    migrations: [CreateApiKeysTable1724172000000, CreateTimeEntrySessionsTable1724172100000],
     migrationsRun: true,
     synchronize: false,
     logging: config.nodeEnv === 'development',

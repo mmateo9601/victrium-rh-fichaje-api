@@ -21,6 +21,23 @@ export class TimeEntriesController {
     private readonly tenantScope: TenantScopeService
   ) {}
 
+  @Get('me/current')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  current(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] }
+  ) {
+    return this.timeEntriesService.current(user.sub, this.tenantScope.toContext(user));
+  }
+
+  @Post('start')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  start(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Body() dto: ClockTimeEntryDto
+  ) {
+    return this.timeEntriesService.start(user.sub, dto, this.tenantScope.toContext(user));
+  }
+
   @Post('clock')
   @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   clock(@CurrentUser() user: { sub: number }, @Body() dto: ClockTimeEntryDto) {
@@ -52,6 +69,33 @@ export class TimeEntriesController {
     @Param('id', ParseIntPipe) id: number
   ) {
     return this.timeEntriesService.findVisibleById(id, this.tenantScope.toContext(user));
+  }
+
+  @Post(':id/pause')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  pause(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    return this.timeEntriesService.pauseSession(id, this.tenantScope.toContext(user));
+  }
+
+  @Post(':id/resume')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  resume(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    return this.timeEntriesService.resumeSession(id, this.tenantScope.toContext(user));
+  }
+
+  @Post(':id/finish')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  finish(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    return this.timeEntriesService.finishSession(id, this.tenantScope.toContext(user));
   }
 
   @Get(':id/audits')

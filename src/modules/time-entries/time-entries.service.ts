@@ -1,18 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
 
 import { AppError } from '../../common/errors/app-error';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { PrincipalTenantContext, TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { TimeEntryAuditEntity } from '../../database/entities/time-entry-audit.entity';
+import { TimeEntryBreakEntity } from '../../database/entities/time-entry-break.entity';
 import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
+import { TimeEntrySessionEntity } from '../../database/entities/time-entry-session.entity';
 import { UserEntity } from '../../database/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { ClockTimeEntryDto } from './dto/clock-time-entry.dto';
 import { CorrectTimeEntryDto } from './dto/correct-time-entry.dto';
 import { TimeEntryAuditDto } from './dto/time-entry-audit.dto';
 import { TimeEntryDto } from './dto/time-entry.dto';
+import { TimeSessionCurrentDto } from './dto/time-session-current.dto';
 
 function formatMadridDate(now: Date) {
   return new Intl.DateTimeFormat('sv-SE', {
@@ -41,42 +44,200 @@ export class TimeEntriesService {
     private readonly timeEntriesRepository: Repository<TimeEntryEntity>,
     @InjectRepository(TimeEntryAuditEntity)
     private readonly timeEntryAuditsRepository: Repository<TimeEntryAuditEntity>,
+    @InjectRepository(TimeEntrySessionEntity)
+    private readonly timeEntrySessionsRepository: Repository<TimeEntrySessionEntity>,
+    @InjectRepository(TimeEntryBreakEntity)
+    private readonly timeEntryBreaksRepository: Repository<TimeEntryBreakEntity>,
     private readonly usersService: UsersService,
     private readonly tenantScope: TenantScopeService
   ) {}
 
   async clock(userId: number, dto: ClockTimeEntryDto): Promise<TimeEntryDto> {
-    const now = new Date();
-    const day = formatMadridDate(now);
-    const time = formatMadridTime(now);
+    const current = await this.getCurrentSession(userId);
+    if (current.state === 'NOT_STARTED') {
+      const started = await this.start(userId, { origen: dto.origen ?? 'web' });
+      return this.toTimeEntryDtoFromSession(started, 'ENTRADA');
+    }
 
-    return this.dataSource.transaction(async (manager) => {
-      const user = await manager.getRepository(UserEntity).findOne({
-        where: { id: userId },
-        relations: { roles: true },
-        lock: { mode: 'pessimistic_write' }
-      });
+    const finished = await this.finish(userId);
+    return this.toTimeEntryDtoFromSession(finished, 'SALIDA');
+  }
 
+  async current(userId: number, context: PrincipalTenantContext): Promise<TimeSessionCurrentDto> {
+    const session = await this.findActiveSession(userId);
+    if (!session) {
+      const user = await this.usersService.findById(userId);
       if (!user) {
         throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
       }
+      return {
+        state: 'NOT_STARTED',
+        sessionId: null,
+        startedAt: null,
+        finishedAt: null,
+        activeBreak: null,
+        workedSeconds: 0,
+        breakSeconds: 0,
+        usuarioId: user.id,
+        usuarioNumero: user.numero,
+        usuarioNombre: user.nombreEmpleado,
+        companyId: user.company?.id ?? null,
+        companyName: user.company?.name ?? null
+      };
+    }
 
-      const tipo = user.working ? 'SALIDA' : 'ENTRADA';
-      user.working = !user.working;
-      user.ultimoFichaje = `${day} ${time} - ${tipo}`;
+    this.assertVisibleSession(session, context);
+    return this.toCurrentSessionDto(session);
+  }
 
-      const entry = manager.getRepository(TimeEntryEntity).create({
-        hora: time,
-        dia: day,
-        tipo,
-        origen: dto.origen ?? 'web',
-        usuario: user
-      });
+  async start(userId: number, dto: ClockTimeEntryDto, context?: PrincipalTenantContext): Promise<TimeSessionCurrentDto> {
+    return this.dataSource.transaction(async (manager) => {
+      const user = await this.lockUser(manager, userId);
+      const activeSession = await this.findActiveSession(userId, manager);
+      if (activeSession) {
+        if (context) {
+          this.assertVisibleSession(activeSession, context);
+        }
+        throw new AppError('SESSION_ALREADY_ACTIVE', 'Ya existe una jornada activa', 409);
+      }
 
-      await manager.getRepository(TimeEntryEntity).save(entry);
+      const now = new Date();
+      const session = await manager.getRepository(TimeEntrySessionEntity).save(
+        manager.getRepository(TimeEntrySessionEntity).create({
+          usuario: user,
+          startedAt: now,
+          finishedAt: null,
+          state: 'WORKING',
+          source: dto.origen ?? 'web'
+        })
+      );
+
+      user.working = true;
+      user.ultimoFichaje = `${formatMadridDate(now)} ${formatMadridTime(now)} - ENTRADA`;
       await manager.getRepository(UserEntity).save(user);
 
-      return this.toDto(entry);
+      return this.toCurrentSessionDto({ ...session, breaks: [] } as TimeEntrySessionEntity);
+    });
+  }
+
+  async pause(userId: number, context?: PrincipalTenantContext): Promise<TimeSessionCurrentDto> {
+    const session = await this.sessionOrThrow(userId, context);
+    return this.pauseSession(session.id, context);
+  }
+
+  async pauseSession(sessionId: number, context?: PrincipalTenantContext): Promise<TimeSessionCurrentDto> {
+    return this.dataSource.transaction(async (manager) => {
+      const session = await this.findSessionByIdOrFail(sessionId, manager);
+      if (!session) {
+        throw new AppError('SESSION_NOT_FOUND', 'No hay una jornada activa', 404);
+      }
+      if (session.finishedAt) {
+        throw new AppError('SESSION_COMPLETED', 'La jornada ya está finalizada', 409);
+      }
+      if (context) {
+        this.assertVisibleSession(session, context);
+      }
+      if (session.state === 'PAUSED') {
+        throw new AppError('SESSION_ALREADY_PAUSED', 'La jornada ya está en pausa', 409);
+      }
+
+      const now = new Date();
+      const breakItem = await manager.getRepository(TimeEntryBreakEntity).save(
+        manager.getRepository(TimeEntryBreakEntity).create({
+          session,
+          startedAt: now,
+          endedAt: null
+        })
+      );
+
+      session.state = 'PAUSED';
+      await manager.getRepository(TimeEntrySessionEntity).save(session);
+
+      const refreshed = await this.findSessionByIdOrFail(session.id, manager);
+      return this.toCurrentSessionDto(refreshed, breakItem);
+    });
+  }
+
+  async resume(userId: number, context?: PrincipalTenantContext): Promise<TimeSessionCurrentDto> {
+    const session = await this.sessionOrThrow(userId, context);
+    return this.resumeSession(session.id, context);
+  }
+
+  async resumeSession(sessionId: number, context?: PrincipalTenantContext): Promise<TimeSessionCurrentDto> {
+    return this.dataSource.transaction(async (manager) => {
+      const session = await this.findSessionByIdOrFail(sessionId, manager);
+      if (!session) {
+        throw new AppError('SESSION_NOT_FOUND', 'No hay una jornada activa', 404);
+      }
+      if (session.finishedAt) {
+        throw new AppError('SESSION_COMPLETED', 'La jornada ya está finalizada', 409);
+      }
+      if (context) {
+        this.assertVisibleSession(session, context);
+      }
+      if (session.state !== 'PAUSED') {
+        throw new AppError('SESSION_NOT_PAUSED', 'La jornada no está en pausa', 409);
+      }
+
+      const activeBreak = await manager.getRepository(TimeEntryBreakEntity).findOne({
+        where: { session: { id: session.id }, endedAt: IsNull() },
+        order: { startedAt: 'DESC', id: 'DESC' }
+      });
+
+      if (!activeBreak) {
+        throw new AppError('SESSION_BREAK_NOT_FOUND', 'No hay una pausa activa', 409);
+      }
+
+      activeBreak.endedAt = new Date();
+      await manager.getRepository(TimeEntryBreakEntity).save(activeBreak);
+
+      session.state = 'WORKING';
+      await manager.getRepository(TimeEntrySessionEntity).save(session);
+
+      const refreshed = await this.findSessionByIdOrFail(session.id, manager);
+      return this.toCurrentSessionDto(refreshed);
+    });
+  }
+
+  async finish(userId: number, context?: PrincipalTenantContext): Promise<TimeSessionCurrentDto> {
+    const session = await this.sessionOrThrow(userId, context);
+    return this.finishSession(session.id, context);
+  }
+
+  async finishSession(sessionId: number, context?: PrincipalTenantContext): Promise<TimeSessionCurrentDto> {
+    return this.dataSource.transaction(async (manager) => {
+      const session = await this.findSessionByIdOrFail(sessionId, manager);
+      if (!session) {
+        throw new AppError('SESSION_NOT_FOUND', 'No hay una jornada activa', 404);
+      }
+      if (session.finishedAt) {
+        throw new AppError('SESSION_COMPLETED', 'La jornada ya está finalizada', 409);
+      }
+      if (context) {
+        this.assertVisibleSession(session, context);
+      }
+
+      const activeBreak = await manager.getRepository(TimeEntryBreakEntity).findOne({
+        where: { session: { id: session.id }, endedAt: IsNull() },
+        order: { startedAt: 'DESC', id: 'DESC' }
+      });
+
+      if (activeBreak) {
+        activeBreak.endedAt = new Date();
+        await manager.getRepository(TimeEntryBreakEntity).save(activeBreak);
+      }
+
+      session.finishedAt = new Date();
+      session.state = 'COMPLETED';
+      await manager.getRepository(TimeEntrySessionEntity).save(session);
+
+      const user = await this.lockUser(manager, session.usuario.id);
+      user.working = false;
+      user.ultimoFichaje = `${formatMadridDate(session.finishedAt)} ${formatMadridTime(session.finishedAt)} - SALIDA`;
+      await manager.getRepository(UserEntity).save(user);
+
+      const refreshed = await this.findSessionByIdOrFail(session.id, manager);
+      return this.toCurrentSessionDto(refreshed);
     });
   }
 
@@ -272,6 +433,175 @@ export class TimeEntriesService {
       ...query,
       numeroUsuario: user.numero
     }, context);
+  }
+
+  private async getCurrentSession(userId: number) {
+    const session = await this.findActiveSession(userId);
+    if (!session) {
+      return {
+        state: 'NOT_STARTED' as const,
+        sessionId: null,
+        startedAt: null,
+        finishedAt: null,
+        activeBreak: null,
+        workedSeconds: 0,
+        breakSeconds: 0,
+        usuarioId: userId,
+        usuarioNumero: '',
+        usuarioNombre: '',
+        companyId: null,
+        companyName: null
+      };
+    }
+
+    return this.toCurrentSessionDto(session);
+  }
+
+  private async lockUser(manager: EntityManager, userId: number) {
+    const user = await manager.getRepository(UserEntity).findOne({
+      where: { id: userId },
+      relations: { roles: true, company: true, employee: true },
+      lock: { mode: 'pessimistic_write' }
+    });
+
+    if (!user) {
+      throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
+    }
+
+    return user;
+  }
+
+  private async findActiveSession(userId: number, manager?: EntityManager) {
+    const repository = manager ? manager.getRepository(TimeEntrySessionEntity) : this.timeEntrySessionsRepository;
+    return repository.findOne({
+      where: {
+        usuario: { id: userId },
+        finishedAt: IsNull()
+      },
+      relations: {
+        usuario: {
+          company: true
+        },
+        breaks: true
+      },
+      order: {
+        startedAt: 'DESC',
+        id: 'DESC'
+      }
+    });
+  }
+
+  private async findSessionByIdOrFail(id: number, manager?: EntityManager) {
+    const repository = manager ? manager.getRepository(TimeEntrySessionEntity) : this.timeEntrySessionsRepository;
+    const session = await repository.findOne({
+      where: { id },
+      relations: {
+        usuario: {
+          company: true
+        },
+        breaks: true
+      }
+    });
+
+    if (!session) {
+      throw new AppError('SESSION_NOT_FOUND', 'Jornada no encontrada', 404);
+    }
+
+    return session;
+  }
+
+  private assertVisibleSession(session: TimeEntrySessionEntity, context: PrincipalTenantContext) {
+    if (context.canAccessAll) {
+      return;
+    }
+
+    if (context.roles.includes('ROLE_RRHH')) {
+      this.tenantScope.assertResourceAccess(session.usuario.company?.id, context, session.usuario.id);
+      return;
+    }
+
+    if (context.userId === session.usuario.id) {
+      return;
+    }
+
+    throw new AppError('FORBIDDEN_CROSS_TENANT', 'Recurso fuera del alcance del usuario', 404);
+  }
+
+  private calculateBreakSeconds(session: TimeEntrySessionEntity, now = new Date()) {
+    return (session.breaks ?? []).reduce((accumulator, breakItem) => {
+      if (!breakItem.endedAt) {
+        return accumulator + Math.floor((now.getTime() - new Date(breakItem.startedAt).getTime()) / 1000);
+      }
+      return accumulator + Math.floor((new Date(breakItem.endedAt).getTime() - new Date(breakItem.startedAt).getTime()) / 1000);
+    }, 0);
+  }
+
+  private calculateWorkedSeconds(session: TimeEntrySessionEntity, now = new Date()) {
+    const end = session.finishedAt ? new Date(session.finishedAt) : now;
+    const totalSeconds = Math.max(0, Math.floor((end.getTime() - new Date(session.startedAt).getTime()) / 1000));
+    return Math.max(0, totalSeconds - this.calculateBreakSeconds(session, now));
+  }
+
+  private findActiveBreak(session: TimeEntrySessionEntity) {
+    return [...(session.breaks ?? [])]
+      .sort((left, right) => new Date(right.startedAt).getTime() - new Date(left.startedAt).getTime() || right.id - left.id)
+      .find((breakItem) => !breakItem.endedAt) ?? null;
+  }
+
+  private toCurrentSessionDto(session: TimeEntrySessionEntity, activeBreakOverride?: TimeEntryBreakEntity | null): TimeSessionCurrentDto {
+    const activeBreak = activeBreakOverride ?? this.findActiveBreak(session);
+    const now = new Date();
+    return {
+      state: activeBreak ? 'PAUSED' : session.finishedAt ? 'COMPLETED' : 'WORKING',
+      sessionId: session.id,
+      startedAt: session.startedAt.toISOString(),
+      finishedAt: session.finishedAt ? session.finishedAt.toISOString() : null,
+      activeBreak: activeBreak
+        ? {
+            id: activeBreak.id,
+            startedAt: activeBreak.startedAt.toISOString(),
+            endedAt: activeBreak.endedAt ? activeBreak.endedAt.toISOString() : null,
+            seconds: Math.max(0, Math.floor(((activeBreak.endedAt ? activeBreak.endedAt : now).getTime() - new Date(activeBreak.startedAt).getTime()) / 1000))
+          }
+        : null,
+      workedSeconds: this.calculateWorkedSeconds(session, now),
+      breakSeconds: this.calculateBreakSeconds(session, now),
+      usuarioId: session.usuario.id,
+      usuarioNumero: session.usuario.numero,
+      usuarioNombre: session.usuario.nombreEmpleado,
+      companyId: session.usuario.company?.id ?? null,
+      companyName: session.usuario.company?.name ?? null
+    };
+  }
+
+  private toTimeEntryDtoFromSession(session: TimeSessionCurrentDto, tipo: 'ENTRADA' | 'SALIDA'): TimeEntryDto {
+    const timestamp = tipo === 'ENTRADA' ? session.startedAt : session.finishedAt ?? session.startedAt;
+    const date = timestamp ? new Date(timestamp) : new Date();
+    return {
+      id: session.sessionId ?? 0,
+      hora: formatMadridTime(date),
+      dia: formatMadridDate(date),
+      tipo,
+      origen: 'web',
+      version: 1,
+      updatedAt: timestamp,
+      usuarioId: session.usuarioId,
+      usuarioNumero: session.usuarioNumero,
+      usuarioNombre: session.usuarioNombre,
+      companyId: session.companyId,
+      companyName: session.companyName
+    };
+  }
+
+  private async sessionOrThrow(userId: number, context?: PrincipalTenantContext) {
+    const session = await this.findActiveSession(userId);
+    if (!session) {
+      throw new AppError('SESSION_NOT_FOUND', 'No hay una jornada activa', 404);
+    }
+    if (context) {
+      this.assertVisibleSession(session, context);
+    }
+    return session;
   }
 
   private assertVisibleEntry(entry: TimeEntryEntity, context: PrincipalTenantContext) {

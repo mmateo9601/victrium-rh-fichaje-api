@@ -1,7 +1,9 @@
 import { DataSource } from 'typeorm';
 
 import { TimeEntryAuditEntity } from '../../database/entities/time-entry-audit.entity';
+import { TimeEntryBreakEntity } from '../../database/entities/time-entry-break.entity';
 import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
+import { TimeEntrySessionEntity } from '../../database/entities/time-entry-session.entity';
 import { UserEntity } from '../../database/entities/user.entity';
 import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { UsersService } from '../users/users.service';
@@ -50,6 +52,18 @@ describe('TimeEntriesService', () => {
       find: jest.fn().mockResolvedValue([])
     };
 
+    const sessionRepo = {
+      create: jest.fn().mockImplementation((value) => value),
+      findOne: jest.fn().mockResolvedValue(null),
+      save: jest.fn().mockImplementation(async (value) => value)
+    };
+
+    const breakRepo = {
+      create: jest.fn().mockImplementation((value) => value),
+      findOne: jest.fn().mockResolvedValue(null),
+      save: jest.fn().mockImplementation(async (value) => value)
+    };
+
     const timeEntryRepo = {
       create: jest.fn().mockImplementation((value) => value),
       findOne: jest.fn().mockResolvedValue(entry),
@@ -80,6 +94,12 @@ describe('TimeEntriesService', () => {
         if (entity === TimeEntryAuditEntity) {
           return auditRepo;
         }
+        if (entity === TimeEntrySessionEntity) {
+          return sessionRepo;
+        }
+        if (entity === TimeEntryBreakEntity) {
+          return breakRepo;
+        }
         throw new Error('Unexpected entity');
       })
     };
@@ -100,11 +120,13 @@ describe('TimeEntriesService', () => {
       dataSource,
       timeEntryRepo as never,
       auditRepo as never,
+      sessionRepo as never,
+      breakRepo as never,
       usersService,
       tenantScope
     );
 
-    return { service, dataSource, timeEntryRepo, auditRepo, userRepo, manager, user, entry, correctedBy };
+    return { service, dataSource, timeEntryRepo, auditRepo, sessionRepo, breakRepo, userRepo, manager, user, entry, correctedBy };
   }
 
   it('creates a clock in entry and toggles user state', async () => {
