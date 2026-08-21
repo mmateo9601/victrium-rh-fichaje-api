@@ -177,6 +177,24 @@ export type ScheduleRowDto = {
   days: ScheduleCellDto[];
 };
 
+export type ScheduleSummaryDto = {
+  rangeDays: number;
+  plannedMinutes: number;
+  workedMinutes: number;
+  coverageRate: number;
+  plannedDays: number;
+  workedDays: number;
+  absenceDays: number;
+  incidentDays: number;
+  unplannedDays: number;
+  weeklyTargetMinutes: number | null;
+  monthlyTargetMinutes: number | null;
+  targetMinutes: number | null;
+  targetLabel: 'weekly' | 'monthly' | 'custom' | null;
+  remainingMinutes: number | null;
+  progressRate: number | null;
+};
+
 export type ScheduleEmployeeDto = {
   employeeId: number;
   employeeNumero: string;
@@ -190,6 +208,7 @@ export type ScheduleResponseDto = {
   to: string;
   employees: ScheduleEmployeeDto[];
   days: Array<{ date: string; dayOfWeek: number; label: string }>;
+  summary: ScheduleSummaryDto;
   rows: ScheduleRowDto[];
 };
 

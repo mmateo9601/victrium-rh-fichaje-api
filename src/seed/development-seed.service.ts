@@ -130,7 +130,9 @@ const SEED_COMPANIES: SeededCompany[] = [
     workPolicy: {
       maxDailyMinutes: 510,
       minimumBreakMinutes: 30,
-      lateThresholdMinutes: 10
+      lateThresholdMinutes: 10,
+      weeklyTargetMinutes: 2400,
+      monthlyTargetMinutes: 9600
     }
   },
   {
@@ -141,7 +143,9 @@ const SEED_COMPANIES: SeededCompany[] = [
     workPolicy: {
       maxDailyMinutes: 480,
       minimumBreakMinutes: 20,
-      lateThresholdMinutes: 5
+      lateThresholdMinutes: 5,
+      weeklyTargetMinutes: 2250,
+      monthlyTargetMinutes: 9000
     }
   }
 ];

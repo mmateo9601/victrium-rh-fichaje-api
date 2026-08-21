@@ -29,14 +29,13 @@ export class ShiftsController {
   @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   me(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
-    @Query() query: { date?: string }
+    @Query() query: { from?: string; to?: string; date?: string }
   ) {
     const context = this.tenantScope.toContext(user);
     const date = query.date ?? new Date().toISOString().slice(0, 10);
-    if (!context.employeeId) {
-      return this.shiftsService.getMySchedule(context, { from: date, to: date });
-    }
-    return this.shiftsService.getShiftSummaryForEmployee(context.employeeId, date, context);
+    const from = query.from ?? date;
+    const to = query.to ?? date;
+    return this.shiftsService.getMySchedule(context, { from, to });
   }
 
   @Get(':id')

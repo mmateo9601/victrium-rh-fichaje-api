@@ -23,6 +23,7 @@ import {
   CreateShiftOverrideDto,
   EmployeeScheduleResponseDto,
   ScheduleResponseDto,
+  ScheduleSummaryDto,
   ShiftAssignmentDto,
   ShiftDto,
   ShiftOverrideDto,
@@ -44,6 +45,12 @@ function defaultRange() {
     from: from.toISOString().slice(0, 10),
     to: today.toISOString().slice(0, 10)
   };
+}
+
+function rangeLength(from: string, to: string) {
+  const start = new Date(`${from}T12:00:00.000Z`).getTime();
+  const end = new Date(`${to}T12:00:00.000Z`).getTime();
+  return Math.max(1, Math.floor((end - start) / 86400000) + 1);
 }
 
 function assignmentOverlaps(leftFrom: string, leftTo: string | null | undefined, rightFrom: string, rightTo: string | null | undefined) {
@@ -70,6 +77,66 @@ function normalizeRotationStep(step: { working: boolean; startTime: string | nul
     breakMinutes: step.breakMinutes,
     workingMinutes: step.workingMinutes,
     crossesMidnight: step.crossesMidnight
+  };
+}
+
+function toNumber(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function buildScheduleSummary(
+  from: string,
+  to: string,
+  employees: EmployeeEntity[],
+  rows: ReturnType<WorkScheduleResolverService['buildEmployeeRows']>
+): ScheduleSummaryDto {
+  const cells = rows.flatMap((row) => row.days);
+  const workingCells = cells.filter((cell) => cell.workingDay);
+  const plannedMinutes = workingCells.reduce((total, cell) => total + cell.expectedMinutes, 0);
+  const workedMinutes = workingCells.reduce((total, cell) => total + cell.workedMinutes, 0);
+  const coverageRate = plannedMinutes > 0 ? Number(((workedMinutes / plannedMinutes) * 100).toFixed(1)) : 0;
+  const plannedDays = workingCells.length;
+  const workedDays = workingCells.filter((cell) => cell.workedMinutes > 0).length;
+  const absenceDays = cells.filter((cell) => cell.status === 'VACATION' || cell.status === 'PERMISSION').length;
+  const incidentDays = cells.filter((cell) => cell.incidentId !== null).length;
+  const unplannedDays = workingCells.filter((cell) => cell.status === 'NO_SHIFT' || cell.assignmentId === null).length;
+
+  const companyIds = new Set(employees.map((employee) => employee.company?.id).filter((companyId): companyId is number => typeof companyId === 'number'));
+  const sharedPolicy = companyIds.size === 1 ? employees.find((employee) => employee.company?.workPolicy)?.company?.workPolicy ?? null : null;
+  const weeklyTargetMinutes = toNumber(sharedPolicy?.['weeklyTargetMinutes']);
+  const monthlyTargetMinutes = toNumber(sharedPolicy?.['monthlyTargetMinutes']);
+  const days = rangeLength(from, to);
+  const targetMinutes =
+    days >= 28
+      ? monthlyTargetMinutes ?? weeklyTargetMinutes
+      : days <= 8
+        ? weeklyTargetMinutes ?? monthlyTargetMinutes
+        : monthlyTargetMinutes ?? weeklyTargetMinutes;
+  const targetLabel =
+    targetMinutes === null
+      ? null
+      : days >= 28 && monthlyTargetMinutes !== null
+        ? 'monthly'
+        : days <= 8 && weeklyTargetMinutes !== null
+          ? 'weekly'
+          : 'custom';
+
+  return {
+    rangeDays: days,
+    plannedMinutes,
+    workedMinutes,
+    coverageRate,
+    plannedDays,
+    workedDays,
+    absenceDays,
+    incidentDays,
+    unplannedDays,
+    weeklyTargetMinutes,
+    monthlyTargetMinutes,
+    targetMinutes,
+    targetLabel,
+    remainingMinutes: targetMinutes !== null ? Math.max(0, targetMinutes - workedMinutes) : null,
+    progressRate: targetMinutes !== null && targetMinutes > 0 ? Number(((workedMinutes / targetMinutes) * 100).toFixed(1)) : null
   };
 }
 
@@ -591,6 +658,17 @@ export class ShiftsService {
     const incidentsByEmployee = this.groupByEmployee(incidents);
     const timeEntriesByEmployee = this.groupByEmployeeTimeEntries(timeEntries);
     const calendarDaysByEmployee = this.groupCalendarDays(employees);
+    const rows = this.resolver.buildEmployeeRows(
+      employees,
+      days,
+      assignmentsByEmployee,
+      overridesByEmployee,
+      vacationsByEmployee,
+      permissionsByEmployee,
+      incidentsByEmployee,
+      timeEntriesByEmployee,
+      calendarDaysByEmployee
+    );
 
     return {
       from: range.from,
@@ -603,17 +681,8 @@ export class ShiftsService {
         companyName: employee.company?.name ?? null
       })),
       days,
-      rows: this.resolver.buildEmployeeRows(
-        employees,
-        days,
-        assignmentsByEmployee,
-        overridesByEmployee,
-        vacationsByEmployee,
-        permissionsByEmployee,
-        incidentsByEmployee,
-        timeEntriesByEmployee,
-        calendarDaysByEmployee
-      )
+      summary: buildScheduleSummary(range.from, range.to, employees, rows),
+      rows
     };
   }
 
