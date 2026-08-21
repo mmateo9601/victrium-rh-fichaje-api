@@ -158,6 +158,51 @@ describe('WorkScheduleResolverService', () => {
     );
   });
 
+  it('detects night work and overtime thresholds when configured', () => {
+    const resolver = createResolver();
+    const result = resolver.resolveDay({
+      employee: createEmployee({
+        maxDailyMinutes: 450,
+        overtimeWarningMinutes: 30,
+        allowNightWork: false,
+        nightWorkStart: '22:00:00',
+        nightWorkEnd: '06:00:00'
+      }),
+      date: '2026-08-24',
+      assignments: [
+        {
+          id: 1,
+          employee: createEmployee({
+            maxDailyMinutes: 450,
+            overtimeWarningMinutes: 30,
+            allowNightWork: false,
+            nightWorkStart: '22:00:00',
+            nightWorkEnd: '06:00:00'
+          }),
+          shift: createShift(),
+          validFrom: '2026-08-01',
+          validTo: null,
+          active: true
+        } as unknown as never
+      ],
+      overrides: [],
+      calendarDay: null,
+      vacations: [],
+      permissions: [],
+      incidents: [],
+      timeEntries: [
+        createEntry(1, '2026-08-24', '22:00:00', 'ENTRADA'),
+        createEntry(2, '2026-08-24', '06:30:00', 'SALIDA')
+      ]
+    });
+
+    expect(result.policy).not.toBeNull();
+    expect(result.policy?.overtimeMinutes).toBe(30);
+    expect(result.policy?.nightWorkMinutes).toBe(480);
+    expect(result.policy?.warnings).toContain('Horas extra registradas: 30 min');
+    expect(result.policy?.violations).toContain('Trabajo nocturno no permitido: 480 min entre 22:00:00 y 06:00:00');
+  });
+
   it('resolves rotation patterns before weekly shift days', () => {
     const resolver = createResolver();
     const result = resolver.resolveDay({

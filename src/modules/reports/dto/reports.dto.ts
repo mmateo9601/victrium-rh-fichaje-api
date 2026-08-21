@@ -19,4 +19,8 @@ export type ReportsSummaryDto = {
   currentMonthAbsenceDays: number;
   currentMonthIncidentDays: number;
   currentMonthUnplannedDays: number;
+  currentMonthPolicyWarnings: number;
+  currentMonthPolicyViolations: number;
+  currentMonthOvertimeMinutes: number;
+  currentMonthNightWorkMinutes: number;
 };

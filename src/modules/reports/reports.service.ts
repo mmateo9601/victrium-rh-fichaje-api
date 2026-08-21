@@ -88,6 +88,7 @@ export class ReportsService {
     const schedule = await this.shiftsService.getSchedule({ from, to }, context);
     const cells = schedule.rows.flatMap((row) => row.days);
     const workingCells = cells.filter((cell) => cell.workingDay);
+    const policyCells = workingCells.filter((cell) => cell.policy !== null);
 
     const currentMonthPlannedMinutes = workingCells.reduce((total, cell) => total + cell.expectedMinutes, 0);
     const currentMonthWorkedMinutes = workingCells.reduce((total, cell) => total + cell.workedMinutes, 0);
@@ -95,6 +96,10 @@ export class ReportsService {
     const currentMonthAbsenceDays = cells.filter((cell) => cell.status === 'VACATION' || cell.status === 'PERMISSION').length;
     const currentMonthIncidentDays = cells.filter((cell) => cell.incidentId !== null).length;
     const currentMonthUnplannedDays = workingCells.filter((cell) => cell.status === 'NO_SHIFT' || cell.assignmentId === null).length;
+    const currentMonthPolicyWarnings = policyCells.reduce((total, cell) => total + (cell.policy?.warnings.length ?? 0), 0);
+    const currentMonthPolicyViolations = policyCells.reduce((total, cell) => total + (cell.policy?.violations.length ?? 0), 0);
+    const currentMonthOvertimeMinutes = policyCells.reduce((total, cell) => total + (cell.policy?.overtimeMinutes ?? 0), 0);
+    const currentMonthNightWorkMinutes = policyCells.reduce((total, cell) => total + (cell.policy?.nightWorkMinutes ?? 0), 0);
 
     return {
       currentMonthFrom: from,
@@ -104,7 +109,11 @@ export class ReportsService {
       currentMonthCoverageRate,
       currentMonthAbsenceDays,
       currentMonthIncidentDays,
-      currentMonthUnplannedDays
+      currentMonthUnplannedDays,
+      currentMonthPolicyWarnings,
+      currentMonthPolicyViolations,
+      currentMonthOvertimeMinutes,
+      currentMonthNightWorkMinutes
     };
   }
 

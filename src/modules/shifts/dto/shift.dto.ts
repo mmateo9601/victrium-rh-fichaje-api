@@ -104,8 +104,13 @@ export type WorkPolicyEvaluationDto = {
   maxDailyMinutes: number | null;
   minimumBreakMinutes: number | null;
   lateThresholdMinutes: number | null;
+  overtimeWarningMinutes: number | null;
+  nightWorkStart: string | null;
+  nightWorkEnd: string | null;
   expectedBreakMinutes: number | null;
   actualBreakMinutes: number;
+  overtimeMinutes: number;
+  nightWorkMinutes: number;
   warnings: string[];
   violations: string[];
 };

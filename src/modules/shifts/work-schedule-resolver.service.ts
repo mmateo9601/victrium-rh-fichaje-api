@@ -38,6 +38,17 @@ type ResolvedShiftDay = {
   segments: Array<{ startTime: string | null; endTime: string | null; breakMinutes: number; workingMinutes: number | null; crossesMidnight: boolean }>;
 };
 
+type WorkInterval = {
+  startMinutes: number;
+  endMinutes: number;
+};
+
+type PolicyTimeWindow = {
+  startMinutes: number;
+  endMinutes: number;
+  crossesMidnight: boolean;
+};
+
 function dayLabel(date: string) {
   return new Intl.DateTimeFormat('es-ES', {
     timeZone: 'Europe/Madrid',
@@ -159,33 +170,142 @@ function toNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+function toBoolean(value: unknown) {
+  return typeof value === 'boolean' ? value : null;
+}
+
 function hasPolicyConfig(policy: Record<string, unknown> | null | undefined) {
   if (!policy) {
     return false;
   }
 
-  return ['maxDailyMinutes', 'minimumBreakMinutes', 'lateThresholdMinutes'].some((key) => toNumber(policy[key]) !== null);
+  return [
+    'maxDailyMinutes',
+    'minimumBreakMinutes',
+    'lateThresholdMinutes',
+    'overtimeWarningMinutes',
+    'nightWorkStart',
+    'nightWorkEnd',
+    'allowNightWork'
+  ].some((key) => {
+    if (key === 'allowNightWork') {
+      return toBoolean(policy[key]) !== null;
+    }
+    const value = policy[key];
+    return value !== null && value !== undefined;
+  });
 }
 
-function calculateBreakMinutes(timeEntries: TimeEntryEntity[]) {
-  let total = 0;
+function normalizeWindow(start: string | null | undefined, end: string | null | undefined): PolicyTimeWindow | null {
+  const startMinutes = timeToMinutes(start);
+  const endMinutes = timeToMinutes(end);
+  if (startMinutes === null || endMinutes === null) {
+    return null;
+  }
+
+  return {
+    startMinutes,
+    endMinutes,
+    crossesMidnight: endMinutes <= startMinutes
+  };
+}
+
+function buildWorkedIntervals(timeEntries: TimeEntryEntity[]): WorkInterval[] {
+  const intervals: WorkInterval[] = [];
   let openEntry: TimeEntryEntity | null = null;
-  let previousExit: TimeEntryEntity | null = null;
+  let pendingExit: TimeEntryEntity | null = null;
 
   for (const entry of timeEntries) {
     if (entry.tipo === 'ENTRADA') {
-      if (previousExit) {
-        total += Math.max(0, (timeToMinutes(entry.hora) ?? 0) - (timeToMinutes(previousExit.hora) ?? 0));
-        previousExit = null;
+      if (pendingExit) {
+        const startMinutes = timeToMinutes(entry.hora);
+        const endMinutes = timeToMinutes(pendingExit.hora);
+        if (startMinutes !== null && endMinutes !== null) {
+          intervals.push({
+            startMinutes,
+            endMinutes: endMinutes <= startMinutes ? endMinutes + 24 * 60 : endMinutes
+          });
+          pendingExit = null;
+          continue;
+        }
       }
       openEntry = entry;
       continue;
     }
 
-    if (entry.tipo === 'SALIDA' && openEntry) {
-      openEntry = null;
-      previousExit = entry;
+    if (entry.tipo === 'SALIDA' && !openEntry) {
+      pendingExit = entry;
+      continue;
     }
+
+    if (!openEntry) {
+      continue;
+    }
+
+    const startMinutes = timeToMinutes(openEntry.hora);
+    const endMinutes = timeToMinutes(entry.hora);
+    if (startMinutes === null || endMinutes === null) {
+      openEntry = null;
+      continue;
+    }
+
+    intervals.push({
+      startMinutes,
+      endMinutes: endMinutes <= startMinutes ? endMinutes + 24 * 60 : endMinutes
+    });
+    openEntry = null;
+  }
+
+  if (openEntry && pendingExit) {
+    const startMinutes = timeToMinutes(openEntry.hora);
+    const endMinutes = timeToMinutes(pendingExit.hora);
+    if (startMinutes !== null && endMinutes !== null) {
+      intervals.push({
+        startMinutes,
+        endMinutes: endMinutes <= startMinutes ? endMinutes + 24 * 60 : endMinutes
+      });
+    }
+  }
+
+  return intervals;
+}
+
+function overlapMinutes(startA: number, endA: number, startB: number, endB: number) {
+  return Math.max(0, Math.min(endA, endB) - Math.max(startA, startB));
+}
+
+function calculateWorkedMinutes(timeEntries: TimeEntryEntity[]) {
+  return buildWorkedIntervals(timeEntries).reduce((total, interval) => total + Math.max(0, interval.endMinutes - interval.startMinutes), 0);
+}
+
+function calculateBreakMinutes(timeEntries: TimeEntryEntity[]) {
+  const intervals = buildWorkedIntervals(timeEntries);
+  if (intervals.length < 2) {
+    return 0;
+  }
+
+  let total = 0;
+  for (let index = 1; index < intervals.length; index += 1) {
+    const previous = intervals[index - 1];
+    const current = intervals[index];
+    total += Math.max(0, current.startMinutes - previous.endMinutes);
+  }
+
+  return total;
+}
+
+function calculateNightWorkMinutes(timeEntries: TimeEntryEntity[], window: PolicyTimeWindow | null) {
+  if (!window) {
+    return 0;
+  }
+
+  const intervals = buildWorkedIntervals(timeEntries);
+  const windowEnd = window.crossesMidnight ? window.endMinutes + 24 * 60 : window.endMinutes;
+
+  let total = 0;
+  for (const interval of intervals) {
+    total += overlapMinutes(interval.startMinutes, interval.endMinutes, window.startMinutes, windowEnd);
+    total += overlapMinutes(interval.startMinutes + 24 * 60, interval.endMinutes + 24 * 60, window.startMinutes, windowEnd);
   }
 
   return total;
@@ -205,7 +325,15 @@ function buildPolicyEvaluation(
   const maxDailyMinutes = toNumber(workPolicy?.maxDailyMinutes) ?? shiftDay?.workingMinutes ?? null;
   const minimumBreakMinutes = toNumber(workPolicy?.minimumBreakMinutes) ?? shiftDay?.breakMinutes ?? null;
   const lateThresholdMinutes = toNumber(workPolicy?.lateThresholdMinutes);
+  const overtimeWarningMinutes = toNumber(workPolicy?.overtimeWarningMinutes);
+  const nightWorkWindow = normalizeWindow(
+    typeof workPolicy?.nightWorkStart === 'string' ? workPolicy.nightWorkStart : null,
+    typeof workPolicy?.nightWorkEnd === 'string' ? workPolicy.nightWorkEnd : null
+  );
+  const allowNightWork = toBoolean(workPolicy?.allowNightWork);
   const actualBreakMinutes = calculateBreakMinutes(dayEntries);
+  const overtimeMinutes = shiftDay?.workingMinutes !== null && shiftDay?.workingMinutes !== undefined ? Math.max(0, workedMinutes - shiftDay.workingMinutes) : 0;
+  const nightWorkMinutes = calculateNightWorkMinutes(dayEntries, nightWorkWindow);
   const warnings: string[] = [];
   const violations: string[] = [];
 
@@ -225,13 +353,34 @@ function buildPolicyEvaluation(
     warnings.push(`Horas trabajadas por debajo de lo previsto: ${workedMinutes} min frente a ${shiftDay.workingMinutes} min`);
   }
 
+  if (overtimeWarningMinutes !== null && overtimeMinutes > overtimeWarningMinutes) {
+    warnings.push(`Horas extra por encima del umbral: ${overtimeMinutes} min frente a ${overtimeWarningMinutes} min`);
+  } else if (overtimeMinutes > 0) {
+    warnings.push(`Horas extra registradas: ${overtimeMinutes} min`);
+  }
+
+  if (nightWorkWindow && nightWorkMinutes > 0) {
+    if (allowNightWork === false) {
+      violations.push(
+        `Trabajo nocturno no permitido: ${nightWorkMinutes} min entre ${workPolicy?.nightWorkStart} y ${workPolicy?.nightWorkEnd}`
+      );
+    } else {
+      warnings.push(`Trabajo nocturno detectado: ${nightWorkMinutes} min entre ${workPolicy?.nightWorkStart} y ${workPolicy?.nightWorkEnd}`);
+    }
+  }
+
   return {
     configured: true,
     maxDailyMinutes,
     minimumBreakMinutes,
     lateThresholdMinutes,
+    overtimeWarningMinutes,
+    nightWorkStart: nightWorkWindow ? (typeof workPolicy?.nightWorkStart === 'string' ? workPolicy.nightWorkStart : null) : null,
+    nightWorkEnd: nightWorkWindow ? (typeof workPolicy?.nightWorkEnd === 'string' ? workPolicy.nightWorkEnd : null) : null,
     expectedBreakMinutes: shiftDay?.breakMinutes ?? null,
     actualBreakMinutes,
+    overtimeMinutes,
+    nightWorkMinutes,
     warnings,
     violations
   };
@@ -389,16 +538,6 @@ export class WorkScheduleResolverService {
   }
 
   private calculateWorkedMinutes(timeEntries: TimeEntryEntity[]) {
-    let total = 0;
-    let openEntry: TimeEntryEntity | null = null;
-    for (const entry of timeEntries) {
-      if (entry.tipo === 'ENTRADA') {
-        openEntry = entry;
-      } else if (entry.tipo === 'SALIDA' && openEntry) {
-        total += Math.max(0, (timeToMinutes(entry.hora) ?? 0) - (timeToMinutes(openEntry.hora) ?? 0));
-        openEntry = null;
-      }
-    }
-    return total;
+    return calculateWorkedMinutes(timeEntries);
   }
 }

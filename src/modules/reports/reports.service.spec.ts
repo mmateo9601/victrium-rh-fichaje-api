@@ -42,7 +42,11 @@ describe('ReportsService', () => {
       currentMonthCoverageRate: 96.5,
       currentMonthAbsenceDays: 2,
       currentMonthIncidentDays: 1,
-      currentMonthUnplannedDays: 1
+      currentMonthUnplannedDays: 1,
+      currentMonthPolicyWarnings: 0,
+      currentMonthPolicyViolations: 0,
+      currentMonthOvertimeMinutes: 0,
+      currentMonthNightWorkMinutes: 0
     };
 
     const companyRepo = {
@@ -140,5 +144,7 @@ describe('ReportsService', () => {
     expect(result.currentMonthPlannedMinutes).toBe(counts.currentMonthPlannedMinutes);
     expect(result.currentMonthWorkedMinutes).toBe(counts.currentMonthWorkedMinutes);
     expect(result.currentMonthCoverageRate).toBe(counts.currentMonthCoverageRate);
+    expect(result.currentMonthPolicyWarnings).toBe(counts.currentMonthPolicyWarnings);
+    expect(result.currentMonthPolicyViolations).toBe(counts.currentMonthPolicyViolations);
   });
 });
