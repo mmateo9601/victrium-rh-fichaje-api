@@ -16,6 +16,7 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
 import { TimeEntriesModule } from './modules/time-entries/time-entries.module';
 import { UsersModule } from './modules/users/users.module';
 import { ShiftsModule } from './modules/shifts/shifts.module';
+import { PlanningPeriodsModule } from './modules/planning-periods/planning-periods.module';
 import { WorkLocationsModule } from './modules/work-locations/work-locations.module';
 import { RolesGuard } from './common/auth/roles.guard';
 
@@ -35,6 +36,7 @@ import { RolesGuard } from './common/auth/roles.guard';
     PermissionsModule,
     TimeEntriesModule,
     ShiftsModule,
+    PlanningPeriodsModule,
     WorkLocationsModule
   ],
   providers: [

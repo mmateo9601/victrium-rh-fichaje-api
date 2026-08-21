@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, Up
 
 import { CalendarEntity } from './calendar.entity';
 import { EmployeeEntity } from './employee.entity';
+import { PlanningPeriodEntity } from './planning-period.entity';
 import { WorkLocationEntity } from './work-location.entity';
 import { UserEntity } from './user.entity';
 
@@ -42,4 +43,7 @@ export class CompanyEntity {
 
   @OneToMany(() => CalendarEntity, (calendar) => calendar.company)
   calendars!: CalendarEntity[];
+
+  @OneToMany(() => PlanningPeriodEntity, (planningPeriod) => planningPeriod.company)
+  planningPeriods!: PlanningPeriodEntity[];
 }

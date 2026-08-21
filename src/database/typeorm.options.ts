@@ -10,6 +10,7 @@ import { EmployeeLocationAssignmentEntity } from './entities/employee-location-a
 import { IncidentEntity } from './entities/incident.entity';
 import { PermissionEntity } from './entities/permission.entity';
 import { AuthSessionEntity } from './entities/auth-session.entity';
+import { PlanningPeriodEntity } from './entities/planning-period.entity';
 import { RoleEntity } from './entities/role.entity';
 import { ShiftAssignmentEntity } from './entities/shift-assignment.entity';
 import { ShiftDayEntity } from './entities/shift-day.entity';
@@ -27,6 +28,7 @@ import { CreateTimeEntrySessionsTable1724172100000 } from './migrations/17241721
 import { CreateShiftsTables1724172200000 } from './migrations/1724172200000-CreateShiftsTables';
 import { CreateWorkLocationsTables1724172300000 } from './migrations/1724172300000-CreateWorkLocationsTables';
 import { AddWorkLocationToShiftAssignments1724172400000 } from './migrations/1724172400000-AddWorkLocationToShiftAssignments';
+import { CreatePlanningPeriodsTable1724172500000 } from './migrations/1724172500000-CreatePlanningPeriodsTable';
 
 export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
   return {
@@ -49,6 +51,7 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
       VacationEntity,
       IncidentEntity,
       PermissionEntity,
+      PlanningPeriodEntity,
       RoleEntity,
       AuthSessionEntity,
       ApiKeyEntity,
@@ -64,7 +67,8 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
       CreateTimeEntrySessionsTable1724172100000,
       CreateShiftsTables1724172200000,
       CreateWorkLocationsTables1724172300000,
-      AddWorkLocationToShiftAssignments1724172400000
+      AddWorkLocationToShiftAssignments1724172400000,
+      CreatePlanningPeriodsTable1724172500000
     ],
     migrationsRun: true,
     synchronize: false,

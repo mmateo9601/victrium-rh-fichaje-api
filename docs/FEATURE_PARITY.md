@@ -12,6 +12,7 @@ Este documento resume la paridad funcional entre el legado `fichaje-main` y la m
 | Vacations / Permissions / Incidents / Calendars | Módulos NestJS equivalentes | VERIFIED | CRUD funcional con tenant isolation y Swagger |
 | Work locations | Centros de trabajo multicentro | VERIFIED | Sedes, asignaciones históricas y calendario local opcional |
 | Turnos / planificación | `GET/POST/PATCH /api/v1/shifts`, `/api/v1/shift-assignments`, `/api/v1/schedule` | VERIFIED | Asignaciones, excepciones y calendario mensual por empleado |
+| Periodos de planificación | `GET/POST/PATCH /api/v1/planning-periods`, `POST /api/v1/planning-periods/:id/publish`, `POST /api/v1/planning-periods/:id/unpublish` | VERIFIED | Borradores y publicación por empresa con seed demo |
 | API Keys | `GET/POST/PATCH/DELETE /api/v1/api-keys*` | VERIFIED | Claves hasheadas y autenticación por `X-API-KEY` |
 | Profile / Cuenta | `GET /api/v1/auth/me`, `PATCH /api/v1/auth/password` | VERIFIED | La Web ya expone la cuenta y el cambio de contraseña autenticado |
 | Landing pública Angular | Home Next.js | SUPERSEDED | La landing pública se sustituyó por la portada de Next |

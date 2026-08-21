@@ -11,6 +11,7 @@ import { EmployeeEntity } from '../database/entities/employee.entity';
 import { IncidentEntity } from '../database/entities/incident.entity';
 import { PermissionEntity } from '../database/entities/permission.entity';
 import { PermissionStatus } from '../database/entities/permission-status.enum';
+import { PlanningPeriodEntity } from '../database/entities/planning-period.entity';
 import { RoleName } from '../database/entities/role-name.enum';
 import { RoleEntity } from '../database/entities/role.entity';
 import { EmployeeLocationAssignmentEntity } from '../database/entities/employee-location-assignment.entity';
@@ -72,6 +73,7 @@ type SeedSummary = {
   shifts: number;
   assignments: number;
   overrides: number;
+  planningPeriods: number;
   workLocations: number;
   locationAssignments: number;
   timeEntries: number;
@@ -405,6 +407,7 @@ export class DevelopmentSeedService {
       const calendars = await this.seedCalendars(manager, companies, context);
       const users = await this.seedUsersAndEmployees(manager, companies, calendars, roles);
       const locations = await this.seedWorkLocations(manager, companies, calendars, users, context);
+      const planningPeriods = await this.seedPlanningPeriods(manager, companies, users, context);
       const shifts = await this.seedShifts(manager, users, context);
       const timeEntries = await this.seedTimeEntries(manager, users, context);
       const audits = await this.seedAudits(manager, users, timeEntries);
@@ -417,6 +420,7 @@ export class DevelopmentSeedService {
         calendars: calendars.length,
         users: users.length,
         employees: users.length,
+        planningPeriods,
         workLocations: locations.workLocations,
         locationAssignments: locations.locationAssignments,
         shifts: shifts.shifts,
@@ -519,6 +523,7 @@ export class DevelopmentSeedService {
 
     await manager.createQueryBuilder().delete().from(EmployeeLocationAssignmentEntity).execute();
     await manager.createQueryBuilder().delete().from(WorkLocationEntity).execute();
+    await manager.createQueryBuilder().delete().from(PlanningPeriodEntity).execute();
     await manager.createQueryBuilder().delete().from(ShiftOverrideEntity).execute();
     await manager.createQueryBuilder().delete().from(ShiftAssignmentEntity).execute();
     await manager.createQueryBuilder().delete().from(ShiftDayEntity).execute();
@@ -764,6 +769,64 @@ export class DevelopmentSeedService {
       workLocations: locations.length,
       locationAssignments: assignments.length
     };
+  }
+
+  private async seedPlanningPeriods(manager: EntityManager, companies: CompanyEntity[], users: SeedUserBundle[], context: SeedContext) {
+    const repository = manager.getRepository(PlanningPeriodEntity);
+    const publishedBy = users.find((bundle) => bundle.user.email === 'platform@victrium.local')?.user ?? users[0]?.user ?? null;
+    const now = context.referenceDate;
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 12, 0, 0));
+    const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 12, 0, 0));
+    const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 12, 0, 0));
+    const nextMonthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 0, 12, 0, 0));
+
+    const formatLabel = (date: Date) =>
+      new Intl.DateTimeFormat('es-ES', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Europe/Madrid'
+      }).format(date);
+
+    const fixtures = companies.flatMap((company) => [
+      {
+        company,
+        name: `Planificación ${formatLabel(monthStart)} ${company.code}`,
+        startDate: formatMadridDate(monthStart),
+        endDate: formatMadridDate(monthEnd),
+        status: 'PUBLISHED' as const,
+        publishedAt: monthStart,
+        publishedBy,
+        notes: 'Periodo demo publicado'
+      },
+      {
+        company,
+        name: `Planificación ${formatLabel(nextMonthStart)} ${company.code}`,
+        startDate: formatMadridDate(nextMonthStart),
+        endDate: formatMadridDate(nextMonthEnd),
+        status: 'DRAFT' as const,
+        publishedAt: null,
+        publishedBy: null,
+        notes: 'Periodo demo en borrador'
+      }
+    ]);
+
+    const saved = await repository.save(
+      fixtures.map((fixture) =>
+        repository.create({
+          company: fixture.company,
+          name: fixture.name,
+          startDate: fixture.startDate,
+          endDate: fixture.endDate,
+          status: fixture.status,
+          version: fixture.status === 'PUBLISHED' ? 2 : 1,
+          publishedAt: fixture.publishedAt,
+          publishedBy: fixture.publishedBy,
+          notes: fixture.notes
+        })
+      )
+    );
+
+    return saved.length;
   }
 
   private async seedShifts(manager: EntityManager, users: SeedUserBundle[], context: SeedContext) {
