@@ -71,6 +71,30 @@ export class TimeEntriesController {
     return this.timeEntriesService.findVisibleById(id, this.tenantScope.toContext(user));
   }
 
+  @Post('me/pause')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  pauseMine(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] }
+  ) {
+    return this.timeEntriesService.pause(user.sub, this.tenantScope.toContext(user));
+  }
+
+  @Post('me/resume')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  resumeMine(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] }
+  ) {
+    return this.timeEntriesService.resume(user.sub, this.tenantScope.toContext(user));
+  }
+
+  @Post('me/finish')
+  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  finishMine(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] }
+  ) {
+    return this.timeEntriesService.finish(user.sub, this.tenantScope.toContext(user));
+  }
+
   @Post(':id/pause')
   @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   pause(
