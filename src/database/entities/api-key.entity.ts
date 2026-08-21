@@ -14,7 +14,7 @@ export class ApiKeyEntity {
   @Column({ length: 100 })
   name!: string;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   description?: string | null;
 
   @ManyToOne(() => UserEntity, (user) => user.apiKeys, {
@@ -48,7 +48,7 @@ export class ApiKeyEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 
-  @Column({ name: 'created_by', length: 100, nullable: true })
+  @Column({ name: 'created_by', type: 'varchar', length: 100, nullable: true })
   createdBy?: string | null;
 
   isValid() {
