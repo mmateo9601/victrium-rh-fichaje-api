@@ -2,8 +2,8 @@ import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuar
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { ApiRoles } from '../../common/auth/api-roles.decorator';
 import { JwtAuthGuard } from '../../common/auth/jwt.guard';
-import { Roles } from '../../common/auth/roles.decorator';
 import { RolesGuard } from '../../common/auth/roles.guard';
 import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { CreateShiftAssignmentDto, CreateShiftOverrideDto, UpdateShiftAssignmentDto, UpdateShiftOverrideDto } from './dto/shift.dto';
@@ -20,7 +20,7 @@ export class ShiftAssignmentsController {
   ) {}
 
   @Get()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   list(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Query() query: { employeeId?: number; shiftId?: number; active?: string }
@@ -29,7 +29,7 @@ export class ShiftAssignmentsController {
   }
 
   @Post()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   create(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Body() dto: CreateShiftAssignmentDto
@@ -38,7 +38,7 @@ export class ShiftAssignmentsController {
   }
 
   @Patch(':id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   update(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,
@@ -48,7 +48,7 @@ export class ShiftAssignmentsController {
   }
 
   @Post('/overrides')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   createOverride(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Body() dto: CreateShiftOverrideDto
@@ -57,7 +57,7 @@ export class ShiftAssignmentsController {
   }
 
   @Patch('/overrides/:id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   updateOverride(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,
@@ -67,7 +67,7 @@ export class ShiftAssignmentsController {
   }
 
   @Get('/overrides')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   listOverrides(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Query() query: { employeeId?: number; date?: string }

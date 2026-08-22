@@ -2,8 +2,8 @@ import { Controller, Get, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { ApiRoles } from '../../common/auth/api-roles.decorator';
 import { JwtAuthGuard } from '../../common/auth/jwt.guard';
-import { Roles } from '../../common/auth/roles.decorator';
 import { RolesGuard } from '../../common/auth/roles.guard';
 import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { PaginationQueryDto } from '../../common/pagination/pagination.dto';
@@ -20,20 +20,20 @@ export class UsersController {
   ) {}
 
   @Get()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   list(@CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] }, @Query() query: PaginationQueryDto & { search?: string; role?: string; active?: string }) {
     return this.usersService.list(query, this.tenantScope.toContext(user));
   }
 
   @Get('me')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   async me(@CurrentUser() user: { sub: number }) {
     const entity = await this.usersService.findByIdOrFail(user.sub);
     return this.usersService.toPublicUser(entity);
   }
 
   @Get(':id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   async byId(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number

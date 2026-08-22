@@ -2,8 +2,8 @@ import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuar
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { ApiRoles } from '../../common/auth/api-roles.decorator';
 import { JwtAuthGuard } from '../../common/auth/jwt.guard';
-import { Roles } from '../../common/auth/roles.decorator';
 import { RolesGuard } from '../../common/auth/roles.guard';
 import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { CreateShiftDto, UpdateShiftDto } from './dto/shift.dto';
@@ -20,13 +20,13 @@ export class ShiftsController {
   ) {}
 
   @Get()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   list(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Query() query: { search?: string; active?: string }) {
     return this.shiftsService.list(query, this.tenantScope.toContext(user));
   }
 
   @Get('me')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   me(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Query() query: { from?: string; to?: string; date?: string }
@@ -39,7 +39,7 @@ export class ShiftsController {
   }
 
   @Get(':id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   byId(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number
@@ -48,7 +48,7 @@ export class ShiftsController {
   }
 
   @Post()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   create(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Body() dto: CreateShiftDto
@@ -57,7 +57,7 @@ export class ShiftsController {
   }
 
   @Patch(':id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   update(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,
@@ -67,7 +67,7 @@ export class ShiftsController {
   }
 
   @Post(':id/activate')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   activate(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number
@@ -76,7 +76,7 @@ export class ShiftsController {
   }
 
   @Post(':id/deactivate')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   deactivate(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number
@@ -85,7 +85,7 @@ export class ShiftsController {
   }
 
   @Get(':id/assignments')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   assignments(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number

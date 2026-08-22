@@ -2,8 +2,8 @@ import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuar
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { ApiRoles } from '../../common/auth/api-roles.decorator';
 import { JwtAuthGuard } from '../../common/auth/jwt.guard';
-import { Roles } from '../../common/auth/roles.decorator';
 import { RolesGuard } from '../../common/auth/roles.guard';
 import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { PaginationQueryDto } from '../../common/pagination/pagination.dto';
@@ -22,7 +22,7 @@ export class EmployeesController {
   ) {}
 
   @Get()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   list(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Query() query: PaginationQueryDto & { search?: string; active?: string; working?: string; companyId?: number }
@@ -31,13 +31,13 @@ export class EmployeesController {
   }
 
   @Get('me')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   me(@CurrentUser() user: { sub: number }) {
     return this.employeesService.findMine(user.sub);
   }
 
   @Get(':id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   byId(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number
@@ -46,7 +46,7 @@ export class EmployeesController {
   }
 
   @Post()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   create(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Body() dto: CreateEmployeeDto
@@ -55,7 +55,7 @@ export class EmployeesController {
   }
 
   @Patch(':id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   update(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,
@@ -65,7 +65,7 @@ export class EmployeesController {
   }
 
   @Patch(':id/activate')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   activate(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number
@@ -74,7 +74,7 @@ export class EmployeesController {
   }
 
   @Patch(':id/deactivate')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   deactivate(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number

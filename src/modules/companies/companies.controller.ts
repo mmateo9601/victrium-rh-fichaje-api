@@ -2,8 +2,8 @@ import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuar
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { ApiRoles } from '../../common/auth/api-roles.decorator';
 import { JwtAuthGuard } from '../../common/auth/jwt.guard';
-import { Roles } from '../../common/auth/roles.decorator';
 import { RolesGuard } from '../../common/auth/roles.guard';
 import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { PaginationQueryDto } from '../../common/pagination/pagination.dto';
@@ -22,7 +22,7 @@ export class CompaniesController {
   ) {}
 
   @Get()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   list(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Query() query: PaginationQueryDto & { search?: string; active?: string }
@@ -31,19 +31,19 @@ export class CompaniesController {
   }
 
   @Post()
-  @Roles('ROLE_ADMIN')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')
   create(@Body() dto: CreateCompanyDto) {
     return this.companiesService.create(dto);
   }
 
   @Get('me')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   me(@CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] }) {
     return this.companiesService.findMine(this.tenantScope.toContext(user));
   }
 
   @Get(':id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   byId(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number
@@ -52,7 +52,7 @@ export class CompaniesController {
   }
 
   @Patch(':id')
-  @Roles('ROLE_ADMIN')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')
   update(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,

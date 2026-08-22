@@ -361,7 +361,7 @@ function buildBusinessDays(count: number, endDate: Date) {
   return days.reverse();
 }
 
-function buildCalendarDays(year: number, referenceDate: Date) {
+function buildCalendarDays(year: number, _referenceDate: Date) {
   const days: { dia: string; horaInicio: string; horaFin: string }[] = [];
   const seen = new Set<string>();
   const pushDay = (dia: string, horaInicio: string, horaFin: string) => {

@@ -2,8 +2,8 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query,
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { ApiRoles } from '../../common/auth/api-roles.decorator';
 import { JwtAuthGuard } from '../../common/auth/jwt.guard';
-import { Roles } from '../../common/auth/roles.decorator';
 import { RolesGuard } from '../../common/auth/roles.guard';
 import { PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
@@ -17,7 +17,7 @@ export class ApiKeysController {
   constructor(private readonly apiKeysService: ApiKeysService) {}
 
   @Post()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   create(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Body() dto: CreateApiKeyDto
@@ -26,7 +26,7 @@ export class ApiKeysController {
   }
 
   @Get()
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   list(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Query() query: PaginationQueryDto & { search?: string; active?: string | boolean; sort?: string; order?: string }
@@ -35,7 +35,7 @@ export class ApiKeysController {
   }
 
   @Get('users/:userId')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   listByUser(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('userId', ParseIntPipe) userId: number,
@@ -45,7 +45,7 @@ export class ApiKeysController {
   }
 
   @Get(':id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   getById(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('id', ParseIntPipe) id: number
@@ -54,7 +54,7 @@ export class ApiKeysController {
   }
 
   @Patch(':id/deactivate')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   deactivate(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('id', ParseIntPipe) id: number
@@ -63,7 +63,7 @@ export class ApiKeysController {
   }
 
   @Patch(':id/activate')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   activate(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('id', ParseIntPipe) id: number
@@ -72,7 +72,7 @@ export class ApiKeysController {
   }
 
   @Delete(':id')
-  @Roles('ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
   remove(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('id', ParseIntPipe) id: number
