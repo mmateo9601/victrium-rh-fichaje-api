@@ -21,7 +21,7 @@
 | `JWT_REFRESH_SECRET` | Yes | Yes | Refresh token signing secret | 32+ chars and different from access secret | Runtime |
 | `JWT_ACCESS_EXPIRES_IN` | Yes | No | Access token lifetime | `15m` | Runtime |
 | `JWT_REFRESH_EXPIRES_IN` | Yes | No | Refresh token lifetime | `7d` | Runtime |
-| `CORS_ORIGINS` | Yes | No | Allowed browser origins | comma-separated URLs | Runtime |
+| `CORS_ORIGINS` | Yes | No | Allowed browser origins or safe subdomain patterns | comma-separated URLs / `https://*.example.com` | Runtime |
 | `TZ` | No | No | Process timezone default | `Europe/Madrid` | Runtime |
 | `SMTP_HOST` | No | Yes | SMTP server host | hostname | Runtime |
 | `SMTP_PORT` | No | Yes | SMTP server port | `587` | Runtime |
@@ -32,6 +32,7 @@
 Notes:
 - Prefer `DATABASE_URL` or split DB fields, not both in deployment docs.
 - In production, `CORS_ORIGINS` must not include `localhost` or `127.0.0.1`.
+- Safe wildcard subdomain patterns such as `https://*.victriumtech.com` are supported.
 - `SWAGGER_ENABLED` defaults to off in production.
 - `BOOTSTRAP_SUPER_ADMIN=true` requires `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD`.
 - The bootstrap password is used only by `npm run bootstrap:super-admin`; it is not printed to logs.

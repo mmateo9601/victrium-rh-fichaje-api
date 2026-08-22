@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { normalizeCorsOrigins, validateCorsOrigins } from './cors-origins';
+
 const optionalPositiveNumber = z.preprocess(
   (value) => (value === '' ? undefined : value),
   z.coerce.number().int().positive().optional()
@@ -96,18 +98,8 @@ export type AppConfig = {
 
 export function createAppConfig(env: NodeJS.ProcessEnv): AppConfig {
   const parsed = envSchema.parse(env);
-  const corsOrigins = parsed.CORS_ORIGINS.split(',').map((value) => value.trim()).filter(Boolean);
-
-  if (!corsOrigins.length) {
-    throw new Error('CORS_ORIGINS must contain at least one allowed origin');
-  }
-
-  if (parsed.NODE_ENV === 'production') {
-    const unsafeOrigin = corsOrigins.find((origin) => origin.includes('localhost') || origin.includes('127.0.0.1') || origin === '*');
-    if (unsafeOrigin) {
-      throw new Error(`Unsafe CORS origin in production: ${unsafeOrigin}`);
-    }
-  }
+  const corsOrigins = normalizeCorsOrigins(parsed.CORS_ORIGINS);
+  validateCorsOrigins(corsOrigins, parsed.NODE_ENV);
 
   const hasDatabaseUrl = Boolean(parsed.DATABASE_URL);
   const hasDatabaseParts = Boolean(parsed.DB_HOST && parsed.DB_NAME && parsed.DB_USER && parsed.DB_PASSWORD);

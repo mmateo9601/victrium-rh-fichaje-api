@@ -9,6 +9,7 @@ import { AppLogger } from './common/logging/app-logger.service';
 import { GlobalHttpExceptionFilter } from './common/errors/global-http-exception.filter';
 import { RequestIdMiddleware } from './common/logging/request-id.middleware';
 import { buildSwaggerDocument, setupSwagger } from './common/swagger/swagger.setup';
+import { isAllowedCorsOrigin } from './config/cors-origins';
 import { createAppConfig } from './config/env.validation';
 
 async function bootstrap() {
@@ -18,7 +19,6 @@ async function bootstrap() {
     cors: false,
     logger
   });
-  const allowedOrigins = new Set(config.corsOrigins.map((origin) => origin.trim()).filter(Boolean));
 
   app.enableShutdownHooks();
   app.setGlobalPrefix('api');
@@ -37,7 +37,7 @@ async function bootstrap() {
         return;
       }
 
-      if (allowedOrigins.has(origin)) {
+      if (isAllowedCorsOrigin(origin, config.corsOrigins)) {
         callback(null, true);
         return;
       }
