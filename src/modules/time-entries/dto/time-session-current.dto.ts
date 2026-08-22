@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { TimeEntryEligibilityDto } from './time-entry-eligibility.dto';
 import { TimeEntryBreakDto } from './time-entry-break.dto';
 
 export class TimeSessionCurrentDto {
@@ -38,4 +39,7 @@ export class TimeSessionCurrentDto {
 
   @ApiProperty({ required: false, nullable: true })
   companyName!: string | null;
+
+  @ApiProperty({ required: false, nullable: true, type: () => TimeEntryEligibilityDto })
+  eligibility!: TimeEntryEligibilityDto | null;
 }

@@ -29,6 +29,14 @@ export class TimeEntriesController {
     return this.timeEntriesService.current(user.sub, this.tenantScope.toContext(user));
   }
 
+  @Get('me/eligibility')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  eligibility(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] }
+  ) {
+    return this.timeEntriesService.eligibility(user.sub, this.tenantScope.toContext(user));
+  }
+
   @Post('start')
   @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   start(
@@ -40,8 +48,11 @@ export class TimeEntriesController {
 
   @Post('clock')
   @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
-  clock(@CurrentUser() user: { sub: number }, @Body() dto: ClockTimeEntryDto) {
-    return this.timeEntriesService.clock(user.sub, dto);
+  clock(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Body() dto: ClockTimeEntryDto
+  ) {
+    return this.timeEntriesService.clock(user.sub, dto, this.tenantScope.toContext(user));
   }
 
   @Get()

@@ -131,6 +131,7 @@ const SEED_COMPANIES: SeededCompany[] = [
       maxDailyMinutes: 510,
       minimumBreakMinutes: 30,
       lateThresholdMinutes: 10,
+      earlyClockInMinutes: 10,
       weeklyTargetMinutes: 2400,
       monthlyTargetMinutes: 9600
     }
@@ -144,6 +145,7 @@ const SEED_COMPANIES: SeededCompany[] = [
       maxDailyMinutes: 480,
       minimumBreakMinutes: 20,
       lateThresholdMinutes: 5,
+      earlyClockInMinutes: 15,
       weeklyTargetMinutes: 2250,
       monthlyTargetMinutes: 9000
     }

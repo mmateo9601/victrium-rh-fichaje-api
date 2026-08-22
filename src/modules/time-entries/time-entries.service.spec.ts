@@ -7,7 +7,9 @@ import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
 import { TimeEntrySessionEntity } from '../../database/entities/time-entry-session.entity';
 import { UserEntity } from '../../database/entities/user.entity';
 import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
+import { ClockService } from '../../common/time/clock.service';
 import { UsersService } from '../users/users.service';
+import { TimeEntryEligibilityService } from './time-entry-eligibility.service';
 import { TimeEntriesService } from './time-entries.service';
 
 describe('TimeEntriesService', () => {
@@ -65,7 +67,15 @@ describe('TimeEntriesService', () => {
     const sessionRepo = {
       create: jest.fn().mockImplementation((value) => value),
       findOne: jest.fn().mockResolvedValue(null),
-      save: jest.fn().mockImplementation(async (value) => value)
+      save: jest.fn().mockImplementation(async (value) => value),
+      createQueryBuilder: jest.fn().mockReturnValue({
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null)
+      })
     };
 
     const breakRepo = {
@@ -129,6 +139,32 @@ describe('TimeEntriesService', () => {
       findById: jest.fn().mockResolvedValue(user)
     } as unknown as UsersService;
 
+    const clockService = {
+      now: jest.fn().mockReturnValue(new Date('2026-08-21T06:00:00.000Z'))
+    } as unknown as ClockService;
+
+    const eligibilityService = {
+      evaluate: jest.fn().mockResolvedValue({
+        canStart: true,
+        reason: 'ALLOWED',
+        message: 'Puede iniciar la jornada',
+        evaluatedAt: '2026-08-21T08:00:00+02:00',
+        allowedFrom: null,
+        allowedUntil: null,
+        scheduledStart: null,
+        scheduledEnd: null,
+        earlyClockInMinutes: 10,
+        companyId: 7,
+        companyName: 'Victrium',
+        workLocationId: null,
+        workLocationName: null,
+        workLocationCode: null,
+        shiftId: null,
+        shiftName: null,
+        shiftCode: null
+      })
+    } as unknown as TimeEntryEligibilityService;
+
     const tenantScope = {
       assertResourceAccess: jest.fn()
     } as unknown as TenantScopeService;
@@ -140,16 +176,43 @@ describe('TimeEntriesService', () => {
       sessionRepo as never,
       breakRepo as never,
       usersService,
-      tenantScope
+      tenantScope,
+      clockService,
+      eligibilityService
     );
 
-    return { service, dataSource, timeEntryRepo, auditRepo, sessionRepo, breakRepo, employeeRepo, userRepo, manager, user, entry, correctedBy };
+    return {
+      service,
+      dataSource,
+      timeEntryRepo,
+      auditRepo,
+      sessionRepo,
+      breakRepo,
+      employeeRepo,
+      userRepo,
+      manager,
+      user,
+      entry,
+      correctedBy,
+      clockService,
+      eligibilityService
+    };
   }
 
   it('creates a clock in entry and toggles user state', async () => {
     const { service, user } = createService();
 
-    const result = await service.clock(1, { origen: 'web' });
+    const result = await service.clock(
+      1,
+      { origen: 'web' },
+      {
+        userId: 1,
+        companyId: 7,
+        employeeId: 21,
+        roles: ['ROLE_USER'],
+        canAccessAll: false
+      }
+    );
 
     expect(result.tipo).toBe('ENTRADA');
     expect(user.working).toBe(true);
@@ -191,6 +254,46 @@ describe('TimeEntriesService', () => {
     expect(breakRepo.save).toHaveBeenCalledTimes(1);
     expect(employeeRepo.save).toHaveBeenCalledTimes(1);
     expect(userRepo.save).toHaveBeenCalled();
+  });
+
+  it('returns a completed session snapshot when the latest session of the day is already closed', async () => {
+    const completedSession = {
+      id: 12,
+      usuario: {
+        id: 1,
+        numero: 'EMP001',
+        nombreEmpleado: 'Ada Lovelace',
+        company: { id: 7, name: 'Victrium' }
+      },
+      startedAt: new Date('2026-08-21T06:00:00.000Z'),
+      finishedAt: new Date('2026-08-21T14:00:00.000Z'),
+      state: 'COMPLETED',
+      source: 'web',
+      breaks: [],
+      version: 1
+    } as unknown as TimeEntrySessionEntity;
+
+    const { service, sessionRepo } = createService();
+    sessionRepo.findOne.mockResolvedValueOnce(null);
+    sessionRepo.createQueryBuilder.mockReturnValueOnce({
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(completedSession)
+    });
+
+    const result = await service.current(1, {
+      userId: 1,
+      companyId: 7,
+      employeeId: 21,
+      roles: ['ROLE_USER'],
+      canAccessAll: false
+    });
+
+    expect(result.state).toBe('COMPLETED');
+    expect(result.sessionId).toBe(completedSession.id);
   });
 
   it('returns a visible entry for the authenticated owner', async () => {

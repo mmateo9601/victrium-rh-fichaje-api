@@ -8,13 +8,16 @@ import { TimeEntrySessionEntity } from '../../database/entities/time-entry-sessi
 import { TimeEntryBreakEntity } from '../../database/entities/time-entry-break.entity';
 import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { UsersModule } from '../users/users.module';
+import { ShiftsModule } from '../shifts/shifts.module';
+import { ClockService } from '../../common/time/clock.service';
 import { TimeEntriesController } from './time-entries.controller';
+import { TimeEntryEligibilityService } from './time-entry-eligibility.service';
 import { TimeEntriesService } from './time-entries.service';
 
 @Module({
-  imports: [UsersModule, TypeOrmModule.forFeature([TimeEntryEntity, TimeEntryAuditEntity, TimeEntrySessionEntity, TimeEntryBreakEntity, UserEntity])],
+  imports: [UsersModule, ShiftsModule, TypeOrmModule.forFeature([TimeEntryEntity, TimeEntryAuditEntity, TimeEntrySessionEntity, TimeEntryBreakEntity, UserEntity])],
   controllers: [TimeEntriesController],
-  providers: [TimeEntriesService, TenantScopeService],
+  providers: [TimeEntriesService, TimeEntryEligibilityService, ClockService, TenantScopeService],
   exports: [TimeEntriesService]
 })
 export class TimeEntriesModule {}
