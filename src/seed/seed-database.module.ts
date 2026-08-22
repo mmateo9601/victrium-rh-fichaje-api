@@ -13,6 +13,7 @@ const config = createAppConfig(process.env);
     TypeOrmModule.forRoot({
       ...createTypeOrmOptions(config),
       synchronize: false,
+      migrationsRun: false,
       logging: ['error', 'warn']
     })
   ],

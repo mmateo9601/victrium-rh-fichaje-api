@@ -88,7 +88,7 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
       AddCompanyDefaultCalendar1724173100000,
       AddEmployeePrimaryWorkLocation1724173200000
     ],
-    migrationsRun: true,
+    migrationsRun: false,
     synchronize: false,
     logging: config.nodeEnv === 'development',
     autoLoadEntities: false,

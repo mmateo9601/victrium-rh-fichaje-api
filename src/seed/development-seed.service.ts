@@ -1311,7 +1311,7 @@ export class DevelopmentSeedService {
       correctedBy: laura.user
     });
 
-    return await repository.count();
+    return 2;
   }
 
   private async correctTimeEntry(
