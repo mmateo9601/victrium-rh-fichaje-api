@@ -10,6 +10,11 @@ function createConfig(): AppConfig {
     logLevel: 'log',
     swaggerEnabled: false,
     trustProxy: false,
+    bootstrap: {
+      superAdmin: {
+        enabled: false
+      }
+    },
     database: {
       host: 'localhost',
       port: 3306,

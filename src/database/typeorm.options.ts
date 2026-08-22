@@ -39,6 +39,7 @@ import { AddWorkLocationToShiftOverrides1724173000000 } from './migrations/17241
 import { AddCompanyDefaultCalendar1724173100000 } from './migrations/1724173100000-AddCompanyDefaultCalendar';
 import { AddEmployeePrimaryWorkLocation1724173200000 } from './migrations/1724173200000-AddEmployeePrimaryWorkLocation';
 import { HardenDatabaseIntegrity1724173300000 } from './migrations/1724173300000-HardenDatabaseIntegrity';
+import { CreateCoreBootstrapSchema1724171900000 } from './migrations/1724171900000-CreateCoreBootstrapSchema';
 
 export function createTypeOrmOptions(config: AppConfig): MysqlConnectionOptions {
   const commonOptions: MysqlConnectionOptions = {
@@ -70,6 +71,7 @@ export function createTypeOrmOptions(config: AppConfig): MysqlConnectionOptions 
       EmployeeLocationAssignmentEntity
     ],
     migrations: [
+      CreateCoreBootstrapSchema1724171900000,
       CreateApiKeysTable1724172000000,
       CreateTimeEntrySessionsTable1724172100000,
       CreateShiftsTables1724172200000,

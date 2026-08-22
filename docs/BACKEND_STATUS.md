@@ -57,9 +57,9 @@ Fecha de corte: 2026-08-22
 
 ## DATABASE IMPACT
 
-- No se añadió migración nueva en este cambio.
+- Se añadió una migración base de arranque para construir la base MySQL desde cero sin `synchronize`.
 - Las entidades existentes ya cubren sesiones, fichajes, turnos, asignaciones, permisos, vacaciones e incidencias.
-- El modelo sigue apoyándose en relaciones eager/TypeORM para ensamblar DTOs específicos.
+- El flujo de despliegue usa `npm run migration:run` y `npm run bootstrap:super-admin` de forma explícita.
 
 ## TESTS
 
@@ -72,9 +72,11 @@ Fecha de corte: 2026-08-22
 
 - Swagger ahora documenta `x-api-key` además de Bearer JWT.
 - El cliente web ya puede invocar `npm run api` como alias de regeneración.
+- La API ya dispone de bootstrap explícito de `ROLE_SUPER_ADMIN` para despliegues sobre bases vacías.
 
 ## PENDING
 
 - Exponer un job programado explícito para `AutoCloseTimeEntriesJob` si el despliegue no lo inyecta externamente.
 - Módulo de notifications dedicado.
 - Revisar si `settings` merece módulo propio en vez de permanecer embebido en `company.workPolicy`.
+- Verificar en Hostinger el flujo completo `build -> migration:run -> bootstrap:super-admin -> start:prod`.

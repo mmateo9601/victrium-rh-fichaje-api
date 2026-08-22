@@ -38,6 +38,16 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['error', 'warn', 'log', 'verbose', 'debug']).default('log'),
   SWAGGER_ENABLED: optionalBoolean,
   TRUST_PROXY: optionalBoolean,
+  BOOTSTRAP_SUPER_ADMIN: optionalBoolean,
+  SUPER_ADMIN_EMAIL: z.string().email().optional(),
+  SUPER_ADMIN_PASSWORD: z
+    .string()
+    .min(12)
+    .refine((value) => /[A-Za-z]/.test(value) && /\d/.test(value), {
+      message: 'SUPER_ADMIN_PASSWORD must contain letters and numbers'
+    })
+    .optional(),
+  SUPER_ADMIN_NAME: z.string().min(1).max(120).optional(),
   SMTP_HOST: z.string().optional().or(z.literal('')),
   SMTP_PORT: optionalPositiveNumber,
   SMTP_USER: z.string().optional().or(z.literal('')),
@@ -53,6 +63,14 @@ export type AppConfig = {
   logLevel: 'error' | 'warn' | 'log' | 'verbose' | 'debug';
   swaggerEnabled: boolean;
   trustProxy: boolean;
+  bootstrap: {
+    superAdmin: {
+      enabled: boolean;
+      email?: string;
+      password?: string;
+      name?: string;
+    };
+  };
   database: {
     url?: string;
     host?: string;
@@ -101,6 +119,16 @@ export function createAppConfig(env: NodeJS.ProcessEnv): AppConfig {
     throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be different');
   }
 
+  const bootstrapEnabled = parsed.BOOTSTRAP_SUPER_ADMIN ?? false;
+  if (bootstrapEnabled) {
+    if (!parsed.SUPER_ADMIN_EMAIL) {
+      throw new Error('SUPER_ADMIN_EMAIL is required when BOOTSTRAP_SUPER_ADMIN=true');
+    }
+    if (!parsed.SUPER_ADMIN_PASSWORD) {
+      throw new Error('SUPER_ADMIN_PASSWORD is required when BOOTSTRAP_SUPER_ADMIN=true');
+    }
+  }
+
   return {
     nodeEnv: parsed.NODE_ENV,
     port: parsed.PORT,
@@ -109,6 +137,14 @@ export function createAppConfig(env: NodeJS.ProcessEnv): AppConfig {
     logLevel: parsed.LOG_LEVEL,
     swaggerEnabled: parsed.SWAGGER_ENABLED ?? parsed.NODE_ENV !== 'production',
     trustProxy: parsed.TRUST_PROXY ?? parsed.NODE_ENV === 'production',
+    bootstrap: {
+      superAdmin: {
+        enabled: bootstrapEnabled,
+        email: parsed.SUPER_ADMIN_EMAIL || undefined,
+        password: parsed.SUPER_ADMIN_PASSWORD || undefined,
+        name: parsed.SUPER_ADMIN_NAME || undefined
+      }
+    },
     database: {
       url: parsed.DATABASE_URL || undefined,
       host: parsed.DB_HOST,
