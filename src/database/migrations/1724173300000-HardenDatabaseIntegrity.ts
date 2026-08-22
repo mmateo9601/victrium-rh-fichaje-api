@@ -7,29 +7,11 @@ export class HardenDatabaseIntegrity1724173300000 implements MigrationInterface 
     await this.dropIndexByColumns(queryRunner, 'calendarios', ['nombre']);
     await this.dropIndexByColumns(queryRunner, 'calendarios', ['year']);
     await this.dropIndexByColumns(queryRunner, 'dias_laborables', ['dia']);
-    await this.dropIndexByColumns(queryRunner, 'turno_dias', ['shift_id', 'day_of_week']);
-    await this.dropIndexByColumns(queryRunner, 'turno_overrides', ['employee_id', 'date']);
 
-    await queryRunner.query(`
-      ALTER TABLE \`calendarios\`
-      ADD UNIQUE KEY \`IDX_calendarios_company_nombre\` (\`company_id\`, \`nombre\`),
-      ADD UNIQUE KEY \`IDX_calendarios_company_year\` (\`company_id\`, \`year\`)
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE \`dias_laborables\`
-      ADD UNIQUE KEY \`IDX_dias_laborables_calendar_day\` (\`calendario_id\`, \`dia\`)
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE \`turno_dias\`
-      ADD UNIQUE KEY \`IDX_turno_dias_shift_day\` (\`shift_id\`, \`day_of_week\`)
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE \`turno_overrides\`
-      ADD UNIQUE KEY \`IDX_turno_overrides_employee_date\` (\`employee_id\`, \`date\`)
-    `);
+    await this.ensureUniqueKey(queryRunner, 'calendarios', 'IDX_calendarios_company_nombre', ['company_id', 'nombre']);
+    await this.ensureUniqueKey(queryRunner, 'calendarios', 'IDX_calendarios_company_year', ['company_id', 'year']);
+    await this.ensureUniqueKey(queryRunner, 'dias_laborables', 'IDX_dias_laborables_calendar_day', ['calendario_id', 'dia']);
+    await this.ensureUniqueKey(queryRunner, 'turno_dias', 'UQ_turno_dias_shift_day', ['shift_id', 'day_of_week']);
 
     await queryRunner.query(`
       ALTER TABLE \`employees\`
@@ -248,34 +230,15 @@ export class HardenDatabaseIntegrity1724173300000 implements MigrationInterface 
     await queryRunner.query('ALTER TABLE `turnos` DROP INDEX `UQ_turnos_id_company_id`');
     await queryRunner.query('ALTER TABLE `employees` DROP INDEX `UQ_employees_id_company_id`');
 
-    await queryRunner.query('ALTER TABLE `turno_overrides` DROP INDEX `IDX_turno_overrides_employee_date`');
-    await queryRunner.query('ALTER TABLE `turno_dias` DROP INDEX `IDX_turno_dias_shift_day`');
     await queryRunner.query('ALTER TABLE `dias_laborables` DROP INDEX `IDX_dias_laborables_calendar_day`');
     await queryRunner.query('ALTER TABLE `calendarios` DROP INDEX `IDX_calendarios_company_year`');
     await queryRunner.query('ALTER TABLE `calendarios` DROP INDEX `IDX_calendarios_company_nombre`');
 
     await this.dropIndexByColumns(queryRunner, 'employee_location_assignments', ['company_id', 'employee_id', 'valid_from', 'valid_to']);
 
-    await queryRunner.query(`
-      ALTER TABLE \`calendarios\`
-      ADD UNIQUE KEY \`IDX_calendarios_nombre\` (\`nombre\`),
-      ADD UNIQUE KEY \`IDX_calendarios_year\` (\`year\`)
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE \`dias_laborables\`
-      ADD UNIQUE KEY \`IDX_dias_laborables_dia\` (\`dia\`)
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE \`turno_dias\`
-      ADD KEY \`IDX_turno_dias_shift_day\` (\`shift_id\`, \`day_of_week\`)
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE \`turno_overrides\`
-      ADD KEY \`IDX_turno_overrides_employee_date\` (\`employee_id\`, \`date\`)
-    `);
+    await this.ensureUniqueKey(queryRunner, 'calendarios', 'IDX_calendarios_nombre', ['nombre']);
+    await this.ensureUniqueKey(queryRunner, 'calendarios', 'IDX_calendarios_year', ['year']);
+    await this.ensureUniqueKey(queryRunner, 'dias_laborables', 'IDX_dias_laborables_dia', ['dia']);
 
     await queryRunner.query('ALTER TABLE `employee_location_assignments` ADD KEY `IDX_employee_location_assignments_company_employee_range` (`company_id`, `employee_id`, `valid_from`, `valid_to`)');
   }
@@ -295,5 +258,23 @@ export class HardenDatabaseIntegrity1724173300000 implements MigrationInterface 
     if (index) {
       await queryRunner.dropIndex(tableName, index);
     }
+  }
+
+  private async ensureUniqueKey(queryRunner: QueryRunner, tableName: string, indexName: string, columns: string[]) {
+    const table = await queryRunner.getTable(tableName);
+    if (!table) {
+      return;
+    }
+
+    const indexExists = table.indices.some((index) => index.name === indexName);
+    if (indexExists) {
+      return;
+    }
+
+    const columnList = columns.map((column) => `\`${column}\``).join(', ');
+    await queryRunner.query(`
+      ALTER TABLE \`${tableName}\`
+      ADD UNIQUE KEY \`${indexName}\` (${columnList})
+    `);
   }
 }

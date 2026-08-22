@@ -1,6 +1,6 @@
 import { AppDataSource } from './data-source';
 
-type MigrationCommand = 'show' | 'run' | 'revert';
+type MigrationCommand = 'show' | 'run' | 'revert' | 'inspect';
 
 function getMigrationsTableName() {
   return (AppDataSource.options.migrationsTableName as string | undefined) ?? 'migrations';
@@ -80,6 +80,37 @@ async function revertMigrations(): Promise<void> {
   }
 }
 
+async function inspectSchema(): Promise<void> {
+  if (!AppDataSource.isInitialized) {
+    await AppDataSource.initialize();
+  }
+
+  const queryRunner = AppDataSource.createQueryRunner();
+  try {
+    const tables = ['calendarios', 'dias_laborables', 'turno_dias', 'turno_overrides'];
+    const result: Record<string, unknown> = {};
+    for (const table of tables) {
+      result[table] = await queryRunner.query(`SHOW INDEX FROM \`${table}\``);
+    }
+
+    result.users = await queryRunner.query('SELECT COUNT(*) AS totalUsers FROM usuarios');
+    result.superAdmins = await queryRunner.query(`
+      SELECT COUNT(DISTINCT u.id) AS totalSuperAdmins
+      FROM usuarios u
+      INNER JOIN usuario_rol ur ON ur.usuario_id = u.id
+      INNER JOIN roles r ON r.id = ur.rol_id
+      WHERE r.rolNombre = 'ROLE_SUPER_ADMIN'
+    `);
+
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  } finally {
+    await queryRunner.release();
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
+    }
+  }
+}
+
 export async function runDatabaseCli(command: MigrationCommand): Promise<void> {
   switch (command) {
     case 'show':
@@ -90,6 +121,9 @@ export async function runDatabaseCli(command: MigrationCommand): Promise<void> {
       return;
     case 'revert':
       await revertMigrations();
+      return;
+    case 'inspect':
+      await inspectSchema();
       return;
     default:
       throw new Error(`Unsupported migration command: ${String(command)}`);

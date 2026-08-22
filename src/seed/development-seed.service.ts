@@ -35,6 +35,17 @@ type SeededCompany = {
   year: number;
   calendarName: string;
   workPolicy: Record<string, unknown> | null;
+  workLocations: SeededWorkLocation[];
+};
+
+type SeededWorkLocation = {
+  code: string;
+  name: string;
+  city: string;
+  province: string;
+  timezone: string;
+  address: string;
+  postalCode: string;
 };
 
 type SeededUser = {
@@ -45,25 +56,17 @@ type SeededUser = {
   roles: RoleName[];
   admin: boolean;
   companyCode: string;
-  diasVacaciones: number;
-  horasGeneradas: number;
-  working: boolean;
-  enVacaciones: boolean;
-  deBaja: boolean;
-};
-
-type SeededEmployee = {
-  numero: string;
-  nombreEmpleado: string;
-  email: string;
-  dni: string;
-  companyCode: string;
   calendarYear: number;
   diasVacaciones: number;
   horasGeneradas: number;
   working: boolean;
   enVacaciones: boolean;
   deBaja: boolean;
+  weeklyContractMinutes?: number;
+  annualContractMinutes?: number;
+  workingPercentage?: string;
+  contractType?: string;
+  primaryWorkLocationCode?: string;
 };
 
 type SeedSummary = {
@@ -136,7 +139,36 @@ const SEED_COMPANIES: SeededCompany[] = [
       earlyClockInMinutes: 10,
       weeklyTargetMinutes: 2400,
       monthlyTargetMinutes: 9600
-    }
+    },
+    workLocations: [
+      {
+        code: 'MAD-CENTRO',
+        name: 'Madrid Centro',
+        city: 'Madrid',
+        province: 'Madrid',
+        timezone: 'Europe/Madrid',
+        address: 'Calle Gran Vía 1',
+        postalCode: '28013'
+      },
+      {
+        code: 'MAD-ALC',
+        name: 'Alcobendas',
+        city: 'Alcobendas',
+        province: 'Madrid',
+        timezone: 'Europe/Madrid',
+        address: 'Avenida de Europa 12',
+        postalCode: '28108'
+      },
+      {
+        code: 'BCN-SANT',
+        name: 'Barcelona Sant',
+        city: 'Barcelona',
+        province: 'Barcelona',
+        timezone: 'Europe/Madrid',
+        address: 'Carrer de Balmes 44',
+        postalCode: '08007'
+      }
+    ]
   },
   {
     code: 'ACME',
@@ -150,7 +182,129 @@ const SEED_COMPANIES: SeededCompany[] = [
       earlyClockInMinutes: 15,
       weeklyTargetMinutes: 2250,
       monthlyTargetMinutes: 9000
-    }
+    },
+    workLocations: [
+      {
+        code: 'SEV-NORTE',
+        name: 'Sevilla Norte',
+        city: 'Sevilla',
+        province: 'Sevilla',
+        timezone: 'Europe/Madrid',
+        address: 'Calle Sierpes 10',
+        postalCode: '41004'
+      },
+      {
+        code: 'VLC-CENTRO',
+        name: 'Valencia Centro',
+        city: 'Valencia',
+        province: 'Valencia',
+        timezone: 'Europe/Madrid',
+        address: 'Carrer de Colón 8',
+        postalCode: '46004'
+      }
+    ]
+  },
+  {
+    code: 'NEXA',
+    name: 'Nexa Logistics',
+    year: 2026,
+    calendarName: 'Nexa Logistics 2026',
+    workPolicy: {
+      maxDailyMinutes: 500,
+      minimumBreakMinutes: 30,
+      lateThresholdMinutes: 8,
+      earlyClockInMinutes: 10,
+      weeklyTargetMinutes: 2380,
+      monthlyTargetMinutes: 9520
+    },
+    workLocations: [
+      {
+        code: 'MAD-LOG',
+        name: 'Madrid Logística',
+        city: 'Madrid',
+        province: 'Madrid',
+        timezone: 'Europe/Madrid',
+        address: 'Polígono Industrial Vallecas 7',
+        postalCode: '28053'
+      },
+      {
+        code: 'ALG-PLN',
+        name: 'Algeciras Puerto',
+        city: 'Algeciras',
+        province: 'Cádiz',
+        timezone: 'Europe/Madrid',
+        address: 'Muelle de Levante 4',
+        postalCode: '11201'
+      }
+    ]
+  },
+  {
+    code: 'ORION',
+    name: 'Orion Servicios',
+    year: 2027,
+    calendarName: 'Orion Servicios 2027',
+    workPolicy: {
+      maxDailyMinutes: 480,
+      minimumBreakMinutes: 30,
+      lateThresholdMinutes: 10,
+      earlyClockInMinutes: 15,
+      weeklyTargetMinutes: 2250,
+      monthlyTargetMinutes: 9000
+    },
+    workLocations: [
+      {
+        code: 'MAD-SUR',
+        name: 'Madrid Sur',
+        city: 'Madrid',
+        province: 'Madrid',
+        timezone: 'Europe/Madrid',
+        address: 'Avenida de Andalucía 155',
+        postalCode: '28041'
+      },
+      {
+        code: 'BIO-PORT',
+        name: 'Bilbao Port',
+        city: 'Bilbao',
+        province: 'Bizkaia',
+        timezone: 'Europe/Madrid',
+        address: 'Muelle Zorrozaurre 2',
+        postalCode: '48014'
+      }
+    ]
+  },
+  {
+    code: 'LUMEN',
+    name: 'Lumen Health',
+    year: 2027,
+    calendarName: 'Lumen Health 2027',
+    workPolicy: {
+      maxDailyMinutes: 450,
+      minimumBreakMinutes: 20,
+      lateThresholdMinutes: 5,
+      earlyClockInMinutes: 10,
+      weeklyTargetMinutes: 2100,
+      monthlyTargetMinutes: 8400
+    },
+    workLocations: [
+      {
+        code: 'MAD-CLN',
+        name: 'Madrid Clínica',
+        city: 'Madrid',
+        province: 'Madrid',
+        timezone: 'Europe/Madrid',
+        address: 'Paseo de la Castellana 101',
+        postalCode: '28046'
+      },
+      {
+        code: 'BCN-HUB',
+        name: 'Barcelona Hub',
+        city: 'Barcelona',
+        province: 'Barcelona',
+        timezone: 'Europe/Madrid',
+        address: 'Avinguda Diagonal 612',
+        postalCode: '08021'
+      }
+    ]
   }
 ];
 
@@ -163,11 +317,17 @@ const SEED_USERS: SeededUser[] = [
     roles: [RoleName.ROLE_SUPER_ADMIN],
     admin: false,
     companyCode: 'VICTRIUM',
+    calendarYear: 2026,
     diasVacaciones: 30,
     horasGeneradas: 0,
     working: false,
     enVacaciones: false,
-    deBaja: false
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2400,
+    annualContractMinutes: 86400,
+    workingPercentage: '100.00',
+    primaryWorkLocationCode: 'MAD-CENTRO'
   },
   {
     email: 'admin@victrium.local',
@@ -177,135 +337,397 @@ const SEED_USERS: SeededUser[] = [
     roles: [RoleName.ROLE_ADMIN],
     admin: true,
     companyCode: 'VICTRIUM',
+    calendarYear: 2026,
     diasVacaciones: 24,
     horasGeneradas: 0,
     working: false,
     enVacaciones: false,
-    deBaja: false
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2400,
+    annualContractMinutes: 86400,
+    workingPercentage: '100.00',
+    primaryWorkLocationCode: 'MAD-CENTRO'
+  },
+  {
+    email: 'company-admin@victrium.local',
+    numero: 'VIC-CAD',
+    nombreEmpleado: 'Sergio Moreno Gil',
+    dni: '90000002B',
+    roles: [RoleName.ROLE_COMPANY_ADMIN],
+    admin: true,
+    companyCode: 'VICTRIUM',
+    calendarYear: 2026,
+    diasVacaciones: 26,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2400,
+    annualContractMinutes: 86400,
+    workingPercentage: '100.00',
+    primaryWorkLocationCode: 'BCN-SANT'
   },
   {
     email: 'rrhh@victrium.local',
     numero: 'VIC-RRHH',
     nombreEmpleado: 'Raúl Navarro Pérez',
-    dni: '90000002B',
+    dni: '90000003C',
     roles: [RoleName.ROLE_RRHH],
     admin: false,
     companyCode: 'VICTRIUM',
+    calendarYear: 2026,
     diasVacaciones: 22,
     horasGeneradas: 0,
     working: false,
     enVacaciones: false,
-    deBaja: false
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2400,
+    annualContractMinutes: 86400,
+    workingPercentage: '100.00',
+    primaryWorkLocationCode: 'MAD-CENTRO'
   },
   {
     email: 'laura@victrium.local',
     numero: 'VIC-LAU',
     nombreEmpleado: 'Laura Pérez Martín',
-    dni: '90000003C',
+    dni: '90000004D',
     roles: [RoleName.ROLE_USER],
     admin: false,
     companyCode: 'VICTRIUM',
+    calendarYear: 2026,
     diasVacaciones: 30,
     horasGeneradas: 0,
     working: false,
     enVacaciones: false,
-    deBaja: false
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2400,
+    annualContractMinutes: 86400,
+    workingPercentage: '100.00',
+    primaryWorkLocationCode: 'MAD-CENTRO'
   },
   {
     email: 'carlos@victrium.local',
     numero: 'VIC-CAR',
     nombreEmpleado: 'Carlos Gómez Ruiz',
-    dni: '90000004D',
+    dni: '90000005E',
     roles: [RoleName.ROLE_USER],
     admin: false,
     companyCode: 'VICTRIUM',
+    calendarYear: 2026,
     diasVacaciones: 28,
     horasGeneradas: 0,
     working: false,
     enVacaciones: false,
-    deBaja: false
+    deBaja: false,
+    contractType: 'PART_TIME',
+    weeklyContractMinutes: 1500,
+    annualContractMinutes: 54000,
+    workingPercentage: '62.50',
+    primaryWorkLocationCode: 'MAD-ALC'
   },
   {
     email: 'admin@acme.local',
     numero: 'ACM-ADM',
     nombreEmpleado: 'Marta Sánchez León',
-    dni: '90000005E',
+    dni: '90000006F',
     roles: [RoleName.ROLE_ADMIN],
     admin: true,
-    companyCode: 'ACME',
-    diasVacaciones: 22,
-    horasGeneradas: 0,
-    working: false,
-    enVacaciones: false,
-    deBaja: false
-  }
-];
-
-const SEED_EMPLOYEES: SeededEmployee[] = [
-  {
-    numero: 'VIC-ADM',
-    nombreEmpleado: 'Ana Martínez López',
-    email: 'admin@victrium.local',
-    dni: '90000001A',
-    companyCode: 'VICTRIUM',
-    calendarYear: 2026,
-    diasVacaciones: 24,
-    horasGeneradas: 0,
-    working: false,
-    enVacaciones: false,
-    deBaja: false
-  },
-  {
-    numero: 'VIC-RRHH',
-    nombreEmpleado: 'Raúl Navarro Pérez',
-    email: 'rrhh@victrium.local',
-    dni: '90000002B',
-    companyCode: 'VICTRIUM',
-    calendarYear: 2026,
-    diasVacaciones: 22,
-    horasGeneradas: 0,
-    working: false,
-    enVacaciones: false,
-    deBaja: false
-  },
-  {
-    numero: 'VIC-LAU',
-    nombreEmpleado: 'Laura Pérez Martín',
-    email: 'laura@victrium.local',
-    dni: '90000003C',
-    companyCode: 'VICTRIUM',
-    calendarYear: 2026,
-    diasVacaciones: 30,
-    horasGeneradas: 0,
-    working: false,
-    enVacaciones: false,
-    deBaja: false
-  },
-  {
-    numero: 'VIC-CAR',
-    nombreEmpleado: 'Carlos Gómez Ruiz',
-    email: 'carlos@victrium.local',
-    dni: '90000004D',
-    companyCode: 'VICTRIUM',
-    calendarYear: 2026,
-    diasVacaciones: 28,
-    horasGeneradas: 0,
-    working: false,
-    enVacaciones: false,
-    deBaja: false
-  },
-  {
-    numero: 'ACM-ADM',
-    nombreEmpleado: 'Marta Sánchez León',
-    email: 'admin@acme.local',
-    dni: '90000005E',
     companyCode: 'ACME',
     calendarYear: 2027,
     diasVacaciones: 22,
     horasGeneradas: 0,
     working: false,
     enVacaciones: false,
-    deBaja: false
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2250,
+    annualContractMinutes: 81000,
+    workingPercentage: '93.75',
+    primaryWorkLocationCode: 'SEV-NORTE'
+  },
+  {
+    email: 'company-admin@acme.local',
+    numero: 'ACM-CAD',
+    nombreEmpleado: 'Javier Ortiz Medina',
+    dni: '90000007G',
+    roles: [RoleName.ROLE_COMPANY_ADMIN],
+    admin: true,
+    companyCode: 'ACME',
+    calendarYear: 2027,
+    diasVacaciones: 26,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2250,
+    annualContractMinutes: 81000,
+    workingPercentage: '93.75',
+    primaryWorkLocationCode: 'VLC-CENTRO'
+  },
+  {
+    email: 'rrhh@acme.local',
+    numero: 'ACM-RRHH',
+    nombreEmpleado: 'Sara Molina Vega',
+    dni: '90000008H',
+    roles: [RoleName.ROLE_RRHH],
+    admin: false,
+    companyCode: 'ACME',
+    calendarYear: 2027,
+    diasVacaciones: 24,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2250,
+    annualContractMinutes: 81000,
+    workingPercentage: '93.75',
+    primaryWorkLocationCode: 'SEV-NORTE'
+  },
+  {
+    email: 'operations@acme.local',
+    numero: 'ACM-OPS',
+    nombreEmpleado: 'Lucía Torres Gil',
+    dni: '90000009J',
+    roles: [RoleName.ROLE_USER],
+    admin: false,
+    companyCode: 'ACME',
+    calendarYear: 2027,
+    diasVacaciones: 20,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2250,
+    annualContractMinutes: 81000,
+    workingPercentage: '93.75',
+    primaryWorkLocationCode: 'VLC-CENTRO'
+  },
+  {
+    email: 'company-admin@nexa.local',
+    numero: 'NEX-CAD',
+    nombreEmpleado: 'Pedro Ibáñez Cano',
+    dni: '90000010K',
+    roles: [RoleName.ROLE_COMPANY_ADMIN],
+    admin: true,
+    companyCode: 'NEXA',
+    calendarYear: 2026,
+    diasVacaciones: 26,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2380,
+    annualContractMinutes: 85680,
+    workingPercentage: '99.17',
+    primaryWorkLocationCode: 'MAD-LOG'
+  },
+  {
+    email: 'rrhh@nexa.local',
+    numero: 'NEX-RRHH',
+    nombreEmpleado: 'Irene Pastor Ruiz',
+    dni: '90000011L',
+    roles: [RoleName.ROLE_RRHH],
+    admin: false,
+    companyCode: 'NEXA',
+    calendarYear: 2026,
+    diasVacaciones: 22,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2380,
+    annualContractMinutes: 85680,
+    workingPercentage: '99.17',
+    primaryWorkLocationCode: 'MAD-LOG'
+  },
+  {
+    email: 'alba@nexa.local',
+    numero: 'NEX-ALB',
+    nombreEmpleado: 'Alba Reyes Núñez',
+    dni: '90000012M',
+    roles: [RoleName.ROLE_USER],
+    admin: false,
+    companyCode: 'NEXA',
+    calendarYear: 2026,
+    diasVacaciones: 22,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'PART_TIME',
+    weeklyContractMinutes: 1800,
+    annualContractMinutes: 64800,
+    workingPercentage: '75.00',
+    primaryWorkLocationCode: 'ALG-PLN'
+  },
+  {
+    email: 'diego@nexa.local',
+    numero: 'NEX-DIE',
+    nombreEmpleado: 'Diego Serrano León',
+    dni: '90000013N',
+    roles: [RoleName.ROLE_USER],
+    admin: false,
+    companyCode: 'NEXA',
+    calendarYear: 2026,
+    diasVacaciones: 20,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'PART_TIME',
+    weeklyContractMinutes: 1500,
+    annualContractMinutes: 54000,
+    workingPercentage: '62.50',
+    primaryWorkLocationCode: 'MAD-LOG'
+  },
+  {
+    email: 'company-admin@orion.local',
+    numero: 'ORI-CAD',
+    nombreEmpleado: 'Elena Sanz Prieto',
+    dni: '90000014P',
+    roles: [RoleName.ROLE_COMPANY_ADMIN],
+    admin: true,
+    companyCode: 'ORION',
+    calendarYear: 2027,
+    diasVacaciones: 25,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2250,
+    annualContractMinutes: 81000,
+    workingPercentage: '93.75',
+    primaryWorkLocationCode: 'MAD-SUR'
+  },
+  {
+    email: 'marcos@orion.local',
+    numero: 'ORI-MAR',
+    nombreEmpleado: 'Marcos Del Río Vidal',
+    dni: '90000015Q',
+    roles: [RoleName.ROLE_USER],
+    admin: false,
+    companyCode: 'ORION',
+    calendarYear: 2027,
+    diasVacaciones: 20,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2250,
+    annualContractMinutes: 81000,
+    workingPercentage: '93.75',
+    primaryWorkLocationCode: 'BIO-PORT'
+  },
+  {
+    email: 'ines@orion.local',
+    numero: 'ORI-INE',
+    nombreEmpleado: 'Inés Fuentes Aranda',
+    dni: '90000016R',
+    roles: [RoleName.ROLE_USER],
+    admin: false,
+    companyCode: 'ORION',
+    calendarYear: 2027,
+    diasVacaciones: 22,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'PART_TIME',
+    weeklyContractMinutes: 1800,
+    annualContractMinutes: 64800,
+    workingPercentage: '75.00',
+    primaryWorkLocationCode: 'MAD-SUR'
+  },
+  {
+    email: 'company-admin@lumen.local',
+    numero: 'LUM-CAD',
+    nombreEmpleado: 'Nuria Salvatierra Peña',
+    dni: '90000017S',
+    roles: [RoleName.ROLE_COMPANY_ADMIN],
+    admin: true,
+    companyCode: 'LUMEN',
+    calendarYear: 2027,
+    diasVacaciones: 26,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2100,
+    annualContractMinutes: 75600,
+    workingPercentage: '87.50',
+    primaryWorkLocationCode: 'MAD-CLN'
+  },
+  {
+    email: 'rrhh@lumen.local',
+    numero: 'LUM-RRHH',
+    nombreEmpleado: 'Daniel Varela Moreno',
+    dni: '90000018T',
+    roles: [RoleName.ROLE_RRHH],
+    admin: false,
+    companyCode: 'LUMEN',
+    calendarYear: 2027,
+    diasVacaciones: 24,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2100,
+    annualContractMinutes: 75600,
+    workingPercentage: '87.50',
+    primaryWorkLocationCode: 'BCN-HUB'
+  },
+  {
+    email: 'sofia@lumen.local',
+    numero: 'LUM-SOF',
+    nombreEmpleado: 'Sofía Campo Rueda',
+    dni: '90000019U',
+    roles: [RoleName.ROLE_USER],
+    admin: false,
+    companyCode: 'LUMEN',
+    calendarYear: 2027,
+    diasVacaciones: 20,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'PART_TIME',
+    weeklyContractMinutes: 1500,
+    annualContractMinutes: 54000,
+    workingPercentage: '62.50',
+    primaryWorkLocationCode: 'BCN-HUB'
+  },
+  {
+    email: 'pablo@lumen.local',
+    numero: 'LUM-PAB',
+    nombreEmpleado: 'Pablo León Miralles',
+    dni: '90000020V',
+    roles: [RoleName.ROLE_USER],
+    admin: false,
+    companyCode: 'LUMEN',
+    calendarYear: 2027,
+    diasVacaciones: 22,
+    horasGeneradas: 0,
+    working: false,
+    enVacaciones: false,
+    deBaja: false,
+    contractType: 'FULL_TIME',
+    weeklyContractMinutes: 2100,
+    annualContractMinutes: 75600,
+    workingPercentage: '87.50',
+    primaryWorkLocationCode: 'MAD-CLN'
   }
 ];
 
@@ -440,10 +862,10 @@ export class DevelopmentSeedService {
         users: users.length,
         employees: users.length,
         planningPeriods,
-      workLocations: locations.workLocations,
-      locationAssignments: locations.locationAssignments,
-      employmentTerms: locations.employmentTerms,
-      shifts: shifts.shifts,
+        workLocations: locations.workLocations,
+        locationAssignments: locations.locationAssignments,
+        employmentTerms: locations.employmentTerms,
+        shifts: shifts.shifts,
         assignments: shifts.assignments,
         overrides: shifts.overrides,
         timeEntries: timeEntries.total,
@@ -475,7 +897,7 @@ export class DevelopmentSeedService {
     const userIds = users.map((user) => user.id);
 
     const employees = await manager.getRepository(EmployeeEntity).find({
-      where: SEED_EMPLOYEES.map((employee) => ({ email: employee.email }))
+      where: SEED_USERS.map((user) => ({ email: user.email }))
     });
     const employeeIds = employees.map((employee) => employee.id);
 
@@ -669,7 +1091,7 @@ export class DevelopmentSeedService {
         throw new AppError('COMPANY_NOT_FOUND', `Empresa seed no encontrada: ${fixture.companyCode}`, 404);
       }
 
-      const calendar = company.defaultCalendar ?? calendars.find((item) => item.year === (fixture.companyCode === 'VICTRIUM' ? 2026 : 2027)) ?? null;
+      const calendar = company.defaultCalendar ?? calendars.find((item) => item.year === fixture.calendarYear) ?? null;
       const user = userRepository.create({
         email: fixture.email,
         password: hashedPassword,
@@ -731,57 +1153,67 @@ export class DevelopmentSeedService {
     const locationRepository = manager.getRepository(WorkLocationEntity);
     const assignmentRepository = manager.getRepository(EmployeeLocationAssignmentEntity);
     const employmentTermsRepository = manager.getRepository(EmploymentTermsEntity);
-
-    const victrium = companies.find((company) => company.code === 'VICTRIUM');
-    const acme = companies.find((company) => company.code === 'ACME');
-    if (!victrium || !acme) {
-      throw new AppError('COMPANY_NOT_FOUND', 'No se pudieron preparar los centros seed', 404);
-    }
-
-    const victriumCalendar = calendars.find((calendar) => calendar.company?.code === 'VICTRIUM') ?? null;
-    const acmeCalendar = calendars.find((calendar) => calendar.company?.code === 'ACME') ?? null;
-
-    const fixtures = [
-      { company: victrium, calendar: victriumCalendar, code: 'MAD-CENTRO', name: 'Madrid Centro', city: 'Madrid', province: 'Madrid', timezone: 'Europe/Madrid', address: 'Calle Gran Vía 1', postalCode: '28013' },
-      { company: victrium, calendar: victriumCalendar, code: 'MAD-ALC', name: 'Alcobendas', city: 'Alcobendas', province: 'Madrid', timezone: 'Europe/Madrid', address: 'Avenida de Europa 12', postalCode: '28108' },
-      { company: victrium, calendar: victriumCalendar, code: 'MAD-BCN', name: 'Barcelona', city: 'Barcelona', province: 'Barcelona', timezone: 'Europe/Madrid', address: 'Carrer de Balmes 44', postalCode: '08007' },
-      { company: victrium, calendar: victriumCalendar, code: 'MAD-TFE', name: 'Tenerife', city: 'Santa Cruz de Tenerife', province: 'Santa Cruz de Tenerife', timezone: 'Atlantic/Canary', address: 'Avenida Tres de Mayo 20', postalCode: '38005' },
-      { company: acme, calendar: acmeCalendar, code: 'ACM-SEV', name: 'Sevilla', city: 'Sevilla', province: 'Sevilla', timezone: 'Europe/Madrid', address: 'Calle Sierpes 10', postalCode: '41004' },
-      { company: acme, calendar: acmeCalendar, code: 'ACM-VLC', name: 'Valencia', city: 'Valencia', province: 'Valencia', timezone: 'Europe/Madrid', address: 'Carrer de Colón 8', postalCode: '46004' }
-    ];
-
+    const companyFixturesByCode = new Map(SEED_COMPANIES.map((fixture) => [fixture.code, fixture]));
     const locations: WorkLocationEntity[] = [];
-    for (const fixture of fixtures) {
-      const location = await locationRepository.save(
-        locationRepository.create({
-          company: fixture.company,
-          calendar: fixture.calendar,
-          name: fixture.name,
-          code: fixture.code,
-          city: fixture.city,
-          province: fixture.province,
-          timezone: fixture.timezone,
-          address: fixture.address,
-          postalCode: fixture.postalCode,
-          active: true
-        })
-      );
-      locations.push(location);
+    const locationMap = new Map<string, WorkLocationEntity>();
+
+    for (const companyFixture of SEED_COMPANIES) {
+      const company = companies.find((item) => item.code === companyFixture.code);
+      if (!company) {
+        throw new AppError('COMPANY_NOT_FOUND', `Empresa seed no encontrada: ${companyFixture.code}`, 404);
+      }
+
+      const calendar = calendars.find((item) => item.company?.code === companyFixture.code) ?? null;
+
+      for (const locationFixture of companyFixture.workLocations) {
+        const location = await locationRepository.save(
+          locationRepository.create({
+            company,
+            calendar,
+            name: locationFixture.name,
+            code: locationFixture.code,
+            city: locationFixture.city,
+            province: locationFixture.province,
+            timezone: locationFixture.timezone,
+            address: locationFixture.address,
+            postalCode: locationFixture.postalCode,
+            active: true
+          })
+        );
+        locations.push(location);
+        locationMap.set(`${company.code}:${location.code}`, location);
+      }
     }
 
-    const locationMap = new Map(locations.map((location) => [`${location.company.code}:${location.code}`, location]));
-    const employeeMap = new Map(users.map((bundle) => [bundle.user.email, bundle]));
+    const userFixtureByEmail = new Map(SEED_USERS.map((fixture) => [fixture.email, fixture]));
     const validFrom = formatMadridDate(addDays(context.referenceDate, -30));
     const validTo = formatMadridDate(addDays(context.referenceDate, 120));
+    const assignments: { employee: SeedUserBundle; location: WorkLocationEntity; primary: boolean }[] = [];
 
-    const assignments = [
-      { employee: employeeMap.get('platform@victrium.local'), location: locationMap.get('VICTRIUM:MAD-CENTRO'), primary: true },
-      { employee: employeeMap.get('admin@victrium.local'), location: locationMap.get('VICTRIUM:MAD-CENTRO'), primary: true },
-      { employee: employeeMap.get('rrhh@victrium.local'), location: locationMap.get('VICTRIUM:MAD-CENTRO'), primary: true },
-      { employee: employeeMap.get('laura@victrium.local'), location: locationMap.get('VICTRIUM:MAD-CENTRO'), primary: true },
-      { employee: employeeMap.get('carlos@victrium.local'), location: locationMap.get('VICTRIUM:MAD-ALC'), primary: true },
-      { employee: employeeMap.get('admin@acme.local'), location: locationMap.get('ACME:ACM-SEV'), primary: true }
-    ].filter((item): item is { employee: SeedUserBundle; location: WorkLocationEntity; primary: boolean } => Boolean(item.employee && item.location));
+    for (const bundle of users) {
+      const userFixture = userFixtureByEmail.get(bundle.user.email);
+      if (!userFixture) {
+        continue;
+      }
+
+      const companyFixture = companyFixturesByCode.get(bundle.user.company!.code);
+      const defaultLocationCode = companyFixture?.workLocations[0]?.code ?? null;
+      const locationCode = userFixture.primaryWorkLocationCode ?? defaultLocationCode;
+      if (!locationCode) {
+        throw new AppError('WORK_LOCATION_NOT_FOUND', `No se pudo determinar el centro principal de ${bundle.user.email}`, 404);
+      }
+
+      const location = locationMap.get(`${bundle.user.company!.code}:${locationCode}`);
+      if (!location) {
+        throw new AppError('WORK_LOCATION_NOT_FOUND', `Centro seed no encontrado: ${bundle.user.company!.code}:${locationCode}`, 404);
+      }
+
+      assignments.push({
+        employee: bundle,
+        location,
+        primary: true
+      });
+    }
 
     await assignmentRepository.save(
       assignments.map((item) =>
@@ -797,121 +1229,52 @@ export class DevelopmentSeedService {
       )
     );
 
-    for (const item of assignments.filter((assignment): assignment is { employee: SeedUserBundle; location: WorkLocationEntity; primary: boolean } => Boolean(assignment.primary))) {
+    for (const item of assignments) {
       item.employee.employee.primaryWorkLocation = item.location;
       await manager.getRepository(EmployeeEntity).save(item.employee.employee);
     }
 
-    type EmploymentTermsFixture = {
-      employee?: SeedUserBundle;
-      location?: WorkLocationEntity;
-      effectiveFrom: string;
-      effectiveTo: string | null;
-      weeklyContractMinutes: number;
-      annualContractMinutes: number | null;
-      workingPercentage: string;
-      contractType: string;
-      policyVersion: number;
-      notes: string;
-    };
-
-    const employmentTermsFixtures: EmploymentTermsFixture[] = [
-      {
-        employee: employeeMap.get('admin@victrium.local'),
-        location: locationMap.get('VICTRIUM:MAD-CENTRO'),
-        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -180)),
-        effectiveTo: null,
-        weeklyContractMinutes: 2400,
-        annualContractMinutes: 86400,
-        workingPercentage: '100.00',
-        contractType: 'FULL_TIME',
-        policyVersion: 1,
-        notes: 'Condición laboral administrativa seed'
-      },
-      {
-        employee: employeeMap.get('rrhh@victrium.local'),
-        location: locationMap.get('VICTRIUM:MAD-CENTRO'),
-        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -180)),
-        effectiveTo: null,
-        weeklyContractMinutes: 2400,
-        annualContractMinutes: 86400,
-        workingPercentage: '100.00',
-        contractType: 'FULL_TIME',
-        policyVersion: 1,
-        notes: 'RRHH seed'
-      },
-      {
-        employee: employeeMap.get('laura@victrium.local'),
-        location: locationMap.get('VICTRIUM:MAD-CENTRO'),
-        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -90)),
-        effectiveTo: formatMadridDate(addDays(context.referenceDate, 60)),
-        weeklyContractMinutes: 2400,
-        annualContractMinutes: 86400,
-        workingPercentage: '100.00',
-        contractType: 'FULL_TIME',
-        policyVersion: 2,
-        notes: 'Cambio temporal de jornada seed'
-      },
-      {
-        employee: employeeMap.get('carlos@victrium.local'),
-        location: locationMap.get('VICTRIUM:MAD-ALC'),
-        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -30)),
-        effectiveTo: null,
-        weeklyContractMinutes: 1500,
-        annualContractMinutes: 54000,
-        workingPercentage: '62.50',
-        contractType: 'PART_TIME',
-        policyVersion: 1,
-        notes: 'Jornada parcial seed'
-      },
-      {
-        employee: employeeMap.get('admin@acme.local'),
-        location: locationMap.get('ACME:ACM-SEV'),
-        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -120)),
-        effectiveTo: null,
-        weeklyContractMinutes: 2250,
-        annualContractMinutes: 81000,
-        workingPercentage: '93.75',
-        contractType: 'FULL_TIME',
-        policyVersion: 1,
-        notes: 'Plantilla ACME seed'
-      }
-    ];
-
-    const resolvedEmploymentTermsFixtures = employmentTermsFixtures.filter(
-      (item): item is EmploymentTermsFixture & { employee: SeedUserBundle; location: WorkLocationEntity } => Boolean(item.employee && item.location)
-    );
-
     await employmentTermsRepository.save(
-      resolvedEmploymentTermsFixtures.map((item) =>
-        employmentTermsRepository.create({
+      assignments.map((item) => {
+        const fixture = userFixtureByEmail.get(item.employee.user.email);
+        if (!fixture) {
+          throw new AppError('USER_NOT_FOUND', `Usuario seed no encontrado: ${item.employee.user.email}`, 404);
+        }
+
+        const weeklyContractMinutes = fixture.weeklyContractMinutes ?? 2400;
+        const annualContractMinutes = fixture.annualContractMinutes ?? Math.round(weeklyContractMinutes * 36);
+        const workingPercentage = fixture.workingPercentage ?? '100.00';
+        const contractType = fixture.contractType ?? 'FULL_TIME';
+        const effectiveFrom = formatMadridDate(addDays(context.referenceDate, fixture.roles.includes(RoleName.ROLE_USER) ? -90 : -180));
+
+        return employmentTermsRepository.create({
           company: item.employee.user.company!,
           employee: item.employee.employee,
           primaryWorkLocation: item.location,
-          effectiveFrom: item.effectiveFrom,
-          effectiveTo: item.effectiveTo,
-          weeklyContractMinutes: item.weeklyContractMinutes,
-          annualContractMinutes: item.annualContractMinutes,
-          workingPercentage: item.workingPercentage,
-          contractType: item.contractType,
-          policyVersion: item.policyVersion,
+          effectiveFrom,
+          effectiveTo: null,
+          weeklyContractMinutes,
+          annualContractMinutes,
+          workingPercentage,
+          contractType,
+          policyVersion: 1,
           policySnapshot: {
-            weeklyContractMinutes: item.weeklyContractMinutes,
-            annualContractMinutes: item.annualContractMinutes,
-            workingPercentage: item.workingPercentage,
-            contractType: item.contractType,
+            weeklyContractMinutes,
+            annualContractMinutes,
+            workingPercentage,
+            contractType,
             primaryWorkLocationCode: item.location.code
           },
-          notes: item.notes,
+          notes: `Condición laboral seed de ${fixture.companyCode}`,
           active: true
-        })
-      )
+        });
+      })
     );
 
     return {
       workLocations: locations.length,
       locationAssignments: assignments.length,
-      employmentTerms: resolvedEmploymentTermsFixtures.length
+      employmentTerms: assignments.length
     };
   }
 
