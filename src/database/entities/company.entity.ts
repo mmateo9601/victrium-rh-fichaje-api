@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 import { CalendarEntity } from './calendar.entity';
 import { EmployeeEntity } from './employee.entity';
@@ -22,6 +22,10 @@ export class CompanyEntity {
 
   @Column({ name: 'work_policy', type: 'json', nullable: true })
   workPolicy?: Record<string, unknown> | null;
+
+  @ManyToOne(() => CalendarEntity, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'default_calendar_id' })
+  defaultCalendar?: CalendarEntity | null;
 
   @Column({ type: 'boolean', default: true })
   active!: boolean;

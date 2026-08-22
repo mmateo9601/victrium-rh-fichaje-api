@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, MinLength, MaxLength } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, MinLength, MaxLength } from 'class-validator';
 
 export class CreateCompanyDto {
   @ApiProperty()
@@ -22,6 +22,11 @@ export class CreateCompanyDto {
   @IsString()
   @MaxLength(80)
   timezone?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsInt()
+  defaultCalendarId?: number | null;
 
   @ApiProperty({ required: false, nullable: true })
   @IsOptional()

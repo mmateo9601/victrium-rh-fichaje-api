@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { TenantScopeService, PrincipalTenantContext } from '../../common/tenant/tenant-scope.service';
+import { CalendarEntity } from '../../database/entities/calendar.entity';
 import { CompanyEntity } from '../../database/entities/company.entity';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { CompanyResponseDto } from './dto/company-response.dto';
@@ -15,6 +16,8 @@ export class CompaniesService {
   constructor(
     @InjectRepository(CompanyEntity)
     private readonly companiesRepository: Repository<CompanyEntity>,
+    @InjectRepository(CalendarEntity)
+    private readonly calendarsRepository: Repository<CalendarEntity>,
     private readonly tenantScope: TenantScopeService
   ) {}
 
@@ -24,13 +27,19 @@ export class CompaniesService {
       throw new AppError('COMPANY_ALREADY_EXISTS', 'Empresa ya existente', 409);
     }
 
+    const defaultCalendar =
+      dto.defaultCalendarId === undefined || dto.defaultCalendarId === null
+        ? null
+        : await this.resolveCompanyCalendar(dto.defaultCalendarId, null);
+
     const company = await this.companiesRepository.save(
       this.companiesRepository.create({
         name: dto.name,
         code: dto.code,
         active: dto.active ?? true,
         timezone: dto.timezone ?? null,
-        workPolicy: dto.workPolicy ?? null
+        workPolicy: dto.workPolicy ?? null,
+        defaultCalendar
       })
     );
 
@@ -110,8 +119,31 @@ export class CompaniesService {
     if (dto.workPolicy !== undefined) {
       company.workPolicy = dto.workPolicy;
     }
+    if (dto.defaultCalendarId !== undefined) {
+      company.defaultCalendar =
+        dto.defaultCalendarId === null ? null : await this.resolveCompanyCalendar(dto.defaultCalendarId, company.id);
+    }
     const saved = await this.companiesRepository.save(company);
     return this.toDto(saved);
+  }
+
+  private async resolveCompanyCalendar(calendarId: number, companyId: number | null) {
+    const calendar = await this.calendarsRepository.findOne({
+      where: { id: calendarId },
+      relations: {
+        company: true
+      }
+    });
+
+    if (!calendar) {
+      throw new AppError('CALENDAR_NOT_FOUND', 'Calendario no encontrado', 404);
+    }
+
+    if (companyId !== null && calendar.company?.id !== companyId) {
+      throw new AppError('CALENDAR_COMPANY_MISMATCH', 'El calendario no pertenece a la empresa', 400);
+    }
+
+    return calendar;
   }
 
   toDto(company: CompanyEntity): CompanyResponseDto {
@@ -120,6 +152,7 @@ export class CompaniesService {
       name: company.name,
       code: company.code,
       timezone: company.timezone ?? null,
+      defaultCalendarId: company.defaultCalendar?.id ?? null,
       workPolicy: company.workPolicy ?? null,
       active: company.active
     };

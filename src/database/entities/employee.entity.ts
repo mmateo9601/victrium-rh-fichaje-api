@@ -12,6 +12,7 @@ import {
 import { CompanyEntity } from './company.entity';
 import { CalendarEntity } from './calendar.entity';
 import { UserEntity } from './user.entity';
+import { WorkLocationEntity } from './work-location.entity';
 import { PermissionEntity } from './permission.entity';
 import { IncidentEntity } from './incident.entity';
 import { VacationEntity } from './vacation.entity';
@@ -56,6 +57,10 @@ export class EmployeeEntity {
 
   @Column({ name: 'ultimo_fichaje', type: 'varchar', length: 255, nullable: true })
   ultimoFichaje?: string | null;
+
+  @ManyToOne(() => WorkLocationEntity, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'primary_work_location_id' })
+  primaryWorkLocation?: WorkLocationEntity | null;
 
   @ManyToOne(() => CompanyEntity, (company) => company.employees, {
     eager: true,

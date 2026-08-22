@@ -11,6 +11,7 @@ import { EmployeeEntity } from '../../database/entities/employee.entity';
 import { RoleName } from '../../database/entities/role-name.enum';
 import { RoleEntity } from '../../database/entities/role.entity';
 import { UserEntity } from '../../database/entities/user.entity';
+import { WorkLocationEntity } from '../../database/entities/work-location.entity';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeResponseDto } from './dto/employee-response.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -57,6 +58,11 @@ export class EmployeesService {
       }
 
       this.tenantScope.assertResourceAccess(company.id, context);
+
+      const primaryWorkLocation =
+        dto.primaryWorkLocationId === undefined || dto.primaryWorkLocationId === null
+          ? null
+          : await this.resolveWorkLocation(manager, dto.primaryWorkLocationId, company.id);
 
       const duplicateUser = await manager.getRepository(UserEntity).findOne({
         where: [{ numero: dto.numero }, { email: dto.email }, { dni: dto.dni }]
@@ -106,7 +112,8 @@ export class EmployeesService {
         enVacaciones: dto.enVacaciones ?? false,
         deBaja: dto.deBaja ?? false,
         company,
-        user: savedUser
+        user: savedUser,
+        primaryWorkLocation
       });
 
       const savedEmployee = await employeeRepository.save(employee);
@@ -125,6 +132,7 @@ export class EmployeesService {
       .createQueryBuilder('employee')
       .leftJoinAndSelect('employee.company', 'company')
       .leftJoinAndSelect('employee.user', 'user')
+      .leftJoinAndSelect('employee.primaryWorkLocation', 'primaryWorkLocation')
       .leftJoinAndSelect('user.roles', 'role');
 
     if (query.search) {
@@ -169,6 +177,7 @@ export class EmployeesService {
       where: { id },
       relations: {
         company: true,
+        primaryWorkLocation: true,
         user: {
           roles: true,
           company: true
@@ -196,6 +205,7 @@ export class EmployeesService {
       },
       relations: {
         company: true,
+        primaryWorkLocation: true,
         user: {
           roles: true,
           company: true
@@ -216,6 +226,7 @@ export class EmployeesService {
         where: { id },
         relations: {
           company: true,
+          primaryWorkLocation: true,
           user: {
             roles: true,
             company: true
@@ -234,6 +245,13 @@ export class EmployeesService {
       if (!company) {
         throw new AppError('COMPANY_NOT_FOUND', 'Empresa no encontrada', 404);
       }
+
+      const primaryWorkLocation =
+        dto.primaryWorkLocationId === undefined
+          ? employee.primaryWorkLocation ?? null
+          : dto.primaryWorkLocationId === null
+            ? null
+            : await this.resolveWorkLocation(manager, dto.primaryWorkLocationId, company.id);
 
       if (dto.numero !== undefined) {
         employee.numero = dto.numero;
@@ -263,6 +281,9 @@ export class EmployeesService {
         employee.deBaja = dto.deBaja;
       }
       employee.company = company;
+      if (dto.primaryWorkLocationId !== undefined) {
+        employee.primaryWorkLocation = primaryWorkLocation;
+      }
 
       const user = employee.user
         ? await manager.getRepository(UserEntity).findOne({
@@ -312,6 +333,9 @@ export class EmployeesService {
       dni: employee.dni,
       companyId: employee.company?.id ?? null,
       companyName: employee.company?.name ?? null,
+      primaryWorkLocationId: employee.primaryWorkLocation?.id ?? null,
+      primaryWorkLocationName: employee.primaryWorkLocation?.name ?? null,
+      primaryWorkLocationCode: employee.primaryWorkLocation?.code ?? null,
       userId: employee.user?.id ?? null,
       diasVacaciones: employee.diasVacaciones ?? null,
       horasGeneradas: employee.horasGeneradas ?? null,
@@ -322,5 +346,28 @@ export class EmployeesService {
       roles: (employee.user?.roles ?? []).map((role) => role.rolNombre),
       active: !Boolean(employee.deBaja)
     };
+  }
+
+  private async resolveWorkLocation(
+    manager: DataSource['manager'],
+    workLocationId: number,
+    companyId: number
+  ) {
+    const workLocation = await manager.getRepository(WorkLocationEntity).findOne({
+      where: { id: workLocationId },
+      relations: {
+        company: true
+      }
+    });
+
+    if (!workLocation) {
+      throw new AppError('WORK_LOCATION_NOT_FOUND', 'Ubicación no encontrada', 404);
+    }
+
+    if (workLocation.company?.id !== companyId) {
+      throw new AppError('WORK_LOCATION_COMPANY_MISMATCH', 'La ubicación no pertenece a la empresa', 400);
+    }
+
+    return workLocation;
   }
 }

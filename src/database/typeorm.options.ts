@@ -36,6 +36,8 @@ import { AddShiftDaySegments1724172700000 } from './migrations/1724172700000-Add
 import { AddShiftRotationColumns1724172800000 } from './migrations/1724172800000-AddShiftRotationColumns';
 import { CreateEmploymentTermsTable1724172900000 } from './migrations/1724172900000-CreateEmploymentTermsTable';
 import { AddWorkLocationToShiftOverrides1724173000000 } from './migrations/1724173000000-AddWorkLocationToShiftOverrides';
+import { AddCompanyDefaultCalendar1724173100000 } from './migrations/1724173100000-AddCompanyDefaultCalendar';
+import { AddEmployeePrimaryWorkLocation1724173200000 } from './migrations/1724173200000-AddEmployeePrimaryWorkLocation';
 
 export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
   return {
@@ -82,7 +84,9 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
       AddShiftDaySegments1724172700000,
       AddShiftRotationColumns1724172800000,
       CreateEmploymentTermsTable1724172900000,
-      AddWorkLocationToShiftOverrides1724173000000
+      AddWorkLocationToShiftOverrides1724173000000,
+      AddCompanyDefaultCalendar1724173100000,
+      AddEmployeePrimaryWorkLocation1724173200000
     ],
     migrationsRun: true,
     synchronize: false,

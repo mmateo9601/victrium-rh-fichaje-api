@@ -615,6 +615,7 @@ export class DevelopmentSeedService {
 
   private async seedCalendars(manager: EntityManager, companies: CompanyEntity[], context: SeedContext) {
     const repository = manager.getRepository(CalendarEntity);
+    const companyRepository = manager.getRepository(CompanyEntity);
     const dayRepository = manager.getRepository(CalendarDayEntity);
     const calendars: CalendarEntity[] = [];
 
@@ -643,6 +644,9 @@ export class DevelopmentSeedService {
       );
       savedCalendar.days = await dayRepository.save(days);
       calendars.push(savedCalendar);
+
+      company.defaultCalendar = savedCalendar;
+      await companyRepository.save(company);
     }
 
     return calendars;
@@ -665,7 +669,7 @@ export class DevelopmentSeedService {
         throw new AppError('COMPANY_NOT_FOUND', `Empresa seed no encontrada: ${fixture.companyCode}`, 404);
       }
 
-      const calendar = calendars.find((item) => item.year === (fixture.companyCode === 'VICTRIUM' ? 2026 : 2027)) ?? null;
+      const calendar = company.defaultCalendar ?? calendars.find((item) => item.year === (fixture.companyCode === 'VICTRIUM' ? 2026 : 2027)) ?? null;
       const user = userRepository.create({
         email: fixture.email,
         password: hashedPassword,
@@ -704,7 +708,8 @@ export class DevelopmentSeedService {
           enVacaciones: fixture.enVacaciones,
           deBaja: fixture.deBaja,
           ultimoFichaje: null,
-          user: savedUser
+          user: savedUser,
+          primaryWorkLocation: null
         })
       );
 
@@ -791,6 +796,11 @@ export class DevelopmentSeedService {
         })
       )
     );
+
+    for (const item of assignments.filter((assignment): assignment is { employee: SeedUserBundle; location: WorkLocationEntity; primary: boolean } => Boolean(assignment.primary))) {
+      item.employee.employee.primaryWorkLocation = item.location;
+      await manager.getRepository(EmployeeEntity).save(item.employee.employee);
+    }
 
     type EmploymentTermsFixture = {
       employee?: SeedUserBundle;

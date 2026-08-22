@@ -23,6 +23,15 @@ export class EmployeeResponseDto {
   companyName?: string | null;
 
   @ApiProperty({ required: false, nullable: true })
+  primaryWorkLocationId?: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  primaryWorkLocationName?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  primaryWorkLocationCode?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
   userId?: number | null;
 
   @ApiProperty({ required: false, nullable: true })

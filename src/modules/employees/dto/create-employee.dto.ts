@@ -9,6 +9,11 @@ export class CreateEmployeeDto {
   @IsInt()
   companyId?: number;
 
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsInt()
+  primaryWorkLocationId?: number;
+
   @ApiProperty()
   @IsEmail()
   email!: string;

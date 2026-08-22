@@ -14,6 +14,9 @@ export class CompanyResponseDto {
   timezone!: string | null;
 
   @ApiProperty({ required: false, nullable: true })
+  defaultCalendarId!: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
   workPolicy!: Record<string, unknown> | null;
 
   @ApiProperty()
