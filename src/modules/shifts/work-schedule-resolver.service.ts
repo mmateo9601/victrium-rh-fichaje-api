@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 
 import { CalendarDayEntity } from '../../database/entities/calendar-day.entity';
 import { EmployeeEntity } from '../../database/entities/employee.entity';
+import { EmployeeLocationAssignmentEntity } from '../../database/entities/employee-location-assignment.entity';
+import { EmploymentTermsEntity } from '../../database/entities/employment-terms.entity';
 import { IncidentEntity } from '../../database/entities/incident.entity';
 import { PermissionEntity } from '../../database/entities/permission.entity';
 import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
@@ -21,11 +23,33 @@ type ResolverInput = {
   date: string;
   assignments: ShiftAssignmentEntity[];
   overrides: ShiftOverrideEntity[];
+  locationAssignments: EmployeeLocationAssignmentEntity[];
+  employmentTerms: EmploymentTermsEntity[];
   calendarDay?: CalendarDayEntity | null;
   vacations: VacationEntity[];
   permissions: PermissionEntity[];
   incidents: IncidentEntity[];
   timeEntries: TimeEntryEntity[];
+};
+
+type ResolvedWorkLocation = {
+  id: number | null;
+  name: string | null;
+  code: string | null;
+  source: 'override' | 'assignment' | 'employee_location' | 'terms' | 'default' | null;
+};
+
+type ResolvedEmploymentTerms = {
+  id: number | null;
+  contractType: string | null;
+  weeklyContractMinutes: number | null;
+  annualContractMinutes: number | null;
+  workingPercentage: string | null;
+  primaryWorkLocationId: number | null;
+  primaryWorkLocationName: string | null;
+  primaryWorkLocationCode: string | null;
+  policySnapshot: Record<string, unknown> | null;
+  version: number | null;
 };
 
 type ResolvedShiftDay = {
@@ -146,6 +170,47 @@ function resolveRotationDay(shift: ShiftEntity | null | undefined, date: string)
   };
 }
 
+function resolveLocationAssignment(date: string, assignments: EmployeeLocationAssignmentEntity[]) {
+  return [...assignments]
+    .filter((item) => item.validFrom <= date && (item.validTo === null || item.validTo === undefined || item.validTo >= date))
+    .sort((left, right) => Number(right.primary) - Number(left.primary) || right.validFrom.localeCompare(left.validFrom) || right.id - left.id)[0] ?? null;
+}
+
+function resolveEmploymentTerms(date: string, terms: EmploymentTermsEntity[]) {
+  return [...terms]
+    .filter((item) => item.active && item.effectiveFrom <= date && (item.effectiveTo === null || item.effectiveTo === undefined || item.effectiveTo >= date))
+    .sort((left, right) => right.effectiveFrom.localeCompare(left.effectiveFrom) || right.policyVersion - left.policyVersion || right.id - left.id)[0] ?? null;
+}
+
+function resolveWorkLocation(
+  date: string,
+  resolved: { override: ShiftOverrideEntity | null; assignment: ShiftAssignmentEntity | null },
+  locationAssignments: EmployeeLocationAssignmentEntity[],
+  employmentTerms: EmploymentTermsEntity[]
+) {
+  const terms = resolveEmploymentTerms(date, employmentTerms);
+  const locationAssignment = resolveLocationAssignment(date, locationAssignments);
+  const overrideLocation = resolved.override?.workLocation ?? null;
+  if (overrideLocation) {
+    return buildWorkLocationSummary(overrideLocation, 'override');
+  }
+
+  const assignmentLocation = resolved.assignment?.workLocation ?? null;
+  if (assignmentLocation) {
+    return buildWorkLocationSummary(assignmentLocation, 'assignment');
+  }
+
+  if (locationAssignment?.workLocation) {
+    return buildWorkLocationSummary(locationAssignment.workLocation, 'employee_location');
+  }
+
+  if (terms?.primaryWorkLocation) {
+    return buildWorkLocationSummary(terms.primaryWorkLocation, 'terms');
+  }
+
+  return buildWorkLocationSummary(null, 'default');
+}
+
 function buildShiftSummary(shift: ShiftEntity | null | undefined): ShiftSummaryDto | null {
   if (!shift) return null;
   return {
@@ -153,6 +218,24 @@ function buildShiftSummary(shift: ShiftEntity | null | undefined): ShiftSummaryD
     name: shift.name,
     code: shift.code,
     color: shift.color ?? null
+  };
+}
+
+function buildWorkLocationSummary(location: { id: number; name: string; code: string } | null | undefined, source: ResolvedWorkLocation['source']): ResolvedWorkLocation {
+  if (!location) {
+    return {
+      id: null,
+      name: null,
+      code: null,
+      source
+    };
+  }
+
+  return {
+    id: location.id,
+    name: location.name,
+    code: location.code,
+    source
   };
 }
 
@@ -386,6 +469,36 @@ function buildPolicyEvaluation(
   };
 }
 
+function buildEmploymentTermsSummary(terms: EmploymentTermsEntity | null | undefined): ResolvedEmploymentTerms {
+  if (!terms) {
+    return {
+      id: null,
+      contractType: null,
+      weeklyContractMinutes: null,
+      annualContractMinutes: null,
+      workingPercentage: null,
+      primaryWorkLocationId: null,
+      primaryWorkLocationName: null,
+      primaryWorkLocationCode: null,
+      policySnapshot: null,
+      version: null
+    };
+  }
+
+  return {
+    id: terms.id,
+    contractType: terms.contractType,
+    weeklyContractMinutes: terms.weeklyContractMinutes,
+    annualContractMinutes: terms.annualContractMinutes ?? null,
+    workingPercentage: terms.workingPercentage ?? null,
+    primaryWorkLocationId: terms.primaryWorkLocation?.id ?? null,
+    primaryWorkLocationName: terms.primaryWorkLocation?.name ?? null,
+    primaryWorkLocationCode: terms.primaryWorkLocation?.code ?? null,
+    policySnapshot: terms.policySnapshot ?? null,
+    version: terms.policyVersion
+  };
+}
+
 @Injectable()
 export class WorkScheduleResolverService {
   resolveShiftForDate(date: string, assignments: ShiftAssignmentEntity[], overrides: ShiftOverrideEntity[]) {
@@ -414,10 +527,24 @@ export class WorkScheduleResolverService {
   }
 
   resolveDay(input: ResolverInput): ScheduleCellDto {
-    const { employee, date, assignments, overrides, calendarDay, vacations, permissions, incidents, timeEntries } = input;
+    const {
+      employee,
+      date,
+      assignments,
+      overrides,
+      locationAssignments,
+      employmentTerms,
+      calendarDay,
+      vacations,
+      permissions,
+      incidents,
+      timeEntries
+    } = input;
     const resolved = this.resolveShiftForDate(date, assignments, overrides);
     const shift = resolved.shift;
     const shiftDay = resolveRotationDay(shift, date) ?? resolveShiftDay(shift?.days?.find((day) => day.dayOfWeek === dayOfWeek(date)) ?? null);
+    const resolvedWorkLocation = resolveWorkLocation(date, resolved, locationAssignments, employmentTerms);
+    const resolvedEmploymentTerms = buildEmploymentTermsSummary(resolveEmploymentTerms(date, employmentTerms));
     const vacation = vacations.find((item) => item.inicio <= date && item.fin >= date) ?? null;
     const permission = permissions.find((item) => item.dia === date) ?? null;
     const incident = incidents.find((item) => item.dia === date) ?? null;
@@ -463,9 +590,18 @@ export class WorkScheduleResolverService {
       status,
       statusLabel,
       shift: buildShiftSummary(shift),
+      workLocationId: resolvedWorkLocation.id,
+      workLocationName: resolvedWorkLocation.name,
+      workLocationCode: resolvedWorkLocation.code,
+      workLocationSource: resolvedWorkLocation.source,
       assignmentId: resolved.assignment?.id ?? null,
       overrideId: resolved.override?.id ?? null,
       overrideKind: resolved.override?.kind ?? null,
+      employmentTermsId: resolvedEmploymentTerms.id,
+      employmentTermsContractType: resolvedEmploymentTerms.contractType,
+      employmentTermsWeeklyContractMinutes: resolvedEmploymentTerms.weeklyContractMinutes,
+      employmentTermsAnnualContractMinutes: resolvedEmploymentTerms.annualContractMinutes,
+      employmentTermsWorkingPercentage: resolvedEmploymentTerms.workingPercentage,
       expectedStart: workingDay ? shiftDay?.startTime ?? null : null,
       expectedEnd: workingDay ? shiftDay?.endTime ?? null : null,
       expectedMinutes,
@@ -499,6 +635,8 @@ export class WorkScheduleResolverService {
     days: Array<{ date: string; dayOfWeek: number; label: string }>,
     assignmentsByEmployee: Map<number, ShiftAssignmentEntity[]>,
     overridesByEmployee: Map<number, ShiftOverrideEntity[]>,
+    locationAssignmentsByEmployee: Map<number, EmployeeLocationAssignmentEntity[]>,
+    employmentTermsByEmployee: Map<number, EmploymentTermsEntity[]>,
     vacationsByEmployee: Map<number, VacationEntity[]>,
     permissionsByEmployee: Map<number, PermissionEntity[]>,
     incidentsByEmployee: Map<number, IncidentEntity[]>,
@@ -508,6 +646,8 @@ export class WorkScheduleResolverService {
     return employees.map((employee) => {
       const employeeAssignments = assignmentsByEmployee.get(employee.id) ?? [];
       const employeeOverrides = overridesByEmployee.get(employee.id) ?? [];
+      const employeeLocationAssignments = locationAssignmentsByEmployee.get(employee.id) ?? [];
+      const employeeEmploymentTerms = employmentTermsByEmployee.get(employee.id) ?? [];
       const employeeVacations = vacationsByEmployee.get(employee.id) ?? [];
       const employeePermissions = permissionsByEmployee.get(employee.id) ?? [];
       const employeeIncidents = incidentsByEmployee.get(employee.id) ?? [];
@@ -526,6 +666,8 @@ export class WorkScheduleResolverService {
             date: day.date,
             assignments: employeeAssignments,
             overrides: employeeOverrides,
+            locationAssignments: employeeLocationAssignments,
+            employmentTerms: employeeEmploymentTerms,
             calendarDay: employeeCalendarDays.get(day.date) ?? null,
             vacations: employeeVacations,
             permissions: employeePermissions,

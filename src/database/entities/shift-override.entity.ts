@@ -12,6 +12,7 @@ import {
 import { CompanyEntity } from './company.entity';
 import { EmployeeEntity } from './employee.entity';
 import { ShiftEntity } from './shift.entity';
+import { WorkLocationEntity } from './work-location.entity';
 
 export type ShiftOverrideKind = 'SHIFT' | 'OFF';
 
@@ -40,6 +41,10 @@ export class ShiftOverrideEntity {
   })
   @JoinColumn({ name: 'shift_id' })
   shift?: ShiftEntity | null;
+
+  @ManyToOne(() => WorkLocationEntity, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'work_location_id' })
+  workLocation?: WorkLocationEntity | null;
 
   @Column({ type: 'date' })
   date!: string;

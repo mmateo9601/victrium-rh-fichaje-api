@@ -8,6 +8,7 @@ import { CalendarDayEntity } from '../database/entities/calendar-day.entity';
 import { CalendarEntity } from '../database/entities/calendar.entity';
 import { CompanyEntity } from '../database/entities/company.entity';
 import { EmployeeEntity } from '../database/entities/employee.entity';
+import { EmploymentTermsEntity } from '../database/entities/employment-terms.entity';
 import { IncidentEntity } from '../database/entities/incident.entity';
 import { PermissionEntity } from '../database/entities/permission.entity';
 import { PermissionStatus } from '../database/entities/permission-status.enum';
@@ -76,6 +77,7 @@ type SeedSummary = {
   planningPeriods: number;
   workLocations: number;
   locationAssignments: number;
+  employmentTerms: number;
   timeEntries: number;
   audits: number;
   vacations: number;
@@ -438,9 +440,10 @@ export class DevelopmentSeedService {
         users: users.length,
         employees: users.length,
         planningPeriods,
-        workLocations: locations.workLocations,
-        locationAssignments: locations.locationAssignments,
-        shifts: shifts.shifts,
+      workLocations: locations.workLocations,
+      locationAssignments: locations.locationAssignments,
+      employmentTerms: locations.employmentTerms,
+      shifts: shifts.shifts,
         assignments: shifts.assignments,
         overrides: shifts.overrides,
         timeEntries: timeEntries.total,
@@ -533,6 +536,12 @@ export class DevelopmentSeedService {
         .createQueryBuilder()
         .delete()
         .from(IncidentEntity)
+        .where('employee_id IN (:...employeeIds)', { employeeIds })
+        .execute();
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(EmploymentTermsEntity)
         .where('employee_id IN (:...employeeIds)', { employeeIds })
         .execute();
       await manager.createQueryBuilder().delete().from(EmployeeEntity).where('id IN (:...employeeIds)', { employeeIds }).execute();
@@ -716,6 +725,7 @@ export class DevelopmentSeedService {
   ) {
     const locationRepository = manager.getRepository(WorkLocationEntity);
     const assignmentRepository = manager.getRepository(EmployeeLocationAssignmentEntity);
+    const employmentTermsRepository = manager.getRepository(EmploymentTermsEntity);
 
     const victrium = companies.find((company) => company.code === 'VICTRIUM');
     const acme = companies.find((company) => company.code === 'ACME');
@@ -782,9 +792,116 @@ export class DevelopmentSeedService {
       )
     );
 
+    type EmploymentTermsFixture = {
+      employee?: SeedUserBundle;
+      location?: WorkLocationEntity;
+      effectiveFrom: string;
+      effectiveTo: string | null;
+      weeklyContractMinutes: number;
+      annualContractMinutes: number | null;
+      workingPercentage: string;
+      contractType: string;
+      policyVersion: number;
+      notes: string;
+    };
+
+    const employmentTermsFixtures: EmploymentTermsFixture[] = [
+      {
+        employee: employeeMap.get('admin@victrium.local'),
+        location: locationMap.get('VICTRIUM:MAD-CENTRO'),
+        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -180)),
+        effectiveTo: null,
+        weeklyContractMinutes: 2400,
+        annualContractMinutes: 86400,
+        workingPercentage: '100.00',
+        contractType: 'FULL_TIME',
+        policyVersion: 1,
+        notes: 'Condición laboral administrativa seed'
+      },
+      {
+        employee: employeeMap.get('rrhh@victrium.local'),
+        location: locationMap.get('VICTRIUM:MAD-CENTRO'),
+        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -180)),
+        effectiveTo: null,
+        weeklyContractMinutes: 2400,
+        annualContractMinutes: 86400,
+        workingPercentage: '100.00',
+        contractType: 'FULL_TIME',
+        policyVersion: 1,
+        notes: 'RRHH seed'
+      },
+      {
+        employee: employeeMap.get('laura@victrium.local'),
+        location: locationMap.get('VICTRIUM:MAD-CENTRO'),
+        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -90)),
+        effectiveTo: formatMadridDate(addDays(context.referenceDate, 60)),
+        weeklyContractMinutes: 2400,
+        annualContractMinutes: 86400,
+        workingPercentage: '100.00',
+        contractType: 'FULL_TIME',
+        policyVersion: 2,
+        notes: 'Cambio temporal de jornada seed'
+      },
+      {
+        employee: employeeMap.get('carlos@victrium.local'),
+        location: locationMap.get('VICTRIUM:MAD-ALC'),
+        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -30)),
+        effectiveTo: null,
+        weeklyContractMinutes: 1500,
+        annualContractMinutes: 54000,
+        workingPercentage: '62.50',
+        contractType: 'PART_TIME',
+        policyVersion: 1,
+        notes: 'Jornada parcial seed'
+      },
+      {
+        employee: employeeMap.get('admin@acme.local'),
+        location: locationMap.get('ACME:ACM-SEV'),
+        effectiveFrom: formatMadridDate(addDays(context.referenceDate, -120)),
+        effectiveTo: null,
+        weeklyContractMinutes: 2250,
+        annualContractMinutes: 81000,
+        workingPercentage: '93.75',
+        contractType: 'FULL_TIME',
+        policyVersion: 1,
+        notes: 'Plantilla ACME seed'
+      }
+    ];
+
+    const resolvedEmploymentTermsFixtures = employmentTermsFixtures.filter(
+      (item): item is EmploymentTermsFixture & { employee: SeedUserBundle; location: WorkLocationEntity } => Boolean(item.employee && item.location)
+    );
+
+    await employmentTermsRepository.save(
+      resolvedEmploymentTermsFixtures.map((item) =>
+        employmentTermsRepository.create({
+          company: item.employee.user.company!,
+          employee: item.employee.employee,
+          primaryWorkLocation: item.location,
+          effectiveFrom: item.effectiveFrom,
+          effectiveTo: item.effectiveTo,
+          weeklyContractMinutes: item.weeklyContractMinutes,
+          annualContractMinutes: item.annualContractMinutes,
+          workingPercentage: item.workingPercentage,
+          contractType: item.contractType,
+          policyVersion: item.policyVersion,
+          policySnapshot: {
+            weeklyContractMinutes: item.weeklyContractMinutes,
+            annualContractMinutes: item.annualContractMinutes,
+            workingPercentage: item.workingPercentage,
+            contractType: item.contractType,
+            primaryWorkLocationCode: item.location.code
+          },
+          notes: item.notes,
+          active: true
+        })
+      )
+    );
+
     return {
       workLocations: locations.length,
-      locationAssignments: assignments.length
+      locationAssignments: assignments.length,
+      employmentTerms: resolvedEmploymentTermsFixtures.length
     };
   }
 

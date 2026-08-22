@@ -8,6 +8,8 @@ import { PrincipalTenantContext, TenantScopeService } from '../../common/tenant/
 import { CalendarDayEntity } from '../../database/entities/calendar-day.entity';
 import { CompanyEntity } from '../../database/entities/company.entity';
 import { EmployeeEntity } from '../../database/entities/employee.entity';
+import { EmployeeLocationAssignmentEntity } from '../../database/entities/employee-location-assignment.entity';
+import { EmploymentTermsEntity } from '../../database/entities/employment-terms.entity';
 import { IncidentEntity } from '../../database/entities/incident.entity';
 import { PermissionEntity } from '../../database/entities/permission.entity';
 import { ShiftAssignmentEntity } from '../../database/entities/shift-assignment.entity';
@@ -17,6 +19,7 @@ import { ShiftRotationStepValue, ShiftEntity } from '../../database/entities/shi
 import { ShiftOverrideEntity } from '../../database/entities/shift-override.entity';
 import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
 import { VacationEntity } from '../../database/entities/vacation.entity';
+import { WorkLocationEntity } from '../../database/entities/work-location.entity';
 import {
   CreateShiftAssignmentDto,
   CreateShiftDto,
@@ -152,6 +155,10 @@ export class ShiftsService {
     private readonly overridesRepository: Repository<ShiftOverrideEntity>,
     @InjectRepository(EmployeeEntity)
     private readonly employeesRepository: Repository<EmployeeEntity>,
+    @InjectRepository(EmployeeLocationAssignmentEntity)
+    private readonly locationAssignmentsRepository: Repository<EmployeeLocationAssignmentEntity>,
+    @InjectRepository(EmploymentTermsEntity)
+    private readonly employmentTermsRepository: Repository<EmploymentTermsEntity>,
     @InjectRepository(VacationEntity)
     private readonly vacationsRepository: Repository<VacationEntity>,
     @InjectRepository(PermissionEntity)
@@ -352,12 +359,27 @@ export class ShiftsService {
         throw new AppError('SHIFT_CROSS_TENANT', 'El turno pertenece a otra empresa', 404);
       }
 
+      const workLocation =
+        dto.workLocationId !== undefined && dto.workLocationId !== null
+          ? await manager.getRepository(WorkLocationEntity).findOne({ where: { id: dto.workLocationId }, relations: { company: true } })
+          : null;
+      if (dto.workLocationId !== undefined && dto.workLocationId !== null && !workLocation) {
+        throw new AppError('WORK_LOCATION_NOT_FOUND', 'Centro de trabajo no encontrado', 404);
+      }
+      if (workLocation) {
+        this.tenantScope.assertResourceAccess(workLocation.company?.id, context);
+        if (workLocation.company?.id !== employee.company?.id) {
+          throw new AppError('SHIFT_CROSS_TENANT', 'El centro de trabajo pertenece a otra empresa', 404);
+        }
+      }
+
       this.assertAssignmentOverlap(employee.id, dto.validFrom, dto.validTo ?? null, null);
 
       const assignment = manager.getRepository(ShiftAssignmentEntity).create({
         company: employee.company!,
         employee,
         shift,
+        workLocation,
         validFrom: normalizeDate(dto.validFrom),
         validTo: dto.validTo ? normalizeDate(dto.validTo) : null,
         notes: dto.notes ?? null,
@@ -366,7 +388,7 @@ export class ShiftsService {
       const saved = await manager.getRepository(ShiftAssignmentEntity).save(assignment);
       const reloaded = await manager.getRepository(ShiftAssignmentEntity).findOne({
         where: { id: saved.id },
-        relations: { company: true, employee: { company: true }, shift: { company: true, days: true } }
+        relations: { company: true, employee: { company: true }, shift: { company: true, days: true }, workLocation: { company: true } }
       });
       if (!reloaded) {
         throw new AppError('SHIFT_ASSIGNMENT_NOT_FOUND', 'Asignación no encontrada', 404);
@@ -407,11 +429,28 @@ export class ShiftsService {
         throw new AppError('SHIFT_CROSS_TENANT', 'El turno pertenece a otra empresa', 404);
       }
 
+      const nextWorkLocationId =
+        dto.workLocationId !== undefined ? dto.workLocationId : assignment.workLocation?.id ?? null;
+      const workLocation =
+        nextWorkLocationId !== null
+          ? await manager.getRepository(WorkLocationEntity).findOne({ where: { id: nextWorkLocationId }, relations: { company: true } })
+          : null;
+      if (nextWorkLocationId !== null && !workLocation) {
+        throw new AppError('WORK_LOCATION_NOT_FOUND', 'Centro de trabajo no encontrado', 404);
+      }
+      if (workLocation) {
+        this.tenantScope.assertResourceAccess(workLocation.company?.id, context);
+        if (workLocation.company?.id !== employee.company?.id) {
+          throw new AppError('SHIFT_CROSS_TENANT', 'El centro de trabajo pertenece a otra empresa', 404);
+        }
+      }
+
       this.assertAssignmentOverlap(employee.id, nextValidFrom, nextValidTo, assignment.id);
 
       assignment.employee = employee;
       assignment.shift = shift;
       assignment.company = employee.company!;
+      assignment.workLocation = workLocation;
       assignment.validFrom = nextValidFrom;
       assignment.validTo = nextValidTo;
       assignment.notes = dto.notes !== undefined ? dto.notes : assignment.notes ?? null;
@@ -420,7 +459,7 @@ export class ShiftsService {
       const saved = await repository.save(assignment);
       const reloaded = await repository.findOne({
         where: { id: saved.id },
-        relations: { company: true, employee: { company: true }, shift: { company: true, days: true } }
+        relations: { company: true, employee: { company: true }, shift: { company: true, days: true }, workLocation: { company: true } }
       });
       if (!reloaded) {
         throw new AppError('SHIFT_ASSIGNMENT_NOT_FOUND', 'Asignación no encontrada', 404);
@@ -436,6 +475,7 @@ export class ShiftsService {
       .leftJoinAndSelect('assignment.employee', 'employee')
       .leftJoinAndSelect('employee.company', 'employeeCompany')
       .leftJoinAndSelect('assignment.shift', 'shift')
+      .leftJoinAndSelect('assignment.workLocation', 'workLocation')
       .leftJoinAndSelect('shift.days', 'day');
 
     if (query.employeeId) {
@@ -484,6 +524,20 @@ export class ShiftsService {
         }
       }
 
+      const workLocation =
+        dto.workLocationId !== undefined && dto.workLocationId !== null
+          ? await manager.getRepository(WorkLocationEntity).findOne({ where: { id: dto.workLocationId }, relations: { company: true } })
+          : null;
+      if (dto.workLocationId !== undefined && dto.workLocationId !== null && !workLocation) {
+        throw new AppError('WORK_LOCATION_NOT_FOUND', 'Centro de trabajo no encontrado', 404);
+      }
+      if (workLocation) {
+        this.tenantScope.assertResourceAccess(workLocation.company?.id, context);
+        if (workLocation.company?.id !== employee.company?.id) {
+          throw new AppError('SHIFT_CROSS_TENANT', 'El centro de trabajo pertenece a otra empresa', 404);
+        }
+      }
+
       const existing = await manager.getRepository(ShiftOverrideEntity).findOne({
         where: { employee: { id: employee.id }, date: normalizeDate(dto.date) }
       });
@@ -495,6 +549,7 @@ export class ShiftsService {
         company: employee.company!,
         employee,
         shift: shift ?? null,
+        workLocation,
         date: normalizeDate(dto.date),
         kind: dto.kind ?? (shift ? 'SHIFT' : 'OFF'),
         notes: dto.notes ?? null
@@ -502,7 +557,7 @@ export class ShiftsService {
       const saved = await manager.getRepository(ShiftOverrideEntity).save(override);
       const reloaded = await manager.getRepository(ShiftOverrideEntity).findOne({
         where: { id: saved.id },
-        relations: { company: true, employee: { company: true }, shift: { company: true, days: true } }
+        relations: { company: true, employee: { company: true }, shift: { company: true, days: true }, workLocation: { company: true } }
       });
       if (!reloaded) {
         throw new AppError('SHIFT_OVERRIDE_NOT_FOUND', 'Excepción no encontrada', 404);
@@ -527,6 +582,7 @@ export class ShiftsService {
       const nextDate = normalizeDate(dto.date ?? override.date);
       const nextKind = dto.kind ?? override.kind;
       const nextShiftId = dto.shiftId !== undefined ? dto.shiftId : override.shift?.id ?? null;
+      const nextWorkLocationId = dto.workLocationId !== undefined ? dto.workLocationId : override.workLocation?.id ?? null;
       const employee = await manager.getRepository(EmployeeEntity).findOne({ where: { id: nextEmployeeId }, relations: { company: true } });
       if (!employee) {
         throw new AppError('EMPLOYEE_NOT_FOUND', 'Empleado no encontrado', 404);
@@ -547,6 +603,20 @@ export class ShiftsService {
         }
       }
 
+      const workLocation =
+        nextWorkLocationId !== null
+          ? await manager.getRepository(WorkLocationEntity).findOne({ where: { id: nextWorkLocationId }, relations: { company: true } })
+          : null;
+      if (nextWorkLocationId !== null && !workLocation) {
+        throw new AppError('WORK_LOCATION_NOT_FOUND', 'Centro de trabajo no encontrado', 404);
+      }
+      if (workLocation) {
+        this.tenantScope.assertResourceAccess(workLocation.company?.id, context);
+        if (workLocation.company?.id !== employee.company?.id) {
+          throw new AppError('SHIFT_CROSS_TENANT', 'El centro de trabajo pertenece a otra empresa', 404);
+        }
+      }
+
       const existing = await manager.getRepository(ShiftOverrideEntity).findOne({
         where: { employee: { id: employee.id }, date: nextDate }
       });
@@ -559,12 +629,13 @@ export class ShiftsService {
       override.date = nextDate;
       override.kind = nextKind;
       override.shift = shift ?? null;
+      override.workLocation = workLocation;
       override.notes = dto.notes !== undefined ? dto.notes : override.notes ?? null;
 
       const saved = await repository.save(override);
       const reloaded = await repository.findOne({
         where: { id: saved.id },
-        relations: { company: true, employee: { company: true }, shift: { company: true, days: true } }
+        relations: { company: true, employee: { company: true }, shift: { company: true, days: true }, workLocation: { company: true } }
       });
       if (!reloaded) {
         throw new AppError('SHIFT_OVERRIDE_NOT_FOUND', 'Excepción no encontrada', 404);
@@ -580,6 +651,7 @@ export class ShiftsService {
       .leftJoinAndSelect('override.employee', 'employee')
       .leftJoinAndSelect('employee.company', 'employeeCompany')
       .leftJoinAndSelect('override.shift', 'shift')
+      .leftJoinAndSelect('override.workLocation', 'workLocation')
       .leftJoinAndSelect('shift.days', 'day');
     if (query.employeeId) {
       qb.andWhere('employee.id = :employeeId', { employeeId: query.employeeId });
@@ -606,19 +678,33 @@ export class ShiftsService {
     const userIds = employees.map((employee) => employee.user?.id).filter((id): id is number => typeof id === 'number');
     const days = this.resolver.buildRange(range.from, range.to);
 
-    const [assignments, overrides, vacations, permissions, incidents, timeEntries] = await Promise.all([
+    const [assignments, overrides, locationAssignments, employmentTerms, vacations, permissions, incidents, timeEntries] = await Promise.all([
       employeeIds.length
         ? this.assignmentsRepository.find({
             where: { employee: { id: In(employeeIds) }, active: true },
-            relations: { company: true, employee: { company: true, user: true, calendar: { days: true } }, shift: { company: true, days: true } },
+            relations: { company: true, employee: { company: true, user: true, calendar: { days: true } }, shift: { company: true, days: true }, workLocation: { company: true } },
             order: { validFrom: 'ASC', id: 'ASC' }
           })
         : Promise.resolve([]),
       employeeIds.length
         ? this.overridesRepository.find({
-            where: { employee: { id: In(employeeIds) } },
-            relations: { company: true, employee: { company: true, user: true, calendar: { days: true } }, shift: { company: true, days: true } },
+          where: { employee: { id: In(employeeIds) } },
+            relations: { company: true, employee: { company: true, user: true, calendar: { days: true } }, shift: { company: true, days: true }, workLocation: { company: true } },
             order: { date: 'ASC', id: 'ASC' }
+          })
+        : Promise.resolve([]),
+      employeeIds.length
+        ? this.locationAssignmentsRepository.find({
+            where: { employee: { id: In(employeeIds) } },
+            relations: { company: true, employee: { company: true }, workLocation: { company: true } },
+            order: { validFrom: 'ASC', id: 'ASC' }
+          })
+        : Promise.resolve([]),
+      employeeIds.length
+        ? this.employmentTermsRepository.find({
+            where: { employee: { id: In(employeeIds) } },
+            relations: { company: true, employee: { company: true }, primaryWorkLocation: { company: true } },
+            order: { effectiveFrom: 'ASC', policyVersion: 'ASC', id: 'ASC' }
           })
         : Promise.resolve([]),
       employeeIds.length
@@ -653,6 +739,8 @@ export class ShiftsService {
 
     const assignmentsByEmployee = this.groupByEmployee(assignments);
     const overridesByEmployee = this.groupByEmployee(overrides);
+    const locationAssignmentsByEmployee = this.groupByEmployee(locationAssignments);
+    const employmentTermsByEmployee = this.groupByEmployee(employmentTerms);
     const vacationsByEmployee = this.groupByEmployee(vacations);
     const permissionsByEmployee = this.groupByEmployee(permissions);
     const incidentsByEmployee = this.groupByEmployee(incidents);
@@ -663,6 +751,8 @@ export class ShiftsService {
       days,
       assignmentsByEmployee,
       overridesByEmployee,
+      locationAssignmentsByEmployee,
+      employmentTermsByEmployee,
       vacationsByEmployee,
       permissionsByEmployee,
       incidentsByEmployee,
@@ -899,6 +989,9 @@ export class ShiftsService {
         code: assignment.shift.code,
         color: assignment.shift.color ?? null
       },
+      workLocationId: assignment.workLocation?.id ?? null,
+      workLocationName: assignment.workLocation?.name ?? null,
+      workLocationCode: assignment.workLocation?.code ?? null,
       validFrom: assignment.validFrom,
       validTo: assignment.validTo ?? null,
       notes: assignment.notes ?? null,
@@ -924,6 +1017,9 @@ export class ShiftsService {
             color: override.shift.color ?? null
           }
         : null,
+      workLocationId: override.workLocation?.id ?? null,
+      workLocationName: override.workLocation?.name ?? null,
+      workLocationCode: override.workLocation?.code ?? null,
       date: override.date,
       kind: override.kind,
       notes: override.notes ?? null,

@@ -18,6 +18,7 @@ import { VacationEntity } from './vacation.entity';
 import { ShiftAssignmentEntity } from './shift-assignment.entity';
 import { ShiftOverrideEntity } from './shift-override.entity';
 import { EmployeeLocationAssignmentEntity } from './employee-location-assignment.entity';
+import { EmploymentTermsEntity } from './employment-terms.entity';
 
 @Entity({ name: 'employees' })
 @Index(['company', 'numero'], { unique: true })
@@ -87,6 +88,9 @@ export class EmployeeEntity {
 
   @OneToMany(() => EmployeeLocationAssignmentEntity, (assignment) => assignment.employee)
   locationAssignments!: EmployeeLocationAssignmentEntity[];
+
+  @OneToMany(() => EmploymentTermsEntity, (employmentTerms) => employmentTerms.employee)
+  employmentTerms!: EmploymentTermsEntity[];
 
   @ManyToOne(() => CalendarEntity, (calendar) => calendar.employees, {
     eager: true,

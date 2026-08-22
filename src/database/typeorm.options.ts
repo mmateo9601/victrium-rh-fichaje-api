@@ -6,6 +6,7 @@ import { CompanyEntity } from './entities/company.entity';
 import { CalendarDayEntity } from './entities/calendar-day.entity';
 import { CalendarEntity } from './entities/calendar.entity';
 import { EmployeeEntity } from './entities/employee.entity';
+import { EmploymentTermsEntity } from './entities/employment-terms.entity';
 import { EmployeeLocationAssignmentEntity } from './entities/employee-location-assignment.entity';
 import { IncidentEntity } from './entities/incident.entity';
 import { PermissionEntity } from './entities/permission.entity';
@@ -33,6 +34,8 @@ import { CreatePlanningPeriodsTable1724172500000 } from './migrations/1724172500
 import { CreatePlanningPeriodAuditsTable1724172600000 } from './migrations/1724172600000-CreatePlanningPeriodAuditsTable';
 import { AddShiftDaySegments1724172700000 } from './migrations/1724172700000-AddShiftDaySegments';
 import { AddShiftRotationColumns1724172800000 } from './migrations/1724172800000-AddShiftRotationColumns';
+import { CreateEmploymentTermsTable1724172900000 } from './migrations/1724172900000-CreateEmploymentTermsTable';
+import { AddWorkLocationToShiftOverrides1724173000000 } from './migrations/1724173000000-AddWorkLocationToShiftOverrides';
 
 export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
   return {
@@ -45,6 +48,7 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
     entities: [
       UserEntity,
       EmployeeEntity,
+      EmploymentTermsEntity,
       CompanyEntity,
       CalendarEntity,
       CalendarDayEntity,
@@ -76,7 +80,9 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
       CreatePlanningPeriodsTable1724172500000,
       CreatePlanningPeriodAuditsTable1724172600000,
       AddShiftDaySegments1724172700000,
-      AddShiftRotationColumns1724172800000
+      AddShiftRotationColumns1724172800000,
+      CreateEmploymentTermsTable1724172900000,
+      AddWorkLocationToShiftOverrides1724173000000
     ],
     migrationsRun: true,
     synchronize: false,

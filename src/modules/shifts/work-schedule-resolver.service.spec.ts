@@ -1,8 +1,12 @@
-import { WorkScheduleResolverService } from './work-schedule-resolver.service';
+import { EmployeeLocationAssignmentEntity } from '../../database/entities/employee-location-assignment.entity';
+import { EmploymentTermsEntity } from '../../database/entities/employment-terms.entity';
 import { EmployeeEntity } from '../../database/entities/employee.entity';
-import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
-import { ShiftEntity } from '../../database/entities/shift.entity';
 import { ShiftDayEntity } from '../../database/entities/shift-day.entity';
+import { ShiftOverrideEntity } from '../../database/entities/shift-override.entity';
+import { ShiftEntity } from '../../database/entities/shift.entity';
+import { TimeEntryEntity } from '../../database/entities/time-entry.entity';
+import { WorkLocationEntity } from '../../database/entities/work-location.entity';
+import { WorkScheduleResolverService } from './work-schedule-resolver.service';
 
 describe('WorkScheduleResolverService', () => {
   function createResolver() {
@@ -70,6 +74,31 @@ describe('WorkScheduleResolverService', () => {
     } as unknown as ShiftEntity;
   }
 
+  function createLocation(id: number, code: string, name: string) {
+    return {
+      id,
+      code,
+      name
+    } as WorkLocationEntity;
+  }
+
+  function createTerms(overrides: Partial<EmploymentTermsEntity> = {}) {
+    return {
+      id: 31,
+      active: true,
+      effectiveFrom: '2026-08-01',
+      effectiveTo: null,
+      weeklyContractMinutes: 2400,
+      annualContractMinutes: 86400,
+      workingPercentage: '100.00',
+      contractType: 'FULL_TIME',
+      policyVersion: 1,
+      policySnapshot: null,
+      primaryWorkLocation: createLocation(91, 'MAD-CENTRO', 'Madrid Centro'),
+      ...overrides
+    } as EmploymentTermsEntity;
+  }
+
   function createEmployee(workPolicy: Record<string, unknown> | null = null) {
     return {
       id: 21,
@@ -99,6 +128,8 @@ describe('WorkScheduleResolverService', () => {
       date: '2026-08-24',
       assignments: [],
       overrides: [],
+      locationAssignments: [],
+      employmentTerms: [],
       calendarDay: null,
       vacations: [],
       permissions: [],
@@ -133,6 +164,8 @@ describe('WorkScheduleResolverService', () => {
         } as unknown as never
       ],
       overrides: [],
+      locationAssignments: [],
+      employmentTerms: [],
       calendarDay: null,
       vacations: [],
       permissions: [],
@@ -186,6 +219,8 @@ describe('WorkScheduleResolverService', () => {
         } as unknown as never
       ],
       overrides: [],
+      locationAssignments: [],
+      employmentTerms: [],
       calendarDay: null,
       vacations: [],
       permissions: [],
@@ -219,6 +254,8 @@ describe('WorkScheduleResolverService', () => {
         } as unknown as never
       ],
       overrides: [],
+      locationAssignments: [],
+      employmentTerms: [],
       calendarDay: null,
       vacations: [],
       permissions: [],
@@ -233,5 +270,69 @@ describe('WorkScheduleResolverService', () => {
     expect(result.expectedStart).toBe('14:00:00');
     expect(result.expectedEnd).toBe('22:00:00');
     expect(result.expectedMinutes).toBe(450);
+  });
+
+  it('prefers override location and resolves employment terms for the day', () => {
+    const resolver = createResolver();
+    const overrideLocation = createLocation(101, 'MAD-OVR', 'Override');
+    const assignmentLocation = createLocation(102, 'MAD-ASG', 'Assignment');
+    const employeeLocation = createLocation(103, 'MAD-EMP', 'Employee');
+    const termsLocation = createLocation(104, 'MAD-TERM', 'Terms');
+    const result = resolver.resolveDay({
+      employee: createEmployee(),
+      date: '2026-08-26',
+      assignments: [
+        {
+          id: 3,
+          employee: createEmployee(),
+          shift: createShift(),
+          validFrom: '2026-08-01',
+          validTo: null,
+          active: true,
+          workLocation: assignmentLocation
+        } as unknown as never
+      ],
+      overrides: [
+        {
+          id: 4,
+          employee: createEmployee(),
+          date: '2026-08-26',
+          kind: 'SHIFT',
+          shift: createShift(),
+          workLocation: overrideLocation
+        } as unknown as ShiftOverrideEntity
+      ],
+      locationAssignments: [
+        {
+          id: 5,
+          employee: createEmployee(),
+          workLocation: employeeLocation,
+          validFrom: '2026-08-01',
+          validTo: null,
+          primary: true
+        } as unknown as EmployeeLocationAssignmentEntity
+      ],
+      employmentTerms: [
+        createTerms({
+          primaryWorkLocation: termsLocation,
+          policyVersion: 3
+        })
+      ],
+      calendarDay: null,
+      vacations: [],
+      permissions: [],
+      incidents: [],
+      timeEntries: [
+        createEntry(1, '2026-08-26', '08:00:00', 'ENTRADA'),
+        createEntry(2, '2026-08-26', '17:00:00', 'SALIDA')
+      ]
+    });
+
+    expect(result.workLocationId).toBe(101);
+    expect(result.workLocationSource).toBe('override');
+    expect(result.workLocationName).toBe('Override');
+    expect(result.employmentTermsId).toBe(31);
+    expect(result.employmentTermsContractType).toBe('FULL_TIME');
+    expect(result.employmentTermsWorkingPercentage).toBe('100.00');
   });
 });
