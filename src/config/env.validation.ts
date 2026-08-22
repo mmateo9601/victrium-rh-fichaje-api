@@ -17,9 +17,7 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: z.string().min(1).default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().min(1).default('7d'),
-  CORS_ORIGINS: z
-    .string()
-    .default('https://victrium-rh-fichaje-web.victriumtech.com,http://localhost:3000'),
+  CORS_ORIGINS: z.string().min(1),
   TZ: z.string().default('Europe/Madrid'),
   SMTP_HOST: z.string().optional().or(z.literal('')),
   SMTP_PORT: optionalPositiveNumber,
