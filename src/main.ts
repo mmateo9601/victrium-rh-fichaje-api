@@ -19,6 +19,7 @@ async function bootstrap() {
   });
 
   const config = createAppConfig(process.env);
+  const allowedOrigins = new Set(config.corsOrigins.map((origin) => origin.trim()).filter(Boolean));
 
   app.enableShutdownHooks();
   app.setGlobalPrefix('api');
@@ -29,8 +30,21 @@ async function bootstrap() {
 
   app.use(helmet());
   app.enableCors({
-    origin: config.corsOrigins,
-    credentials: true
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS origin not allowed: ${origin}`), false);
+    },
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS']
   });
   app.use(new RequestIdMiddleware().use);
 
