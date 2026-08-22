@@ -1275,7 +1275,6 @@ export class DevelopmentSeedService {
   }
 
   private async seedAudits(manager: EntityManager, users: SeedUserBundle[], timeEntries: SeedTimeEntryBundle) {
-    const repository = manager.getRepository(TimeEntryAuditEntity);
     const userMap = new Map(users.map((bundle) => [bundle.user.email, bundle]));
     const laura = userMap.get('laura@victrium.local');
     const rrhh = userMap.get('rrhh@victrium.local');

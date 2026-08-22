@@ -229,9 +229,7 @@ export class VacationsService {
       companyName: vacation.company?.name ?? null,
       employeeId: vacation.employee?.id ?? null,
       employeeNumero: vacation.employee?.numero ?? null,
-      employeeNombre: vacation.employee?.nombreEmpleado ?? null,
-      employeeEmail: vacation.employee?.email ?? null,
-      employeeDni: vacation.employee?.dni ?? null
+      employeeNombre: vacation.employee?.nombreEmpleado ?? null
     };
   }
 }

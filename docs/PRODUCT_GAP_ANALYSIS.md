@@ -13,7 +13,7 @@ This document compares the current product against an ideal, modern workforce pl
 
 | Area | Current functionality | Ideal functionality | Gap | Priority | Impact | Recommended action | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Authentication | JWT access/refresh, sessions, profile | Multi-role access with super admin and tenant admin separation | `ROLE_SUPER_ADMIN` missing, company admin semantics are still ambiguous | P0 | High | Introduce explicit super admin and company admin semantics | PARTIAL |
+| Authentication | JWT access/refresh, sessions, profile | Multi-role access with super admin and tenant admin separation | Role semantics are now explicit, but navigation and tenant-admin UX still need continued alignment | P0 | High | Keep the role matrix and frontend navigation synchronized | PARTIAL |
 | Tenant hierarchy | Company, employee, user | Super admin -> company -> locations -> teams -> employees | Work locations and location history are implemented; team-level hierarchy still missing | P0 | High | Add team structures and provisioning flows | PARTIAL |
 | Work locations | Multi-site centers with calendar support | Multi-site model with calendar and schedule support | Work locations are implemented with calendar linkage, schedule context and UI | P0 | High | Extend with richer hierarchy and provisioning flows | IMPLEMENTED |
 | Employee mobility | Historical location assignments | Historical location assignments | Employee-location assignment history is implemented and visible in the UI | P1 | High | Continue improving mobility analytics and validation rules | IMPLEMENTED |

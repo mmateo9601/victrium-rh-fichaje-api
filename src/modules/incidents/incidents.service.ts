@@ -315,9 +315,7 @@ export class IncidentsService {
       companyName: incident.company?.name ?? null,
       employeeId: incident.employee?.id ?? null,
       employeeNumero: incident.employee?.numero ?? null,
-      employeeNombre: incident.employee?.nombreEmpleado ?? null,
-      employeeEmail: incident.employee?.email ?? null,
-      employeeDni: incident.employee?.dni ?? null
+      employeeNombre: incident.employee?.nombreEmpleado ?? null
     };
   }
 }

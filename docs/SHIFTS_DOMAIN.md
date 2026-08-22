@@ -33,6 +33,17 @@ It covers:
 - `GET /api/v1/employees/:id/schedule`
 - `GET /api/v1/employees/:id/shifts`
 
+## Companion endpoints
+
+The scheduling experience also depends on:
+
+- `GET /api/v1/work-locations`
+- `GET /api/v1/employee-location-assignments`
+- `GET /api/v1/planning-periods`
+- `GET /api/v1/planning-periods/:id/audits`
+- `GET /api/v1/time-entries/me/current`
+- `GET /api/v1/time-entries/me/eligibility`
+
 ## Data model
 
 - `turnos` stores the shift template.
@@ -44,4 +55,5 @@ It covers:
 
 - The module is tenant-aware.
 - Schedule responses combine shift planning with absences, permissions, incidents and time-entry activity.
+- Planning periods are the persistence boundary for draft/publish flows around shifts.
 - The healthcheck can be used to confirm API availability and database connectivity after deployment.

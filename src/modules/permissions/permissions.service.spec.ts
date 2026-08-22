@@ -117,4 +117,31 @@ describe('PermissionsService', () => {
     expect(denied.estado).toBe(PermissionStatus.DENEGADO);
     expect(permissionRepository.save).toHaveBeenCalledTimes(2);
   });
+
+  it('does not expose employee email or dni in public responses', () => {
+    const permission = {
+      id: 22,
+      dia: '2026-08-20',
+      horaInicio: '08:00',
+      horaFin: '10:00',
+      descripcion: 'Cita médica',
+      aprobado: false,
+      estado: PermissionStatus.PENDIENTE,
+      company: { id: 11, name: 'Victrium', code: 'VIC', active: true },
+      employee: {
+        id: 7,
+        numero: 'EMP001',
+        nombreEmpleado: 'Ada Lovelace',
+        email: 'ada@example.com',
+        dni: '12345678A'
+      }
+    } as unknown as PermissionEntity;
+
+    const service = new PermissionsService({} as never, {} as never, {} as never);
+    const response = service.toDto(permission);
+
+    expect(response).not.toHaveProperty('employeeEmail');
+    expect(response).not.toHaveProperty('employeeDni');
+    expect(response.employeeNombre).toBe('Ada Lovelace');
+  });
 });

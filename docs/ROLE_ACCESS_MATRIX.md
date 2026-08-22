@@ -9,8 +9,6 @@ This matrix summarizes the API permissions expected by the workforce app.
 | `ROLE_COMPANY_ADMIN` | Own tenant | Manage operational data for the company, including employees, locations, schedules, and planning |
 | `ROLE_RRHH` | Own tenant | HR operations, employee records, absences, permissions, incidents, and reporting |
 | `ROLE_USER` | Own profile | Self service, time entries, schedule view, personal absences and employee context |
-| `ROLE_AUDITOR` | Read-only access where allowed | Audit and traceability review |
-| `ROLE_WORKFORCE_REPRESENTATIVE` | Read/write on assigned scope | Workforce and shift coordination within the assigned company scope |
 
 ## Guard rules already enforced
 

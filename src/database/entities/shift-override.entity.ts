@@ -17,7 +17,7 @@ import { WorkLocationEntity } from './work-location.entity';
 export type ShiftOverrideKind = 'SHIFT' | 'OFF';
 
 @Entity({ name: 'turno_overrides' })
-@Index(['employee', 'date'])
+@Index(['employee', 'date'], { unique: true })
 export class ShiftOverrideEntity {
   @PrimaryGeneratedColumn()
   id!: number;

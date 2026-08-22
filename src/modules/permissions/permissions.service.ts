@@ -337,9 +337,7 @@ export class PermissionsService {
       companyName: permission.company?.name ?? null,
       employeeId: permission.employee?.id ?? null,
       employeeNumero: permission.employee?.numero ?? null,
-      employeeNombre: permission.employee?.nombreEmpleado ?? null,
-      employeeEmail: permission.employee?.email ?? null,
-      employeeDni: permission.employee?.dni ?? null
+      employeeNombre: permission.employee?.nombreEmpleado ?? null
     };
   }
 }

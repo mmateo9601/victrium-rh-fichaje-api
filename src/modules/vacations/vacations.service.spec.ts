@@ -125,4 +125,30 @@ describe('VacationsService', () => {
     expect(denied.estado).toBe(VacationStatus.DENEGADO);
     expect(vacationRepository.save).toHaveBeenCalledTimes(2);
   });
+
+  it('does not expose employee email or dni in public responses', () => {
+    const vacation = {
+      id: 22,
+      inicio: '2026-08-21',
+      fin: '2026-08-25',
+      consumidas: false,
+      aprobado: false,
+      estado: VacationStatus.PENDIENTE,
+      company: { id: 11, name: 'Victrium', code: 'VIC', active: true },
+      employee: {
+        id: 7,
+        numero: 'EMP001',
+        nombreEmpleado: 'Ada Lovelace',
+        email: 'ada@example.com',
+        dni: '12345678A'
+      }
+    } as unknown as VacationEntity;
+
+    const service = new VacationsService({} as never, {} as never, {} as never);
+    const response = service.toDto(vacation);
+
+    expect(response).not.toHaveProperty('employeeEmail');
+    expect(response).not.toHaveProperty('employeeDni');
+    expect(response.employeeNombre).toBe('Ada Lovelace');
+  });
 });

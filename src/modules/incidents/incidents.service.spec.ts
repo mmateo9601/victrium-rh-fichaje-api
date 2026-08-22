@@ -108,4 +108,30 @@ describe('IncidentsService', () => {
     expect(updated.resuelta).toBe(true);
     expect(updated.explicacion).toBe('Resuelto por soporte');
   });
+
+  it('does not expose employee email or dni in public responses', () => {
+    const incident = {
+      id: 5,
+      descripcion: 'Portátil sin batería',
+      resumen: 'Equipo averiado',
+      dia: '2026-08-20',
+      resuelta: false,
+      explicacion: null,
+      company: { id: 11, name: 'Victrium', code: 'VIC', active: true },
+      employee: {
+        id: 7,
+        numero: 'EMP001',
+        nombreEmpleado: 'Ada Lovelace',
+        email: 'ada@example.com',
+        dni: '12345678A'
+      }
+    } as unknown as IncidentEntity;
+
+    const service = new IncidentsService({} as never, {} as never, {} as never);
+    const response = service.toDto(incident);
+
+    expect(response).not.toHaveProperty('employeeEmail');
+    expect(response).not.toHaveProperty('employeeDni');
+    expect(response.employeeNombre).toBe('Ada Lovelace');
+  });
 });

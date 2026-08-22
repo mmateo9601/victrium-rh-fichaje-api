@@ -1,34 +1,50 @@
 # UML Implementation Matrix
 
-This matrix maps the core UML domain model to the current API implementation.
+This matrix maps the target UML vocabulary to the current API codebase.
 
-| UML area | Main entities / modules | API coverage | Notes |
+Status legend:
+
+- `implemented`: there is a direct entity/module/service implementation.
+- `partial`: the concept exists, but it is embedded in another aggregate or service.
+- `missing`: no explicit implementation exists yet.
+
+| UML concept | Current implementation | Status | Notes |
 | --- | --- | --- | --- |
-| Multitenant organization | `CompanyEntity`, `WorkLocationEntity`, `CalendarEntity`, `CalendarDayEntity` | Implemented | Companies, calendars, default calendar relation, work locations, company-scoped queries |
-| Identity and roles | `UserEntity`, `RoleEntity`, `RoleName`, auth sessions, API keys | Implemented | Role-aware auth for web, mobile and desktop |
-| Workforce directory | `EmployeeEntity`, `EmploymentTermsEntity`, employee-location assignments | Implemented | Employee profile, primary work location, contract history |
-| Scheduling | `ShiftEntity`, `ShiftDayEntity`, `ShiftSegment`, `ShiftAssignmentEntity`, `ShiftOverrideEntity`, schedule resolver | Implemented | Rotation, overrides, effective schedule resolution |
-| Time and attendance | `TimeEntryEntity`, `TimeEntrySessionEntity`, `TimeEntryBreakEntity`, `TimeEntryAuditEntity` | Implemented | Clock-in/out, pause/resume, audit trail |
-| Absences and incidents | `VacationEntity`, `PermissionEntity`, `IncidentEntity` | Implemented | Status-based life cycle and reporting hooks |
-| Planning periods | `PlanningPeriodEntity`, `PlanningPeriodAuditEntity` | Implemented | Draft/published cycles and traceability |
-| Policies and settings | `CompanyEntity.workPolicy`, calendar tolerances, operational limits | Implemented | Configurable by tenant, used by schedule and time-entry rules |
-| Reporting | `reports` module | Implemented | Aggregated workforce and attendance views |
+| `Company` | `CompanyEntity`, `CompaniesService` | implemented | Owns timezone, default calendar and `workPolicy` JSON. |
+| `WorkLocation` | `WorkLocationEntity`, `WorkLocationsModule` | implemented | Company-scoped center with optional calendar and timezone. |
+| `Employee` | `EmployeeEntity`, `EmployeesService` | implemented | Workforce profile. It mirrors some user fields by design. |
+| `EmploymentTerms` | `EmploymentTermsEntity` | implemented | Versioned contract history with `policySnapshot` and primary work location. |
+| `Shift` | `ShiftEntity`, `ShiftDayEntity`, `ShiftAssignmentEntity`, `ShiftOverrideEntity`, `ShiftsService`, `WorkScheduleResolverService` | implemented | Template, day rules, assignments and overrides are all present. |
+| `ShiftDay` | `ShiftDayEntity` | implemented | Stored as a child entity of `Shift`. |
+| `ShiftSegment` | `ShiftDayEntity.segments` JSON | partial | There is no dedicated table; segments are embedded JSON. |
+| `RotationPattern` | `ShiftEntity.rotationPattern` JSON | partial | No standalone entity; pattern is resolved inside the shift service and resolver. |
+| `ScheduleAssignment` | `ShiftAssignmentEntity` + `ShiftOverrideEntity` + resolver | partial | The UML concept is split across assignment and override aggregates. |
+| `ScheduleOverride` | `ShiftOverrideEntity` | implemented | Date-specific exception with `SHIFT` and `OFF` modes. |
+| `ScheduleResolver` | `WorkScheduleResolverService` | implemented | Calculates the effective schedule, policy evaluation and row summaries. |
+| `WorkTimePolicy` | `CompanyEntity.workPolicy` JSON | partial | Policy exists, but it is schema-less JSON rather than a typed value object. |
+| `PolicyResolver` | `TimeEntryEligibilityService` + `WorkScheduleResolverService` | partial | Policy resolution is distributed across two services. |
+| `TimeEntry` | `TimeEntryEntity` | implemented | Canonical attendance line item. |
+| `TimeEntryBreak` | `TimeEntryBreakEntity` | implemented | Session-level break history. |
+| `TimeEntryEvent` | `TimeEntryEntity` + `TimeEntrySessionEntity` | partial | No separate event stream entity. Events are inferred from entries and sessions. |
+| `ClockEligibility` | `TimeEntryEligibilityService`, `TimeEntryEligibilityDto` | implemented | Backend authority for clock-in rules. |
+| `AutoClose` | `TimeEntriesService.finishSession` | partial | There is no standalone auto-close service or scheduler yet. |
+| `Vacation` | `VacationEntity`, `VacationsService` | implemented | Status lifecycle and tenant scoping are present. |
+| `Permission` | `PermissionEntity`, `PermissionsService` | implemented | Status lifecycle and tenant scoping are present. |
+| `Incident` | `IncidentEntity`, `IncidentsService` | implemented | Operational incident record with reporting support. |
+| `PlanningPeriod` | `PlanningPeriodEntity`, `PlanningPeriodAuditEntity`, `PlanningPeriodsService` | implemented | Draft/published lifecycle with audits. |
+| `AuditLog` | `TimeEntryAuditEntity`, `PlanningPeriodAuditEntity` | partial | Audit exists by bounded context, not as a shared global audit stream. |
 
 ## Current schema additions
 
 - `companies.default_calendar_id`
 - `employees.primary_work_location_id`
 
-These columns align the persisted model with the UML contract and are included in migrations.
+These columns are already mapped in the ORM and included in migrations.
 
-## Delivery status
+## Gaps To Track
 
-Core production flows are covered end to end in the API:
-
-- authentication and tenant scoping
-- companies and work locations
-- employees and employment terms
-- schedules, shifts, and overrides
-- time entries, breaks, and audits
-- absences, permissions, and incidents
-- reports and operational summaries
+- `ScheduleAssignment` is not a single canonical table or module.
+- `WorkTimePolicy` is still untyped JSON and can drift without a schema contract.
+- `ClockEligibility` is implemented, but only as backend read logic, not a reusable domain object.
+- `AutoClose` is not yet a first-class automation boundary.
+- The resolver is powerful, but it mixes schedule, absence, attendance and policy evaluation in one service.

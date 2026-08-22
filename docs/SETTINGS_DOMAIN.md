@@ -22,6 +22,7 @@ The settings domain groups the tenant-level configuration that shapes attendance
 - `CompanyEntity.workPolicy`
 - `CompanyEntity.timezone`
 - `CompanyEntity.defaultCalendar`
+- `CompanyEntity.defaultCalendarId`
 - `CalendarEntity`
 - `CalendarDayEntity`
 - `WorkLocationEntity.calendar`

@@ -3,7 +3,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 import { CalendarEntity } from './calendar.entity';
 
 @Entity({ name: 'dias_laborables' })
-@Index(['dia'], { unique: true })
+@Index(['calendar', 'dia'], { unique: true })
 export class CalendarDayEntity {
   @PrimaryGeneratedColumn()
   id!: number;

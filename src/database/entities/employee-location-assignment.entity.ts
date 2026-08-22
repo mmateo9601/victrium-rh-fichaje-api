@@ -5,7 +5,7 @@ import { EmployeeEntity } from './employee.entity';
 import { WorkLocationEntity } from './work-location.entity';
 
 @Entity({ name: 'employee_location_assignments' })
-@Index(['employee', 'validFrom', 'validTo'])
+@Index(['company', 'employee', 'validFrom', 'validTo'])
 export class EmployeeLocationAssignmentEntity {
   @PrimaryGeneratedColumn()
   id!: number;

@@ -784,15 +784,12 @@ export class ShiftsService {
   }
 
   async getEmployeeSchedule(employeeId: number, context: PrincipalTenantContext, query: { from?: string; to?: string; shiftId?: number } = {}) {
+    await this.requireAccessibleEmployee(employeeId, context);
     return this.getSchedule({ ...query, employeeId }, context);
   }
 
   async getEmployeeAssignments(employeeId: number, context: PrincipalTenantContext) {
-    const employee = await this.employeesRepository.findOne({ where: { id: employeeId }, relations: { company: true } });
-    if (!employee) {
-      throw new AppError('EMPLOYEE_NOT_FOUND', 'Empleado no encontrado', 404);
-    }
-    this.tenantScope.assertResourceAccess(employee.company?.id, context, employee.id);
+    await this.requireAccessibleEmployee(employeeId, context);
     return this.listAssignments({ employeeId }, context);
   }
 
@@ -817,6 +814,10 @@ export class ShiftsService {
   }
 
   private async listEmployeesForSchedule(employeeId: number | undefined, shiftId: number | undefined, context: PrincipalTenantContext) {
+    if (employeeId) {
+      await this.requireAccessibleEmployee(employeeId, context);
+    }
+
     const qb = this.employeesRepository
       .createQueryBuilder('employee')
       .leftJoinAndSelect('employee.company', 'company')
@@ -843,6 +844,20 @@ export class ShiftsService {
 
     qb.orderBy('employee.nombreEmpleado', 'ASC').distinct(true);
     return qb.getMany();
+  }
+
+  private async requireAccessibleEmployee(employeeId: number, context: PrincipalTenantContext) {
+    const employee = await this.employeesRepository.findOne({
+      where: { id: employeeId },
+      relations: { company: true, user: true }
+    });
+
+    if (!employee) {
+      throw new AppError('EMPLOYEE_NOT_FOUND', 'Empleado no encontrado', 404);
+    }
+
+    this.tenantScope.assertResourceAccess(employee.company?.id, context, employee.user?.id);
+    return employee;
   }
 
   private buildShiftDays(

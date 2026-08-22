@@ -35,10 +35,4 @@ export class VacationResponseDto {
 
   @ApiProperty({ required: false, nullable: true })
   employeeNombre!: string | null;
-
-  @ApiProperty({ required: false, nullable: true })
-  employeeEmail!: string | null;
-
-  @ApiProperty({ required: false, nullable: true })
-  employeeDni!: string | null;
 }

@@ -20,20 +20,18 @@ Build a workforce planning and timekeeping platform that supports Spanish organi
 
 ## Hierarchy
 
-- `SUPER_ADMIN`
+- `ROLE_SUPER_ADMIN`
   - platform-wide access
   - creates and configures companies
   - switches context into a company
   - sees global metrics and audit
-- `COMPANY_ADMIN`
+- `ROLE_ADMIN` / `ROLE_COMPANY_ADMIN`
   - company-wide administration
   - manages work locations, calendars, policies, and users
-- `RRHH`
+- `ROLE_RRHH`
   - operational HR configuration
   - manages employees, shifts, assignments, planning and exceptions
-- `MANAGER`
-  - operational visibility over a team or location if enabled by policy
-- `EMPLOYEE`
+- `ROLE_USER`
   - self-service schedule, calendar, timekeeping and requests
 
 ## Location model
@@ -103,4 +101,3 @@ Operational data should be auditable and not silently overwritten.
 - Employee self-service area
 
 The navigation should reflect the current context explicitly so the user knows whether they are acting as platform admin or company user.
-

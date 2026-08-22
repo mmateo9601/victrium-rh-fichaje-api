@@ -35,7 +35,9 @@
 ### Roles
 
 - Fixed security roles for the current migration:
+  - `ROLE_SUPER_ADMIN`
   - `ROLE_ADMIN`
+  - `ROLE_COMPANY_ADMIN`
   - `ROLE_RRHH`
   - `ROLE_USER`
 - Roles are authorization metadata, not a business domain CRUD.

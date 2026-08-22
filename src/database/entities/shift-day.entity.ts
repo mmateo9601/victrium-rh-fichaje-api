@@ -11,7 +11,7 @@ export type ShiftSegmentValue = {
 };
 
 @Entity({ name: 'turno_dias' })
-@Index(['shift', 'dayOfWeek'])
+@Index(['shift', 'dayOfWeek'], { unique: true })
 export class ShiftDayEntity {
   @PrimaryGeneratedColumn()
   id!: number;

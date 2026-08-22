@@ -6,8 +6,8 @@ import { EmployeeEntity } from './employee.entity';
 import { WorkLocationEntity } from './work-location.entity';
 
 @Entity({ name: 'calendarios' })
-@Index(['nombre'], { unique: true })
-@Index(['year'], { unique: true })
+@Index(['company', 'nombre'], { unique: true })
+@Index(['company', 'year'], { unique: true })
 export class CalendarEntity {
   @PrimaryGeneratedColumn()
   id!: number;

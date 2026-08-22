@@ -4,6 +4,18 @@
 
 The scheduling domain connects planning, work locations, shifts, absences and actual timekeeping.
 
+## Implementation today
+
+The current API surface is split across:
+
+- `work-locations`
+- `employee-location-assignments`
+- `shifts`
+- `shift-assignments`
+- `planning-periods`
+- `schedule`
+- `time-entries`
+
 ## Concepts
 
 - Work location
@@ -52,6 +64,7 @@ The scheduling domain connects planning, work locations, shifts, absences and ac
 
 - binds employee, shift, date range and optional location
 - can be compared with actual timekeeping
+- is represented across `shift-assignments`, `shift-assignments/overrides`, `planning-periods` and the schedule resolver
 
 ## Conflict checks
 
@@ -75,4 +88,3 @@ The domain should detect:
 - planning changes should be traced
 - publication should be auditable
 - corrections should preserve the original state and store a reason
-
