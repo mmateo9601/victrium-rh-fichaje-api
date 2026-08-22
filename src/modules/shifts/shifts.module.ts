@@ -5,7 +5,9 @@ import { TenantScopeService } from '../../common/tenant/tenant-scope.service';
 import { CalendarDayEntity } from '../../database/entities/calendar-day.entity';
 import { CompanyEntity } from '../../database/entities/company.entity';
 import { EmployeeEntity } from '../../database/entities/employee.entity';
+import { EmployeeLocationAssignmentEntity } from '../../database/entities/employee-location-assignment.entity';
 import { IncidentEntity } from '../../database/entities/incident.entity';
+import { EmploymentTermsEntity } from '../../database/entities/employment-terms.entity';
 import { PermissionEntity } from '../../database/entities/permission.entity';
 import { ShiftAssignmentEntity } from '../../database/entities/shift-assignment.entity';
 import { ShiftDayEntity } from '../../database/entities/shift-day.entity';
@@ -28,6 +30,8 @@ import { WorkScheduleResolverService } from './work-schedule-resolver.service';
       ShiftAssignmentEntity,
       ShiftOverrideEntity,
       EmployeeEntity,
+      EmployeeLocationAssignmentEntity,
+      EmploymentTermsEntity,
       CalendarDayEntity,
       VacationEntity,
       PermissionEntity,

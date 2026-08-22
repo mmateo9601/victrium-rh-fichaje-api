@@ -16,7 +16,7 @@ export class CalendarEntity {
   nombre!: string;
 
   @ManyToOne(() => CompanyEntity, (company) => company.calendars, {
-    eager: true,
+    eager: false,
     nullable: true,
     onDelete: 'SET NULL'
   })

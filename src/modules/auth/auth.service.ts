@@ -31,18 +31,19 @@ export class AuthService {
       throw new AppError('INVALID_CREDENTIALS', 'Credenciales invalidas', 401);
     }
 
+    const roles = (user.roles ?? []).map((role) => role.rolNombre);
+    const companyId = user.company?.id ?? user.employee?.company?.id ?? null;
+    const employeeId = user.employee?.id ?? null;
+
     const session = await this.sessionsRepository.save(
       this.sessionsRepository.create({
         user,
         refreshTokenHash: 'pending',
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        userAgent: userAgent ?? null
+        userAgent: userAgent ? userAgent.slice(0, 255) : null
       })
     );
 
-    const roles = (user.roles ?? []).map((role) => role.rolNombre);
-    const companyId = user.company?.id ?? user.employee?.company?.id ?? null;
-    const employeeId = user.employee?.id ?? null;
     const accessToken = this.tokenService.signAccessToken({
       sub: user.id,
       numero: user.numero,
