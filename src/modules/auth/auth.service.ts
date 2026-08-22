@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 
 import { AppError } from '../../common/errors/app-error';
+import { parseDurationToMilliseconds } from '../../common/time/duration';
 import { createAppConfig } from '../../config/env.validation';
 import { AuthSessionEntity } from '../../database/entities/auth-session.entity';
 import { PublicUserDto } from '../users/dto/public-user.dto';
@@ -16,7 +17,8 @@ import { TokenService } from '../../common/auth/token.service';
 
 @Injectable()
 export class AuthService {
-  private readonly tokenService = new TokenService(createAppConfig(process.env));
+  private readonly config = createAppConfig(process.env);
+  private readonly tokenService = new TokenService(this.config);
 
   constructor(
     private readonly usersService: UsersService,
@@ -39,7 +41,7 @@ export class AuthService {
       this.sessionsRepository.create({
         user,
         refreshTokenHash: 'pending',
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + parseDurationToMilliseconds(this.config.jwt.refreshExpiresIn)),
         userAgent: userAgent ? userAgent.slice(0, 255) : null
       })
     );

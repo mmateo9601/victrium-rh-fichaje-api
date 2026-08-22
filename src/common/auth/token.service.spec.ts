@@ -7,6 +7,9 @@ function createConfig(): AppConfig {
     port: 3001,
     corsOrigins: ['http://localhost:3000'],
     tz: 'Europe/Madrid',
+    logLevel: 'log',
+    swaggerEnabled: false,
+    trustProxy: false,
     database: {
       host: 'localhost',
       port: 3306,

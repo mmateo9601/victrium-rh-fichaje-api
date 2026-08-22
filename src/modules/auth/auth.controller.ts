@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../common/auth/jwt.guard';
@@ -14,11 +15,13 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   login(@Body() dto: LoginRequestDto, @Req() req: { headers: { ['user-agent']?: string } }) {
     return this.authService.login(dto, req.headers['user-agent']);
   }
 
   @Post('refresh')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   refresh(@Body() dto: RefreshRequestDto) {
     return this.authService.refresh(dto);
   }

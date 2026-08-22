@@ -7,7 +7,7 @@ import { createTypeOrmOptions } from './typeorm.options';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, cache: true, envFilePath: '.env' }),
+    ConfigModule.forRoot({ isGlobal: true, cache: true, envFilePath: '.env', validate: createAppConfig }),
     TypeOrmModule.forRootAsync({
       useFactory: () => createTypeOrmOptions(createAppConfig(process.env))
     })

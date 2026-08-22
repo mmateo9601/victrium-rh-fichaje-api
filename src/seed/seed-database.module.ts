@@ -9,7 +9,7 @@ const config = createAppConfig(process.env);
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, cache: true }),
+    ConfigModule.forRoot({ isGlobal: true, cache: true, validate: createAppConfig }),
     TypeOrmModule.forRoot({
       ...createTypeOrmOptions(config),
       synchronize: false,

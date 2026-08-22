@@ -5,12 +5,25 @@ import { DataSource } from 'typeorm';
 export class HealthService {
   constructor(private readonly dataSource: DataSource) {}
 
-  async check() {
+  live() {
+    return {
+      status: 'ok' as const,
+      timestamp: new Date().toISOString(),
+      version: '0.2.0'
+    };
+  }
+
+  async ready() {
     const timestamp = new Date().toISOString();
 
     try {
       if (!this.dataSource.isInitialized) {
-        await this.dataSource.initialize();
+        return {
+          status: 'degraded' as const,
+          database: 'down' as const,
+          timestamp,
+          version: '0.2.0'
+        };
       }
       await this.dataSource.query('SELECT 1');
       return {
@@ -27,5 +40,9 @@ export class HealthService {
         version: '0.2.0'
       };
     }
+  }
+
+  check() {
+    return this.ready();
   }
 }

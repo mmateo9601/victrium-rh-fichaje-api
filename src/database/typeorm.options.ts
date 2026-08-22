@@ -1,4 +1,4 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
 
 import { AppConfig } from '../config/env.validation';
 import { ApiKeyEntity } from './entities/api-key.entity';
@@ -40,14 +40,9 @@ import { AddCompanyDefaultCalendar1724173100000 } from './migrations/17241731000
 import { AddEmployeePrimaryWorkLocation1724173200000 } from './migrations/1724173200000-AddEmployeePrimaryWorkLocation';
 import { HardenDatabaseIntegrity1724173300000 } from './migrations/1724173300000-HardenDatabaseIntegrity';
 
-export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
-  return {
+export function createTypeOrmOptions(config: AppConfig): MysqlConnectionOptions {
+  const commonOptions: MysqlConnectionOptions = {
     type: 'mysql',
-    host: config.database.host,
-    port: config.database.port,
-    username: config.database.user,
-    password: config.database.password,
-    database: config.database.name,
     entities: [
       UserEntity,
       EmployeeEntity,
@@ -91,12 +86,28 @@ export function createTypeOrmOptions(config: AppConfig): TypeOrmModuleOptions {
       HardenDatabaseIntegrity1724173300000
     ],
     migrationsRun: false,
+    dropSchema: false,
     synchronize: false,
     logging: config.nodeEnv === 'development',
-    autoLoadEntities: false,
     timezone: 'Z',
     extra: {
       connectionLimit: 10
     }
+  };
+
+  if (config.database.url) {
+    return {
+      ...commonOptions,
+      url: config.database.url
+    };
+  }
+
+  return {
+    ...commonOptions,
+    host: config.database.host!,
+    port: config.database.port!,
+    username: config.database.user!,
+    password: config.database.password!,
+    database: config.database.name!
   };
 }

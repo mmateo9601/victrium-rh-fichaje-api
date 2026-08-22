@@ -33,16 +33,16 @@ function loadEnvFile(filePath) {
 
 const envPath = path.resolve(__dirname, '..', '.env');
 loadEnvFile(envPath);
-console.log(`[seed] env loaded from ${envPath}`);
+process.stdout.write(`[seed] env loaded from ${envPath}\n`);
 
 require('ts-node/register/transpile-only');
 
 const { runSeedCli } = require('../src/seed/seed.cli.ts');
 
 const mode = process.argv[2] === 'reset' ? 'reset' : 'dev';
-console.log(`[seed] mode ${mode}`);
+process.stdout.write(`[seed] mode ${mode}\n`);
 
 runSeedCli(mode).catch((error) => {
-  console.error(error);
+  process.stderr.write(`${String(error)}\n`);
   process.exitCode = 1;
 });

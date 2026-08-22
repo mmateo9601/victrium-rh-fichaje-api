@@ -12,13 +12,12 @@ import { buildSwaggerDocument, setupSwagger } from './common/swagger/swagger.set
 import { createAppConfig } from './config/env.validation';
 
 async function bootstrap() {
-  const logger = new AppLogger();
+  const config = createAppConfig(process.env);
+  const logger = new AppLogger(config.logLevel);
   const app = await NestFactory.create(AppModule, {
     cors: false,
     logger
   });
-
-  const config = createAppConfig(process.env);
   const allowedOrigins = new Set(config.corsOrigins.map((origin) => origin.trim()).filter(Boolean));
 
   app.enableShutdownHooks();
@@ -27,6 +26,8 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: '1'
   });
+
+  app.getHttpAdapter().getInstance().set('trust proxy', config.trustProxy);
 
   app.use(helmet());
   app.enableCors({
@@ -51,7 +52,9 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalHttpExceptionFilter());
   app.useLogger(logger);
 
-  setupSwagger(app, buildSwaggerDocument(app));
+  if (config.swaggerEnabled) {
+    setupSwagger(app, buildSwaggerDocument(app));
+  }
 
   const port = config.port;
   await app.listen(port);

@@ -1,6 +1,8 @@
 import { LoggerService } from '@nestjs/common';
 
 export class AppLogger implements LoggerService {
+  constructor(private readonly minimumLevel: 'error' | 'warn' | 'log' | 'verbose' | 'debug' = 'log') {}
+
   log(message: unknown, context?: string) {
     this.write('log', message, context);
   }
@@ -22,12 +24,29 @@ export class AppLogger implements LoggerService {
   }
 
   private write(level: string, message: unknown, context?: string) {
+    if (!this.shouldLog(level)) {
+      return;
+    }
+
     const payload = {
       level,
       context,
       message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      pid: process.pid
     };
-    console.log(JSON.stringify(payload));
+    process.stdout.write(`${JSON.stringify(payload)}\n`);
+  }
+
+  private shouldLog(level: string) {
+    const priorities: Record<string, number> = {
+      error: 0,
+      warn: 1,
+      log: 2,
+      verbose: 3,
+      debug: 4
+    };
+
+    return (priorities[level] ?? 99) <= priorities[this.minimumLevel];
   }
 }
