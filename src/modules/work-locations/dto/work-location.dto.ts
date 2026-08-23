@@ -51,6 +51,11 @@ export class CreateWorkLocationDto {
 }
 
 export class UpdateWorkLocationDto {
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsInt()
+  companyId?: number | null;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()

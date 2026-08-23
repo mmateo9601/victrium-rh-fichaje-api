@@ -147,12 +147,27 @@ export class WorkLocationsService {
 
   async update(id: number, dto: UpdateWorkLocationDto, context: PrincipalTenantContext) {
     const location = await this.findByIdOrFail(id, context);
+    const nextCompanyId = dto.companyId ?? location.company?.id ?? null;
+
+    if (nextCompanyId === null || nextCompanyId === undefined) {
+      throw new AppError('COMPANY_NOT_FOUND', 'No se pudo determinar la empresa del centro', 400);
+    }
+
+    if (!context.canAccessAll && dto.companyId !== undefined && dto.companyId !== context.companyId) {
+      throw new AppError('FORBIDDEN_CROSS_TENANT', 'No puedes mover el centro a otra empresa', 403);
+    }
+
+    const nextCompany = await this.companiesRepository.findOne({ where: { id: nextCompanyId } });
+    if (!nextCompany) {
+      throw new AppError('COMPANY_NOT_FOUND', 'Empresa no encontrada', 404);
+    }
+    this.tenantScope.assertResourceAccess(nextCompany.id, context);
 
     if (dto.name !== undefined || dto.code !== undefined) {
       const duplicate = await this.workLocationsRepository.findOne({
         where: [
-          { company: { id: location.company.id }, name: dto.name ?? location.name },
-          { company: { id: location.company.id }, code: dto.code ?? location.code }
+          { company: { id: nextCompany.id }, name: dto.name ?? location.name },
+          { company: { id: nextCompany.id }, code: dto.code ?? location.code }
         ]
       });
       if (duplicate && duplicate.id !== location.id) {
@@ -160,6 +175,7 @@ export class WorkLocationsService {
       }
     }
 
+    location.company = nextCompany;
     if (dto.name !== undefined) location.name = dto.name;
     if (dto.code !== undefined) location.code = dto.code;
     if (dto.address !== undefined) location.address = dto.address;
