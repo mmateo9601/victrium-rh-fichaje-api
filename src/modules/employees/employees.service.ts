@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { DataSource, Repository } from 'typeorm';
 
 import { AppError } from '../../common/errors/app-error';
+import { ACTIVE_ACCESS_ROLES, normalizeRoleNames } from '../../common/auth/role-access';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { TenantScopeService, PrincipalTenantContext } from '../../common/tenant/tenant-scope.service';
 import { CompanyEntity } from '../../database/entities/company.entity';
@@ -33,13 +34,14 @@ export class EmployeesService {
   ) {}
 
   private assertAssignableRoles(roles: RoleName[], context: PrincipalTenantContext) {
-    const normalizedRoles = [...new Set(roles)];
+    const normalizedRoles = [...new Set(normalizeRoleNames(roles))] as RoleName[];
 
-    if (
-      !context.roles.includes(RoleName.ROLE_SUPER_ADMIN) &&
-      normalizedRoles.includes(RoleName.ROLE_SUPER_ADMIN)
-    ) {
+    if (!context.roles.includes(RoleName.ROLE_SUPER_ADMIN) && normalizedRoles.includes(RoleName.ROLE_SUPER_ADMIN)) {
       throw new AppError('FORBIDDEN_ROLE_ASSIGNMENT', 'No puedes asignar el rol superadministrador', 403);
+    }
+
+    if (normalizedRoles.some((role) => !ACTIVE_ACCESS_ROLES.includes(role))) {
+      throw new AppError('FORBIDDEN_ROLE_ASSIGNMENT', 'No puedes asignar roles reservados', 403);
     }
 
     return normalizedRoles;
@@ -50,6 +52,9 @@ export class EmployeesService {
       const companyId = dto.companyId ?? context.companyId;
       if (!companyId && !context.canAccessAll) {
         throw new AppError('COMPANY_NOT_FOUND', 'Empresa no encontrada', 404);
+      }
+      if (!context.canAccessAll && dto.companyId !== undefined && dto.companyId !== context.companyId) {
+        throw new AppError('FORBIDDEN_CROSS_TENANT', 'No puedes crear empleados fuera de tu empresa', 403);
       }
 
       const company = await manager.getRepository(CompanyEntity).findOne({ where: { id: companyId ?? 0 } });
@@ -63,6 +68,9 @@ export class EmployeesService {
         dto.primaryWorkLocationId === undefined || dto.primaryWorkLocationId === null
           ? null
           : await this.resolveWorkLocation(manager, dto.primaryWorkLocationId, company.id);
+      if ((dto.deBaja === undefined || dto.deBaja === false) && !primaryWorkLocation) {
+        throw new AppError('WORK_LOCATION_REQUIRED', 'El empleado activo requiere un centro habitual', 400);
+      }
 
       const duplicateUser = await manager.getRepository(UserEntity).findOne({
         where: [{ numero: dto.numero }, { email: dto.email }, { dni: dto.dni }]
@@ -241,6 +249,9 @@ export class EmployeesService {
       this.tenantScope.assertResourceAccess(employee.company?.id, context, employee.user?.id);
 
       const companyId = dto.companyId ?? employee.company.id;
+      if (!context.canAccessAll && dto.companyId !== undefined && dto.companyId !== employee.company.id) {
+        throw new AppError('FORBIDDEN_CROSS_TENANT', 'No puedes mover empleados a otra empresa', 403);
+      }
       const company = await manager.getRepository(CompanyEntity).findOne({ where: { id: companyId } });
       if (!company) {
         throw new AppError('COMPANY_NOT_FOUND', 'Empresa no encontrada', 404);
@@ -283,6 +294,9 @@ export class EmployeesService {
       employee.company = company;
       if (dto.primaryWorkLocationId !== undefined) {
         employee.primaryWorkLocation = primaryWorkLocation;
+      }
+      if ((dto.deBaja === undefined || dto.deBaja === false) && employee.primaryWorkLocation === null) {
+        throw new AppError('WORK_LOCATION_REQUIRED', 'El empleado activo requiere un centro habitual', 400);
       }
 
       const user = employee.user

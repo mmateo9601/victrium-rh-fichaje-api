@@ -20,7 +20,7 @@ export class ShiftAssignmentsController {
   ) {}
 
   @Get()
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   list(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Query() query: { employeeId?: number; shiftId?: number; active?: string }
@@ -29,7 +29,7 @@ export class ShiftAssignmentsController {
   }
 
   @Post()
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   create(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Body() dto: CreateShiftAssignmentDto
@@ -38,7 +38,7 @@ export class ShiftAssignmentsController {
   }
 
   @Patch(':id')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   update(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,
@@ -48,7 +48,7 @@ export class ShiftAssignmentsController {
   }
 
   @Post('/overrides')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   createOverride(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Body() dto: CreateShiftOverrideDto
@@ -57,7 +57,7 @@ export class ShiftAssignmentsController {
   }
 
   @Patch('/overrides/:id')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   updateOverride(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,
@@ -67,7 +67,7 @@ export class ShiftAssignmentsController {
   }
 
   @Get('/overrides')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   listOverrides(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Query() query: { employeeId?: number; date?: string }

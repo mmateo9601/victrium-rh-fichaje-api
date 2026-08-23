@@ -132,7 +132,7 @@ describe('SuperAdminBootstrapService', () => {
       numero: 'admin@example.com',
       nombreEmpleado: 'Platform Admin',
       dni: 'super-admin:admin@example.com',
-      roles: [{ id: 2, rolNombre: RoleName.ROLE_ADMIN }]
+      roles: [{ id: 2, rolNombre: RoleName.ROLE_COMPANY_ADMIN }]
     } as UserEntity;
     const roleRepository = {
       findOne: jest.fn().mockResolvedValue({ id: 1, rolNombre: RoleName.ROLE_SUPER_ADMIN }),

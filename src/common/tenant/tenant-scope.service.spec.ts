@@ -24,7 +24,7 @@ describe('TenantScopeService', () => {
         userId: 1,
         companyId: null,
         employeeId: null,
-        roles: ['ROLE_ADMIN'],
+        roles: ['ROLE_COMPANY_ADMIN'],
         canAccessAll: true
       })
     ).not.toThrow();

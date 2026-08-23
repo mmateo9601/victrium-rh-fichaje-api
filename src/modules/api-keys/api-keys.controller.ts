@@ -17,7 +17,7 @@ export class ApiKeysController {
   constructor(private readonly apiKeysService: ApiKeysService) {}
 
   @Post()
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN')
   create(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Body() dto: CreateApiKeyDto
@@ -26,7 +26,7 @@ export class ApiKeysController {
   }
 
   @Get()
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN')
   list(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Query() query: PaginationQueryDto & { search?: string; active?: string | boolean; sort?: string; order?: string }
@@ -35,7 +35,7 @@ export class ApiKeysController {
   }
 
   @Get('users/:userId')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN')
   listByUser(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('userId', ParseIntPipe) userId: number,
@@ -45,7 +45,7 @@ export class ApiKeysController {
   }
 
   @Get(':id')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN')
   getById(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('id', ParseIntPipe) id: number
@@ -54,7 +54,7 @@ export class ApiKeysController {
   }
 
   @Patch(':id/deactivate')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN')
   deactivate(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('id', ParseIntPipe) id: number
@@ -63,7 +63,7 @@ export class ApiKeysController {
   }
 
   @Patch(':id/activate')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN')
   activate(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('id', ParseIntPipe) id: number
@@ -72,7 +72,7 @@ export class ApiKeysController {
   }
 
   @Delete(':id')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN')
   remove(
     @CurrentUser() user: { sub: number; numero?: string; roles?: string[]; companyId?: number | null; employeeId?: number | null },
     @Param('id', ParseIntPipe) id: number

@@ -68,6 +68,9 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   ultimoFichaje?: string | null;
 
+  @Column({ name: 'last_login_at', type: 'datetime', nullable: true })
+  lastLoginAt?: Date | null;
+
   @OneToOne(() => EmployeeEntity, (employee) => employee.user, {
     eager: true,
     nullable: true,

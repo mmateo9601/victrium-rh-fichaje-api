@@ -48,6 +48,7 @@ describe('AuthService super-admin compatibility', () => {
 
     const usersService = {
       findByEmailOrFail: jest.fn().mockResolvedValue(user),
+      save: jest.fn().mockImplementation(async (value) => value),
       toPublicUser: jest.fn().mockReturnValue({
         id: 1,
         numero: 'ADMIN001',
@@ -55,7 +56,12 @@ describe('AuthService super-admin compatibility', () => {
         companyId: null,
         employeeId: null,
         roles: [RoleName.ROLE_SUPER_ADMIN],
-        admin: false
+        admin: false,
+        active: true,
+        lastLoginAt: null,
+        email: 'admin@example.com',
+        companyName: null,
+        employeeName: null
       })
     };
     const sessionsRepository = {

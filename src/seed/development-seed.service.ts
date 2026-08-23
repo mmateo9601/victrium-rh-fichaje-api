@@ -3,6 +3,7 @@ import { DataSource, EntityManager } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
 import { AppError } from '../common/errors/app-error';
+import { SuperAdminBootstrapService } from '../bootstrap/super-admin.bootstrap';
 import { AuthSessionEntity } from '../database/entities/auth-session.entity';
 import { CalendarDayEntity } from '../database/entities/calendar-day.entity';
 import { CalendarEntity } from '../database/entities/calendar.entity';
@@ -121,10 +122,12 @@ const PASSWORD = 'Victrium123!';
 const SEED_ORIGIN = 'seed:dev';
 const ROLE_NAMES: RoleName[] = [
   RoleName.ROLE_SUPER_ADMIN,
-  RoleName.ROLE_ADMIN,
   RoleName.ROLE_COMPANY_ADMIN,
   RoleName.ROLE_RRHH,
-  RoleName.ROLE_USER
+  RoleName.ROLE_MANAGER,
+  RoleName.ROLE_USER,
+  RoleName.ROLE_AUDITOR,
+  RoleName.ROLE_WORKFORCE_REPRESENTATIVE
 ];
 const SEED_COMPANIES: SeededCompany[] = [
   {
@@ -334,7 +337,7 @@ const SEED_USERS: SeededUser[] = [
     numero: 'VIC-ADM',
     nombreEmpleado: 'Ana Martínez López',
     dni: '90000001A',
-    roles: [RoleName.ROLE_ADMIN],
+    roles: [RoleName.ROLE_COMPANY_ADMIN],
     admin: true,
     companyCode: 'VICTRIUM',
     calendarYear: 2026,
@@ -434,7 +437,7 @@ const SEED_USERS: SeededUser[] = [
     numero: 'ACM-ADM',
     nombreEmpleado: 'Marta Sánchez León',
     dni: '90000006F',
-    roles: [RoleName.ROLE_ADMIN],
+    roles: [RoleName.ROLE_COMPANY_ADMIN],
     admin: true,
     companyCode: 'ACME',
     calendarYear: 2027,
@@ -840,6 +843,44 @@ export class DevelopmentSeedService {
   async run(mode: SeedRunMode): Promise<SeedResult> {
     const context = this.buildContext();
 
+    if (mode === 'reset') {
+      await this.dataSource.transaction(async (manager) => {
+        await this.cleanupAllData(manager);
+        await this.seedRoles(manager);
+      });
+
+      const bootstrapResult = await new SuperAdminBootstrapService(this.dataSource).run();
+
+      if (bootstrapResult === 'disabled') {
+        throw new AppError(
+          'SUPER_ADMIN_BOOTSTRAP_DISABLED',
+          'BOOTSTRAP_SUPER_ADMIN debe estar activo para dejar solo el superadmin',
+          400
+        );
+      }
+
+      return {
+        companies: 0,
+        calendars: 0,
+        users: 1,
+        employees: 0,
+        planningPeriods: 0,
+        workLocations: 0,
+        locationAssignments: 0,
+        employmentTerms: 0,
+        shifts: 0,
+        assignments: 0,
+        overrides: 0,
+        timeEntries: 0,
+        audits: 0,
+        vacations: 0,
+        permissions: 0,
+        incidents: 0,
+        mode,
+        referenceDate: context.referenceDate.toISOString()
+      };
+    }
+
     return this.dataSource.transaction(async (manager) => {
       await this.cleanup(manager);
 
@@ -994,6 +1035,27 @@ export class DevelopmentSeedService {
 
     if (companyIds.length) {
       await manager.createQueryBuilder().delete().from(CompanyEntity).where('id IN (:...companyIds)', { companyIds }).execute();
+    }
+  }
+
+  private async cleanupAllData(manager: EntityManager) {
+    const queryRunner = manager.queryRunner;
+    if (!queryRunner) {
+      throw new AppError('QUERY_RUNNER_NOT_AVAILABLE', 'No se pudo iniciar la limpieza completa de la base de datos', 500);
+    }
+
+    const protectedTables = new Set(['migrations', 'typeorm_metadata']);
+    const tableNames = this.dataSource.entityMetadatas
+      .map((metadata) => metadata.tableName)
+      .filter((tableName) => !protectedTables.has(tableName));
+
+    await queryRunner.query('SET FOREIGN_KEY_CHECKS = 0');
+    try {
+      for (const tableName of tableNames) {
+        await queryRunner.query(`DELETE FROM \`${tableName}\``);
+      }
+    } finally {
+      await queryRunner.query('SET FOREIGN_KEY_CHECKS = 1');
     }
   }
 

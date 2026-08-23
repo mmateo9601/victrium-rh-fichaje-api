@@ -20,7 +20,7 @@ export class PlanningPeriodsController {
   ) {}
 
   @Get()
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   list(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Query() query: { page?: number; pageSize?: number; search?: string; status?: 'DRAFT' | 'PUBLISHED'; companyId?: number }
@@ -29,19 +29,19 @@ export class PlanningPeriodsController {
   }
 
   @Get(':id')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   byId(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Param('id', ParseIntPipe) id: number) {
     return this.planningPeriodsService.findByIdOrFail(id, this.tenantScope.toContext(user));
   }
 
   @Post()
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   create(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Body() dto: CreatePlanningPeriodDto) {
     return this.planningPeriodsService.create(dto, this.tenantScope.toContext(user));
   }
 
   @Patch(':id')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   update(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,
@@ -51,19 +51,19 @@ export class PlanningPeriodsController {
   }
 
   @Post(':id/publish')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   publish(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Param('id', ParseIntPipe) id: number) {
     return this.planningPeriodsService.publish(id, this.tenantScope.toContext(user));
   }
 
   @Post(':id/unpublish')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   unpublish(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Param('id', ParseIntPipe) id: number) {
     return this.planningPeriodsService.unpublish(id, this.tenantScope.toContext(user));
   }
 
   @Get(':id/audits')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   audits(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Param('id', ParseIntPipe) id: number) {
     return this.planningPeriodsService.listAudits(id, this.tenantScope.toContext(user));
   }

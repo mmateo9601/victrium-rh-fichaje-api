@@ -5,6 +5,7 @@ import { UserEntity } from '../../database/entities/user.entity';
 import { UsersService } from './users.service';
 
 describe('UsersService', () => {
+  const dataSource = {} as never;
   const tenantScope = {
     applyCompanyScope: jest.fn(),
     assertResourceAccess: jest.fn()
@@ -29,7 +30,7 @@ describe('UsersService', () => {
     const user = { id: 7, email: 'laura@victrium.local' } as UserEntity;
     repository.qb.getOne.mockResolvedValue(user);
 
-    const service = new UsersService(repository, tenantScope);
+    const service = new UsersService(dataSource, repository, tenantScope);
     const result = await service.findByEmailOrFail('  LAURA@VICTRIUM.LOCAL  ');
 
     expect(result).toBe(user);
@@ -45,7 +46,7 @@ describe('UsersService', () => {
     const repository = createRepositoryMock();
     repository.qb.getOne.mockResolvedValue(null);
 
-    const service = new UsersService(repository, tenantScope);
+    const service = new UsersService(dataSource, repository, tenantScope);
 
     await expect(service.findByEmailOrFail('missing@example.com')).rejects.toMatchObject({
       code: 'USER_NOT_FOUND',
@@ -58,7 +59,7 @@ describe('UsersService', () => {
     const user = { id: 9, email: 'admin@victrium.local' } as UserEntity;
     repository.qb.getOne.mockResolvedValue(user);
 
-    const service = new UsersService(repository, tenantScope);
+    const service = new UsersService(dataSource, repository, tenantScope);
     const result = await service.findById(9);
 
     expect(result).toBe(user);
@@ -70,7 +71,7 @@ describe('UsersService', () => {
     const user = { id: 10, email: 'operations@acme.local' } as UserEntity;
     repository.qb.getOne.mockResolvedValue(user);
 
-    const service = new UsersService(repository, tenantScope);
+    const service = new UsersService(dataSource, repository, tenantScope);
     const result = await service.findByNumeroOrEmail('  OPERATIONS@ACME.LOCAL  ');
 
     expect(result).toBe(user);

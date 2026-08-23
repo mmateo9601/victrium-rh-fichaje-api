@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { SelectQueryBuilder } from 'typeorm';
 
+import { normalizeRoleNames } from '../auth/role-access';
 import { AppError } from '../errors/app-error';
+import { RoleName } from '../../database/entities/role-name.enum';
 
 export type PrincipalTenantContext = {
   userId: number;
@@ -23,13 +25,13 @@ export type PrincipalLike = {
 @Injectable()
 export class TenantScopeService {
   toContext(principal: PrincipalLike): PrincipalTenantContext {
-    const roles = principal.roles ?? [];
+    const roles = normalizeRoleNames(principal.roles ?? []);
     return {
       userId: principal.sub ?? 0,
       companyId: principal.companyId ?? null,
       employeeId: principal.employeeId ?? null,
       roles,
-      canAccessAll: roles.includes('ROLE_SUPER_ADMIN')
+      canAccessAll: roles.includes(RoleName.ROLE_SUPER_ADMIN)
     };
   }
 

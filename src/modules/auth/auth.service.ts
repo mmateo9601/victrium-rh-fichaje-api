@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 
 import { AppError } from '../../common/errors/app-error';
+import { normalizeRoleNames } from '../../common/auth/role-access';
 import { parseDurationToMilliseconds } from '../../common/time/duration';
 import { createAppConfig } from '../../config/env.validation';
 import { AuthSessionEntity } from '../../database/entities/auth-session.entity';
@@ -33,7 +34,7 @@ export class AuthService {
       throw new AppError('INVALID_CREDENTIALS', 'Credenciales invalidas', 401);
     }
 
-    const roles = (user.roles ?? []).map((role) => role.rolNombre);
+    const roles = normalizeRoleNames((user.roles ?? []).map((role) => role.rolNombre));
     const companyId = user.company?.id ?? user.employee?.company?.id ?? null;
     const employeeId = user.employee?.id ?? null;
 
@@ -45,6 +46,9 @@ export class AuthService {
         userAgent: userAgent ? userAgent.slice(0, 255) : null
       })
     );
+
+    user.lastLoginAt = new Date();
+    await this.usersService.save(user);
 
     const accessToken = this.tokenService.signAccessToken({
       sub: user.id,
@@ -93,7 +97,7 @@ export class AuthService {
       throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
     }
 
-    const roles = (user.roles ?? []).map((role) => role.rolNombre);
+    const roles = normalizeRoleNames((user.roles ?? []).map((role) => role.rolNombre));
     const companyId = user.company?.id ?? user.employee?.company?.id ?? null;
     const employeeId = user.employee?.id ?? null;
     const accessToken = this.tokenService.signAccessToken({

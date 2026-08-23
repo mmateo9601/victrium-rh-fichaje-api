@@ -19,7 +19,7 @@ export class ReportsController {
   ) {}
 
   @Get('summary')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   summary(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }) {
     return this.reportsService.summary(this.tenantScope.toContext(user));
   }

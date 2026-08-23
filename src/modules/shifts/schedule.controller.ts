@@ -19,7 +19,7 @@ export class ScheduleController {
   ) {}
 
   @Get()
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   list(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Query() query: { from?: string; to?: string; employeeId?: number; shiftId?: number }
@@ -28,7 +28,7 @@ export class ScheduleController {
   }
 
   @Get('me')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   me(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Query() query: { from?: string; to?: string; shiftId?: number }
@@ -37,7 +37,7 @@ export class ScheduleController {
   }
 
   @Get('employees/:id')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   employee(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,

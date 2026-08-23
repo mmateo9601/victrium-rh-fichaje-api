@@ -1,8 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
+import { hasAnyRole, normalizeRoleNames } from './role-access';
 import { AppError } from '../errors/app-error';
 import { ROLES_KEY } from './roles.decorator';
+import { RoleName } from '../../database/entities/role-name.enum';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -19,13 +21,14 @@ export class RolesGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<{ user?: { roles?: string[] } }>();
-    const userRoles = request.user?.roles ?? [];
+    const userRoles = normalizeRoleNames(request.user?.roles ?? []);
+    const normalizedRequiredRoles = requiredRoles.map((role) => normalizeRoleNames([role])[0] ?? role);
 
-    if (userRoles.includes('ROLE_SUPER_ADMIN')) {
+    if (hasAnyRole(userRoles, [RoleName.ROLE_SUPER_ADMIN])) {
       return true;
     }
 
-    const allowed = requiredRoles.some((role) => userRoles.includes(role));
+    const allowed = normalizedRequiredRoles.some((role) => userRoles.includes(role));
     if (!allowed) {
       throw new AppError('FORBIDDEN', 'Insufficient permissions', 403);
     }

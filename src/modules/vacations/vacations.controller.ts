@@ -21,7 +21,7 @@ export class VacationsController {
   ) {}
 
   @Get()
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   list(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Query()
@@ -41,7 +41,7 @@ export class VacationsController {
   }
 
   @Get('me')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   me(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Query()
@@ -60,7 +60,7 @@ export class VacationsController {
   }
 
   @Get(':id')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   async byId(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number
@@ -69,7 +69,7 @@ export class VacationsController {
   }
 
   @Post()
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH', 'ROLE_USER')
   create(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Body() dto: CreateVacationDto
@@ -78,7 +78,7 @@ export class VacationsController {
   }
 
   @Patch(':id/approve')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   approve(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number
@@ -87,7 +87,7 @@ export class VacationsController {
   }
 
   @Patch(':id/deny')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   deny(
     @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number

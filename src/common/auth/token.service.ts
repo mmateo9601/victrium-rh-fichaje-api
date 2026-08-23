@@ -1,6 +1,7 @@
 import * as jwt from 'jsonwebtoken';
 
 import { AppConfig } from '../../config/env.validation';
+import { normalizeRoleNames } from './role-access';
 
 export type AccessTokenPayload = {
   sub: number;
@@ -22,7 +23,11 @@ export class TokenService {
   constructor(private readonly config: AppConfig) {}
 
   signAccessToken(payload: AccessTokenPayload) {
-    return jwt.sign(payload as unknown as object, this.config.jwt.accessSecret as jwt.Secret, {
+    const normalizedPayload = {
+      ...payload,
+      roles: normalizeRoleNames(payload.roles)
+    };
+    return jwt.sign(normalizedPayload as unknown as object, this.config.jwt.accessSecret as jwt.Secret, {
       expiresIn: this.config.jwt.accessExpiresIn as jwt.SignOptions['expiresIn']
     });
   }

@@ -93,7 +93,7 @@ describe('PlanningPeriodsService', () => {
         userId: 1,
         companyId: company.id,
         employeeId: null,
-        roles: ['ROLE_ADMIN'],
+        roles: ['ROLE_COMPANY_ADMIN'],
         canAccessAll: false
       }
     );
@@ -111,7 +111,7 @@ describe('PlanningPeriodsService', () => {
       userId: 1,
       companyId: 7,
       employeeId: null,
-      roles: ['ROLE_ADMIN'],
+      roles: ['ROLE_COMPANY_ADMIN'],
       canAccessAll: false
     });
 

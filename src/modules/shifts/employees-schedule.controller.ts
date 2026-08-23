@@ -19,7 +19,7 @@ export class EmployeeScheduleController {
   ) {}
 
   @Get(':id/shifts')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   assignments(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number
@@ -28,7 +28,7 @@ export class EmployeeScheduleController {
   }
 
   @Get(':id/schedule')
-  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_RRHH')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN', 'ROLE_RRHH')
   schedule(
     @CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] },
     @Param('id', ParseIntPipe) id: number,

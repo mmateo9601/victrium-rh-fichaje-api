@@ -333,7 +333,7 @@ describe('TimeEntriesService', () => {
         userId: 1,
         companyId: 7,
         employeeId: null,
-        roles: ['ROLE_ADMIN'],
+        roles: ['ROLE_COMPANY_ADMIN'],
         canAccessAll: true
       }
     );

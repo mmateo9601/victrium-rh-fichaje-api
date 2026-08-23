@@ -5,6 +5,9 @@ export class PublicUserDto {
   id!: number;
 
   @ApiProperty()
+  email!: string;
+
+  @ApiProperty()
   numero!: string;
 
   @ApiProperty()
@@ -16,9 +19,21 @@ export class PublicUserDto {
   @ApiProperty({ required: false, nullable: true })
   employeeId?: number | null;
 
+  @ApiProperty({ required: false, nullable: true })
+  companyName?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  employeeName?: string | null;
+
   @ApiProperty({ isArray: true, type: String })
   roles!: string[];
 
   @ApiProperty()
   admin!: boolean;
+
+  @ApiProperty()
+  active!: boolean;
+
+  @ApiProperty({ required: false, nullable: true })
+  lastLoginAt?: string | null;
 }

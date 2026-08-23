@@ -39,6 +39,8 @@ import { AddWorkLocationToShiftOverrides1724173000000 } from './migrations/17241
 import { AddCompanyDefaultCalendar1724173100000 } from './migrations/1724173100000-AddCompanyDefaultCalendar';
 import { AddEmployeePrimaryWorkLocation1724173200000 } from './migrations/1724173200000-AddEmployeePrimaryWorkLocation';
 import { HardenDatabaseIntegrity1724173300000 } from './migrations/1724173300000-HardenDatabaseIntegrity';
+import { ExpandRolesEnum1724173400000 } from './migrations/1724173400000-ExpandRolesEnum';
+import { AddUserLastLoginAt1724173500000 } from './migrations/1724173500000-AddUserLastLoginAt';
 import { CreateCoreBootstrapSchema1724171900000 } from './migrations/1724171900000-CreateCoreBootstrapSchema';
 
 export function createTypeOrmOptions(config: AppConfig): MysqlConnectionOptions {
@@ -85,7 +87,9 @@ export function createTypeOrmOptions(config: AppConfig): MysqlConnectionOptions 
       AddWorkLocationToShiftOverrides1724173000000,
       AddCompanyDefaultCalendar1724173100000,
       AddEmployeePrimaryWorkLocation1724173200000,
-      HardenDatabaseIntegrity1724173300000
+      HardenDatabaseIntegrity1724173300000,
+      ExpandRolesEnum1724173400000,
+      AddUserLastLoginAt1724173500000
     ],
     migrationsRun: false,
     dropSchema: false,
