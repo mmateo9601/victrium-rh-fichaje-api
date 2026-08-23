@@ -82,16 +82,15 @@ export class UsersService {
   }
 
   async findByEmailOrFail(email: string) {
-    const user = await this.usersRepository.findOne({
-      where: { email },
-      relations: {
-        roles: true,
-        company: true,
-        employee: {
-          company: true
-        }
-      }
-    });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'role')
+      .leftJoinAndSelect('user.company', 'company')
+      .leftJoinAndSelect('user.employee', 'employee')
+      .leftJoinAndSelect('employee.company', 'employeeCompany')
+      .where('LOWER(user.email) = :email', { email: normalizedEmail })
+      .getOne();
 
     if (!user) {
       throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
