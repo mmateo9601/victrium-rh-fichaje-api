@@ -27,42 +27,38 @@ export class UsersService {
   ) {}
 
   async findByNumero(numero: string) {
-    return this.usersRepository.findOne({
-      where: { numero },
-      relations: {
-        roles: true,
-        company: true,
-        employee: {
-          company: true
-        }
-      }
-    });
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'role')
+      .leftJoinAndSelect('user.company', 'company')
+      .leftJoinAndSelect('user.employee', 'employee')
+      .leftJoinAndSelect('employee.company', 'employeeCompany')
+      .where('user.numero = :numero', { numero })
+      .getOne();
   }
 
   async findByNumeroOrEmail(identifier: string) {
-    return this.usersRepository.findOne({
-      where: [{ numero: identifier }, { email: identifier }],
-      relations: {
-        roles: true,
-        company: true,
-        employee: {
-          company: true
-        }
-      }
-    });
+    const normalizedIdentifier = identifier.trim().toLowerCase();
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'role')
+      .leftJoinAndSelect('user.company', 'company')
+      .leftJoinAndSelect('user.employee', 'employee')
+      .leftJoinAndSelect('employee.company', 'employeeCompany')
+      .where('user.numero = :identifier', { identifier })
+      .orWhere('LOWER(user.email) = :normalizedIdentifier', { normalizedIdentifier })
+      .getOne();
   }
 
   async findById(id: number) {
-    return this.usersRepository.findOne({
-      where: { id },
-      relations: {
-        roles: true,
-        company: true,
-        employee: {
-          company: true
-        }
-      }
-    });
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'role')
+      .leftJoinAndSelect('user.company', 'company')
+      .leftJoinAndSelect('user.employee', 'employee')
+      .leftJoinAndSelect('employee.company', 'employeeCompany')
+      .where('user.id = :id', { id })
+      .getOne();
   }
 
   async findByNumeroOrFail(numero: string) {

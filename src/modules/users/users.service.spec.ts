@@ -14,6 +14,7 @@ describe('UsersService', () => {
     const qb = {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
+      orWhere: jest.fn().mockReturnThis(),
       getOne: jest.fn()
     };
 
@@ -49,6 +50,33 @@ describe('UsersService', () => {
     await expect(service.findByEmailOrFail('missing@example.com')).rejects.toMatchObject({
       code: 'USER_NOT_FOUND',
       statusCode: 404
+    });
+  });
+
+  it('loads users by id with the same lean query shape', async () => {
+    const repository = createRepositoryMock();
+    const user = { id: 9, email: 'admin@victrium.local' } as UserEntity;
+    repository.qb.getOne.mockResolvedValue(user);
+
+    const service = new UsersService(repository, tenantScope);
+    const result = await service.findById(9);
+
+    expect(result).toBe(user);
+    expect(repository.qb.where).toHaveBeenCalledWith('user.id = :id', { id: 9 });
+  });
+
+  it('finds users by number or email with normalized email matching', async () => {
+    const repository = createRepositoryMock();
+    const user = { id: 10, email: 'operations@acme.local' } as UserEntity;
+    repository.qb.getOne.mockResolvedValue(user);
+
+    const service = new UsersService(repository, tenantScope);
+    const result = await service.findByNumeroOrEmail('  OPERATIONS@ACME.LOCAL  ');
+
+    expect(result).toBe(user);
+    expect(repository.qb.where).toHaveBeenCalledWith('user.numero = :identifier', { identifier: '  OPERATIONS@ACME.LOCAL  ' });
+    expect(repository.qb.orWhere).toHaveBeenCalledWith('LOWER(user.email) = :normalizedIdentifier', {
+      normalizedIdentifier: 'operations@acme.local'
     });
   });
 });
