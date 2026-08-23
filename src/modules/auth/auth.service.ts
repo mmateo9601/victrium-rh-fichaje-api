@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
@@ -18,6 +18,7 @@ import { TokenService } from '../../common/auth/token.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly config = createAppConfig(process.env);
   private readonly tokenService = new TokenService(this.config);
 
@@ -48,7 +49,14 @@ export class AuthService {
     );
 
     user.lastLoginAt = new Date();
-    await this.usersService.save(user);
+    try {
+      await this.usersService.save(user);
+    } catch (error) {
+      this.logger.warn(
+        `No se pudo persistir lastLoginAt para el usuario ${user.id}; el login continuará igualmente.`,
+        error instanceof Error ? error.stack : undefined
+      );
+    }
 
     const accessToken = this.tokenService.signAccessToken({
       sub: user.id,

@@ -92,6 +92,55 @@ describe('AuthService super-admin compatibility', () => {
     );
   });
 
+  it('continues login when lastLoginAt persistence fails', async () => {
+    const user = {
+      id: 1,
+      email: 'admin@example.com',
+      password: 'hashed-password',
+      numero: 'ADMIN001',
+      nombreEmpleado: 'Platform Admin',
+      dni: 'SUPERADMIN001',
+      company: null,
+      employee: null,
+      roles: [{ id: 1, rolNombre: RoleName.ROLE_SUPER_ADMIN }]
+    } as UserEntity;
+
+    const usersService = {
+      findByEmailOrFail: jest.fn().mockResolvedValue(user),
+      save: jest.fn().mockRejectedValue(new Error('Unknown column last_login_at')),
+      toPublicUser: jest.fn().mockReturnValue({
+        id: 1,
+        numero: 'ADMIN001',
+        nombreEmpleado: 'Platform Admin',
+        companyId: null,
+        employeeId: null,
+        roles: [RoleName.ROLE_SUPER_ADMIN],
+        admin: false,
+        active: true,
+        lastLoginAt: null,
+        email: 'admin@example.com',
+        companyName: null,
+        employeeName: null
+      })
+    };
+    const sessionsRepository = {
+      create: jest.fn().mockImplementation((value) => value),
+      save: jest.fn().mockImplementation(async (value) => value),
+      createQueryBuilder: jest.fn()
+    };
+
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    (bcrypt.hash as jest.Mock).mockResolvedValue('refresh-token-hash');
+
+    const service = new AuthService(usersService as never, sessionsRepository as never);
+    const response = await service.login({ email: 'admin@example.com', password: 'Password1234' }, 'Mozilla/5.0');
+
+    expect(response.accessToken).toBeDefined();
+    expect(response.refreshToken).toBeDefined();
+    expect(usersService.save).toHaveBeenCalledTimes(1);
+    expect(sessionsRepository.save).toHaveBeenCalledTimes(2);
+  });
+
   it('returns a public profile for a super admin without company or employee relations', async () => {
     const user = {
       id: 1,
