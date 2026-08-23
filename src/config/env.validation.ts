@@ -98,8 +98,7 @@ export type AppConfig = {
 
 export function createAppConfig(env: NodeJS.ProcessEnv): AppConfig {
   const parsed = envSchema.parse(env);
-  const corsOrigins = normalizeCorsOrigins(parsed.CORS_ORIGINS);
-  validateCorsOrigins(corsOrigins, parsed.NODE_ENV);
+  const corsOrigins = validateCorsOrigins(normalizeCorsOrigins(parsed.CORS_ORIGINS), parsed.NODE_ENV);
 
   const hasDatabaseUrl = Boolean(parsed.DATABASE_URL);
   const hasDatabaseParts = Boolean(parsed.DB_HOST && parsed.DB_NAME && parsed.DB_USER && parsed.DB_PASSWORD);

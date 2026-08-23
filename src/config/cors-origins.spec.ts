@@ -21,13 +21,16 @@ describe('cors origins', () => {
     expect(isAllowedCorsOrigin('https://victriumtech.com', ['https://*.victriumtech.com'])).toBe(false);
   });
 
-  it('rejects invalid production origins', () => {
+  it('filters unsafe production origins and keeps safe ones', () => {
+    expect(validateCorsOrigins(['https://localhost:3000', 'https://app.victriumtech.com'], 'production')).toEqual([
+      'https://app.victriumtech.com'
+    ]);
+    expect(validateCorsOrigins(['https://*.localhost', 'https://app.victriumtech.com'], 'production')).toEqual([
+      'https://app.victriumtech.com'
+    ]);
+  });
+
+  it('rejects invalid CORS syntax', () => {
     expect(() => validateCorsOrigins(['*'], 'production')).toThrow('Invalid CORS origin: *');
-    expect(() => validateCorsOrigins(['https://localhost:3000'], 'production')).toThrow(
-      'Unsafe CORS origin in production: https://localhost:3000'
-    );
-    expect(() => validateCorsOrigins(['https://*.localhost'], 'production')).toThrow(
-      'Unsafe CORS origin in production: https://*.localhost'
-    );
   });
 });

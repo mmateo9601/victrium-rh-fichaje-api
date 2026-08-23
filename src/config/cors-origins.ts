@@ -99,17 +99,31 @@ export function validateCorsOrigins(origins: string[], nodeEnv: 'development' | 
     throw new Error('CORS_ORIGINS must contain at least one allowed origin');
   }
 
+  const validatedOrigins: string[] = [];
+
   for (const origin of origins) {
     const parsed = parseCorsOriginPattern(origin);
     if (!parsed) {
       throw new Error(`Invalid CORS origin: ${origin}`);
     }
 
+    const normalizedOrigin =
+      parsed.type === 'exact'
+        ? parsed.value
+        : `${parsed.scheme}://*.${parsed.hostnameSuffix}${parsed.port ? `:${parsed.port}` : ''}`;
+
     if (nodeEnv === 'production') {
-      const normalizedOrigin = parsed.type === 'exact' ? parsed.value : `${parsed.scheme}://*.${parsed.hostnameSuffix}${parsed.port ? `:${parsed.port}` : ''}`;
       if (normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1')) {
-        throw new Error(`Unsafe CORS origin in production: ${normalizedOrigin}`);
+        continue;
       }
     }
+
+    validatedOrigins.push(normalizedOrigin);
   }
+
+  if (!validatedOrigins.length) {
+    throw new Error('CORS_ORIGINS must contain at least one allowed origin');
+  }
+
+  return validatedOrigins;
 }

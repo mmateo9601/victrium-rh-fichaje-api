@@ -31,7 +31,7 @@
 
 Notes:
 - Prefer `DATABASE_URL` or split DB fields, not both in deployment docs.
-- In production, `CORS_ORIGINS` must not include `localhost` or `127.0.0.1`.
+- In production, `CORS_ORIGINS` entries for `localhost` or `127.0.0.1` are ignored during startup and should be removed from the final deployment config.
 - Safe wildcard subdomain patterns such as `https://*.victriumtech.com` are supported.
 - `SWAGGER_ENABLED` defaults to off in production.
 - `BOOTSTRAP_SUPER_ADMIN=true` requires `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD`.
