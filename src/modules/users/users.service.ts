@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
-import { Brackets, DataSource, EntityManager, Repository } from 'typeorm';
+import { Brackets, DataSource, EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 
 import { AppError } from '../../common/errors/app-error';
 import { CONTRACT_ROLES, normalizeRoleNames } from '../../common/auth/role-access';
@@ -31,6 +31,8 @@ function isTruthy(value: unknown) {
 
 @Injectable()
 export class UsersService {
+  private lastLoginAtColumnExistsPromise?: Promise<boolean>;
+
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(UserEntity)
@@ -39,38 +41,41 @@ export class UsersService {
   ) {}
 
   async findByNumero(numero: string) {
-    return this.usersRepository
+    const qb = this.usersRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role')
       .leftJoinAndSelect('user.company', 'company')
       .leftJoinAndSelect('user.employee', 'employee')
       .leftJoinAndSelect('employee.company', 'employeeCompany')
-      .where('user.numero = :numero', { numero })
-      .getOne();
+      .where('user.numero = :numero', { numero });
+    await this.addLastLoginAtSelectIfAvailable(qb);
+    return qb.getOne();
   }
 
   async findByNumeroOrEmail(identifier: string) {
     const normalizedIdentifier = identifier.trim().toLowerCase();
-    return this.usersRepository
+    const qb = this.usersRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role')
       .leftJoinAndSelect('user.company', 'company')
       .leftJoinAndSelect('user.employee', 'employee')
       .leftJoinAndSelect('employee.company', 'employeeCompany')
       .where('user.numero = :identifier', { identifier })
-      .orWhere('LOWER(user.email) = :normalizedIdentifier', { normalizedIdentifier })
-      .getOne();
+      .orWhere('LOWER(user.email) = :normalizedIdentifier', { normalizedIdentifier });
+    await this.addLastLoginAtSelectIfAvailable(qb);
+    return qb.getOne();
   }
 
   async findById(id: number) {
-    return this.usersRepository
+    const qb = this.usersRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role')
       .leftJoinAndSelect('user.company', 'company')
       .leftJoinAndSelect('user.employee', 'employee')
       .leftJoinAndSelect('employee.company', 'employeeCompany')
-      .where('user.id = :id', { id })
-      .getOne();
+      .where('user.id = :id', { id });
+    await this.addLastLoginAtSelectIfAvailable(qb);
+    return qb.getOne();
   }
 
   async findByNumeroOrFail(numero: string) {
@@ -147,6 +152,7 @@ export class UsersService {
       .leftJoinAndSelect('user.company', 'company')
       .leftJoinAndSelect('user.employee', 'employee')
       .leftJoinAndSelect('employee.company', 'employeeCompany');
+    await this.addLastLoginAtSelectIfAvailable(qb);
 
     if (query.search) {
       qb.andWhere(
@@ -452,5 +458,32 @@ export class UsersService {
     if (existing) {
       throw new AppError('USER_ALREADY_EXISTS', 'Ya existe un usuario con ese email, login o DNI', 409);
     }
+  }
+
+  private async addLastLoginAtSelectIfAvailable(qb: SelectQueryBuilder<UserEntity>) {
+    if (await this.hasLastLoginAtColumn()) {
+      qb.addSelect('user.lastLoginAt');
+    }
+  }
+
+  private async hasLastLoginAtColumn() {
+    if (!this.lastLoginAtColumnExistsPromise) {
+      this.lastLoginAtColumnExistsPromise = this.dataSource
+        .query(
+          `SELECT COUNT(*) AS count
+           FROM INFORMATION_SCHEMA.COLUMNS
+           WHERE TABLE_SCHEMA = DATABASE()
+             AND TABLE_NAME = 'usuarios'
+             AND COLUMN_NAME = 'last_login_at'`
+        )
+        .then((rows) => {
+          const row = Array.isArray(rows) ? rows[0] : undefined;
+          const count = Number(row?.count ?? row?.COUNT ?? row?.['COUNT(*)'] ?? 0);
+          return count > 0;
+        })
+        .catch(() => false);
+    }
+
+    return this.lastLoginAtColumnExistsPromise;
   }
 }
