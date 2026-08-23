@@ -47,7 +47,7 @@ describe('AuthService super-admin compatibility', () => {
     } as UserEntity;
 
     const usersService = {
-      findByNumeroOrEmailOrFail: jest.fn().mockResolvedValue(user),
+      findByEmailOrFail: jest.fn().mockResolvedValue(user),
       toPublicUser: jest.fn().mockReturnValue({
         id: 1,
         numero: 'ADMIN001',
@@ -68,7 +68,7 @@ describe('AuthService super-admin compatibility', () => {
     (bcrypt.hash as jest.Mock).mockResolvedValue('refresh-token-hash');
 
     const service = new AuthService(usersService as never, sessionsRepository as never);
-    const response = await service.login({ numero: 'admin@example.com', password: 'Password1234' }, 'Mozilla/5.0');
+    const response = await service.login({ email: 'admin@example.com', password: 'Password1234' }, 'Mozilla/5.0');
 
     expect(response.user.companyId).toBeNull();
     expect(response.user.employeeId).toBeNull();

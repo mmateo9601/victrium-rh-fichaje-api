@@ -27,7 +27,7 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginRequestDto, userAgent?: string): Promise<AuthResponseDto> {
-    const user = await this.usersService.findByNumeroOrEmailOrFail(dto.numero);
+    const user = await this.usersService.findByEmailOrFail(dto.email);
     const passwordMatches = await bcrypt.compare(dto.password, user.password);
     if (!passwordMatches) {
       throw new AppError('INVALID_CREDENTIALS', 'Credenciales invalidas', 401);

@@ -81,6 +81,25 @@ export class UsersService {
     return user;
   }
 
+  async findByEmailOrFail(email: string) {
+    const user = await this.usersRepository.findOne({
+      where: { email },
+      relations: {
+        roles: true,
+        company: true,
+        employee: {
+          company: true
+        }
+      }
+    });
+
+    if (!user) {
+      throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
+    }
+
+    return user;
+  }
+
   async findByIdOrFail(id: number) {
     const user = await this.findById(id);
     if (!user) {
