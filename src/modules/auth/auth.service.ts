@@ -30,6 +30,7 @@ export class AuthService {
 
   async login(dto: LoginRequestDto, userAgent?: string): Promise<AuthResponseDto> {
     const user = await this.usersService.findByEmailOrFail(dto.email);
+    this.assertUserIsActive(user);
     const passwordMatches = await bcrypt.compare(dto.password, user.password);
     if (!passwordMatches) {
       throw new AppError('INVALID_CREDENTIALS', 'Credenciales invalidas', 401);
@@ -104,6 +105,7 @@ export class AuthService {
     if (!user) {
       throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
     }
+    this.assertUserIsActive(user);
 
     const roles = normalizeRoleNames((user.roles ?? []).map((role) => role.rolNombre));
     const companyId = user.company?.id ?? user.employee?.company?.id ?? null;
@@ -155,6 +157,7 @@ export class AuthService {
     if (!user) {
       throw new AppError('USER_NOT_FOUND', 'Usuario no encontrado', 404);
     }
+    this.assertUserIsActive(user);
 
     return this.usersService.toPublicUser(user);
   }
@@ -182,5 +185,11 @@ export class AuthService {
     return {
       message: 'Password actualizado correctamente'
     };
+  }
+
+  private assertUserIsActive(user: { deBaja?: boolean | null; employee?: { deBaja?: boolean | null } | null }) {
+    if (user.deBaja || user.employee?.deBaja) {
+      throw new AppError('USER_INACTIVE', 'Usuario inactivo', 403);
+    }
   }
 }

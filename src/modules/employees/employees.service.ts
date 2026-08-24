@@ -7,6 +7,7 @@ import { AppError } from '../../common/errors/app-error';
 import { ACTIVE_ACCESS_ROLES, normalizeRoleNames } from '../../common/auth/role-access';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { TenantScopeService, PrincipalTenantContext } from '../../common/tenant/tenant-scope.service';
+import { AuthSessionEntity } from '../../database/entities/auth-session.entity';
 import { CompanyEntity } from '../../database/entities/company.entity';
 import { EmployeeEntity } from '../../database/entities/employee.entity';
 import { RoleName } from '../../database/entities/role-name.enum';
@@ -64,11 +65,12 @@ export class EmployeesService {
 
       this.tenantScope.assertResourceAccess(company.id, context);
 
+      const nextDeBaja = dto.deBaja ?? false;
       const primaryWorkLocation =
         dto.primaryWorkLocationId === undefined || dto.primaryWorkLocationId === null
           ? null
           : await this.resolveWorkLocation(manager, dto.primaryWorkLocationId, company.id);
-      if ((dto.deBaja === undefined || dto.deBaja === false) && !primaryWorkLocation) {
+      if (!nextDeBaja && !primaryWorkLocation) {
         throw new AppError('WORK_LOCATION_REQUIRED', 'El empleado activo requiere un centro habitual', 400);
       }
 
@@ -101,8 +103,8 @@ export class EmployeesService {
         horasGeneradas: dto.horasGeneradas ?? 0,
         working: dto.working ?? false,
         enVacaciones: dto.enVacaciones ?? false,
-        deBaja: dto.deBaja ?? false,
         admin: false,
+        deBaja: nextDeBaja,
         roles: roleEntities,
         company
       });
@@ -257,6 +259,7 @@ export class EmployeesService {
         throw new AppError('COMPANY_NOT_FOUND', 'Empresa no encontrada', 404);
       }
 
+      const nextDeBaja = dto.deBaja ?? employee.deBaja ?? false;
       const primaryWorkLocation =
         dto.primaryWorkLocationId === undefined
           ? employee.primaryWorkLocation ?? null
@@ -295,7 +298,7 @@ export class EmployeesService {
       if (dto.primaryWorkLocationId !== undefined) {
         employee.primaryWorkLocation = primaryWorkLocation;
       }
-      if ((dto.deBaja === undefined || dto.deBaja === false) && employee.primaryWorkLocation === null) {
+      if (!nextDeBaja && employee.primaryWorkLocation === null) {
         throw new AppError('WORK_LOCATION_REQUIRED', 'El empleado activo requiere un centro habitual', 400);
       }
 
@@ -310,6 +313,10 @@ export class EmployeesService {
           })
         : null;
 
+      if (!nextDeBaja && !user) {
+        throw new AppError('USER_REQUIRED', 'El empleado activo requiere un usuario vinculado', 400);
+      }
+
       if (user) {
         if (dto.numero !== undefined) user.numero = dto.numero;
         if (dto.nombreEmpleado !== undefined) user.nombreEmpleado = dto.nombreEmpleado;
@@ -321,6 +328,13 @@ export class EmployeesService {
         if (dto.enVacaciones !== undefined) user.enVacaciones = dto.enVacaciones;
         if (dto.deBaja !== undefined) user.deBaja = dto.deBaja;
         user.company = company;
+        user.deBaja = Boolean(employee.deBaja);
+        if (nextDeBaja) {
+          employee.working = false;
+          employee.enVacaciones = false;
+          user.working = false;
+          user.enVacaciones = false;
+        }
         await manager.getRepository(UserEntity).save(user);
       }
 
@@ -328,6 +342,15 @@ export class EmployeesService {
       if (user) {
         user.employee = savedEmployee;
         await manager.getRepository(UserEntity).save(user);
+        if (savedEmployee.deBaja) {
+          await manager
+            .getRepository(AuthSessionEntity)
+            .createQueryBuilder()
+            .update()
+            .set({ revokedAt: new Date() })
+            .where('user_id = :userId', { userId: user.id })
+            .execute();
+        }
       }
 
       return this.toDto(savedEmployee);

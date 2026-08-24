@@ -468,20 +468,24 @@ export class UsersService {
 
   private async hasLastLoginAtColumn() {
     if (!this.lastLoginAtColumnExistsPromise) {
-      this.lastLoginAtColumnExistsPromise = this.dataSource
-        .query(
-          `SELECT COUNT(*) AS count
-           FROM INFORMATION_SCHEMA.COLUMNS
-           WHERE TABLE_SCHEMA = DATABASE()
-             AND TABLE_NAME = 'usuarios'
-             AND COLUMN_NAME = 'last_login_at'`
-        )
-        .then((rows) => {
-          const row = Array.isArray(rows) ? rows[0] : undefined;
-          const count = Number(row?.count ?? row?.COUNT ?? row?.['COUNT(*)'] ?? 0);
-          return count > 0;
-        })
-        .catch(() => false);
+      if (typeof this.dataSource.query !== 'function') {
+        this.lastLoginAtColumnExistsPromise = Promise.resolve(false);
+      } else {
+        this.lastLoginAtColumnExistsPromise = this.dataSource
+          .query(
+            `SELECT COUNT(*) AS count
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = 'usuarios'
+               AND COLUMN_NAME = 'last_login_at'`
+          )
+          .then((rows) => {
+            const row = Array.isArray(rows) ? rows[0] : undefined;
+            const count = Number(row?.count ?? row?.COUNT ?? row?.['COUNT(*)'] ?? 0);
+            return count > 0;
+          })
+          .catch(() => false);
+      }
     }
 
     return this.lastLoginAtColumnExistsPromise;

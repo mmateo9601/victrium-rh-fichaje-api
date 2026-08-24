@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { AppError } from '../../common/errors/app-error';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
@@ -43,6 +43,7 @@ function assignmentOverlaps(leftFrom: string, leftTo: string | null | undefined,
 @Injectable()
 export class WorkLocationsService {
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(WorkLocationEntity)
     private readonly workLocationsRepository: Repository<WorkLocationEntity>,
     @InjectRepository(EmployeeLocationAssignmentEntity)
@@ -199,16 +200,14 @@ export class WorkLocationsService {
 
   async delete(id: number, context: PrincipalTenantContext) {
     const location = await this.findByIdOrFail(id, context);
-    const dependencies = await this.assignmentsRepository.count({ where: { workLocation: { id: location.id } } });
-    if (dependencies > 0) {
-      throw new AppError(
-        'WORK_LOCATION_HAS_DEPENDENCIES',
-        'No se puede eliminar el centro porque todavía tiene asignaciones históricas asociadas',
-        409
-      );
-    }
 
-    await this.workLocationsRepository.remove(location);
+    await this.dataSource.transaction(async (manager) => {
+      await manager.query('DELETE FROM employee_location_assignments WHERE work_location_id = ?', [location.id]);
+      await manager.query('DELETE FROM turno_asignaciones WHERE work_location_id = ?', [location.id]);
+      await manager.query('DELETE FROM turno_overrides WHERE work_location_id = ?', [location.id]);
+      await manager.getRepository(WorkLocationEntity).remove(location);
+    });
+
     return { message: 'Centro eliminado' };
   }
 

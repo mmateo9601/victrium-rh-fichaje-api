@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { AppError } from '../../common/errors/app-error';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { TenantScopeService, PrincipalTenantContext } from '../../common/tenant/tenant-scope.service';
 import { CalendarEntity } from '../../database/entities/calendar.entity';
 import { CompanyEntity } from '../../database/entities/company.entity';
-import { EmployeeEntity } from '../../database/entities/employee.entity';
-import { PlanningPeriodEntity } from '../../database/entities/planning-period.entity';
-import { UserEntity } from '../../database/entities/user.entity';
-import { WorkLocationEntity } from '../../database/entities/work-location.entity';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { CompanyResponseDto } from './dto/company-response.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -18,18 +14,11 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 @Injectable()
 export class CompaniesService {
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(CompanyEntity)
     private readonly companiesRepository: Repository<CompanyEntity>,
     @InjectRepository(CalendarEntity)
     private readonly calendarsRepository: Repository<CalendarEntity>,
-    @InjectRepository(EmployeeEntity)
-    private readonly employeesRepository: Repository<EmployeeEntity>,
-    @InjectRepository(UserEntity)
-    private readonly usersRepository: Repository<UserEntity>,
-    @InjectRepository(WorkLocationEntity)
-    private readonly workLocationsRepository: Repository<WorkLocationEntity>,
-    @InjectRepository(PlanningPeriodEntity)
-    private readonly planningPeriodsRepository: Repository<PlanningPeriodEntity>,
     private readonly tenantScope: TenantScopeService
   ) {}
 
@@ -143,23 +132,29 @@ export class CompaniesService {
     const company = await this.findByIdOrFail(id);
     this.tenantScope.assertResourceAccess(company.id, context);
 
-    const [employeesCount, usersCount, workLocationsCount, calendarsCount, planningPeriodsCount] = await Promise.all([
-      this.employeesRepository.count({ where: { company: { id: company.id } } }),
-      this.usersRepository.count({ where: { company: { id: company.id } } }),
-      this.workLocationsRepository.count({ where: { company: { id: company.id } } }),
-      this.calendarsRepository.count({ where: { company: { id: company.id } } }),
-      this.planningPeriodsRepository.count({ where: { company: { id: company.id } } })
-    ]);
+    await this.dataSource.transaction(async (manager) => {
+      await manager.query('DELETE FROM fichaje_audits WHERE corrected_by_id IN (SELECT id FROM usuarios WHERE company_id = ?)', [company.id]);
+      await manager.query('DELETE FROM time_entry_sessions WHERE usuario_id IN (SELECT id FROM usuarios WHERE company_id = ?)', [company.id]);
+      await manager.query('DELETE FROM fichajes WHERE usuario_id IN (SELECT id FROM usuarios WHERE company_id = ?)', [company.id]);
+      await manager.query('DELETE FROM auth_sessions WHERE user_id IN (SELECT id FROM usuarios WHERE company_id = ?)', [company.id]);
+      await manager.query('DELETE FROM api_keys WHERE user_id IN (SELECT id FROM usuarios WHERE company_id = ?)', [company.id]);
 
-    if (employeesCount || usersCount || workLocationsCount || calendarsCount || planningPeriodsCount) {
-      throw new AppError(
-        'COMPANY_HAS_DEPENDENCIES',
-        'No se puede eliminar la empresa porque todavía tiene usuarios, empleados, centros, calendarios o periodos de planificación asociados',
-        409
-      );
-    }
+      await manager.query('DELETE FROM employee_location_assignments WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM turno_asignaciones WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM turno_overrides WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM vacaciones WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM permisos WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM incidencias WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM employment_terms WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM planning_periods WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM turnos WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM work_locations WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM calendarios WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM usuarios WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM employees WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM companies WHERE id = ?', [company.id]);
+    });
 
-    await this.companiesRepository.remove(company);
     return { message: 'Empresa eliminada' };
   }
 
