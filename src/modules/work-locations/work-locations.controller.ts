@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/auth/current-user.decorator';
@@ -66,6 +66,12 @@ export class WorkLocationsController {
   @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN')
   deactivate(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Param('id', ParseIntPipe) id: number) {
     return this.workLocationsService.deactivate(id, this.tenantScope.toContext(user));
+  }
+
+  @Delete(':id')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN')
+  delete(@CurrentUser() user: { sub: number; companyId?: number | null; roles?: string[] }, @Param('id', ParseIntPipe) id: number) {
+    return this.workLocationsService.delete(id, this.tenantScope.toContext(user));
   }
 
   @Get(':id/employees')

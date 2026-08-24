@@ -197,6 +197,21 @@ export class WorkLocationsService {
     return this.update(id, { active: false }, context);
   }
 
+  async delete(id: number, context: PrincipalTenantContext) {
+    const location = await this.findByIdOrFail(id, context);
+    const dependencies = await this.assignmentsRepository.count({ where: { workLocation: { id: location.id } } });
+    if (dependencies > 0) {
+      throw new AppError(
+        'WORK_LOCATION_HAS_DEPENDENCIES',
+        'No se puede eliminar el centro porque todavía tiene asignaciones históricas asociadas',
+        409
+      );
+    }
+
+    await this.workLocationsRepository.remove(location);
+    return { message: 'Centro eliminado' };
+  }
+
   async listAssignments(query: AssignmentListQuery, context: PrincipalTenantContext) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 25;
