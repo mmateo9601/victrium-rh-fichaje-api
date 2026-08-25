@@ -94,7 +94,7 @@ export class EmployeeEntity {
   @Column({ type: 'varchar', length: 150, nullable: true })
   equipo?: string | null;
 
-  @ManyToOne(() => EmployeeEntity, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => EmployeeEntity, { eager: false, nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'manager_employee_id' })
   manager?: EmployeeEntity | null;
 

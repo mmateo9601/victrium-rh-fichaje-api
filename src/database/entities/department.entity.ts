@@ -18,7 +18,7 @@ export class DepartmentEntity {
   @Column({ type: 'varchar', length: 64 })
   code!: string;
 
-  @ManyToOne(() => DepartmentEntity, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => DepartmentEntity, { eager: false, nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'parent_department_id' })
   parentDepartment?: DepartmentEntity | null;
 
