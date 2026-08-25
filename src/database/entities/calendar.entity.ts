@@ -15,6 +15,12 @@ export class CalendarEntity {
   @Column()
   nombre!: string;
 
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  code?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  description?: string | null;
+
   @ManyToOne(() => CompanyEntity, (company) => company.calendars, {
     eager: false,
     nullable: true,
@@ -29,11 +35,29 @@ export class CalendarEntity {
   @Column({ type: 'int' })
   year!: number;
 
+  @Column({ type: 'varchar', length: 80, nullable: true })
+  timezone?: string | null;
+
   @Column({ name: 'minutos_mas_entrada', type: 'int' })
   minutosMasEntrada!: number;
 
   @Column({ name: 'minutos_menos_entrada', type: 'int' })
   minutosMenosEntrada!: number;
+
+  @Column({ name: 'working_days_per_week', type: 'tinyint', nullable: true })
+  workingDaysPerWeek?: number | null;
+
+  @Column({ name: 'weekly_target_minutes', type: 'int', nullable: true })
+  weeklyTargetMinutes?: number | null;
+
+  @Column({ name: 'monthly_target_minutes', type: 'int', nullable: true })
+  monthlyTargetMinutes?: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  notes?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
 
   @OneToMany(() => CalendarDayEntity, (day) => day.calendar, {
     eager: true,

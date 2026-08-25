@@ -14,7 +14,7 @@ import { EmployeeEntity } from './employee.entity';
 import { ShiftEntity } from './shift.entity';
 import { WorkLocationEntity } from './work-location.entity';
 
-export type ShiftOverrideKind = 'SHIFT' | 'OFF';
+export type ShiftOverrideType = 'SHIFT' | 'OFF';
 
 @Entity({ name: 'turno_overrides' })
 @Index(['employee', 'date'], { unique: true })
@@ -49,11 +49,23 @@ export class ShiftOverrideEntity {
   @Column({ type: 'date' })
   date!: string;
 
-  @Column({ type: 'varchar', length: 16, default: 'SHIFT' })
-  kind!: ShiftOverrideKind;
+  @Column({ name: 'type', type: 'varchar', length: 16, default: 'SHIFT' })
+  type!: ShiftOverrideType;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  source?: string | null;
+
+  @Column({ name: 'created_by', type: 'varchar', length: 100, nullable: true })
+  createdBy?: string | null;
+
+  @Column({ name: 'updated_by', type: 'varchar', length: 100, nullable: true })
+  updatedBy?: string | null;
 
   @Column({ type: 'text', nullable: true })
   notes?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

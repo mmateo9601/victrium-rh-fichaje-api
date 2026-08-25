@@ -101,7 +101,7 @@ export type CreateShiftAssignmentDto = {
 
 export type UpdateShiftAssignmentDto = Partial<CreateShiftAssignmentDto>;
 
-export type ShiftOverrideKind = 'SHIFT' | 'OFF';
+export type ShiftOverrideType = 'SHIFT' | 'OFF';
 
 export type WorkPolicyEvaluationDto = {
   configured: boolean;
@@ -131,7 +131,7 @@ export type ShiftOverrideDto = {
   workLocationName: string | null;
   workLocationCode: string | null;
   date: string;
-  kind: ShiftOverrideKind;
+  type: ShiftOverrideType;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -143,7 +143,7 @@ export type CreateShiftOverrideDto = {
   shiftId?: number | null;
   workLocationId?: number | null;
   date: string;
-  kind?: ShiftOverrideKind;
+  type?: ShiftOverrideType;
   notes?: string | null;
 };
 
@@ -164,7 +164,7 @@ export type ScheduleCellDto = {
   workLocationSource: 'override' | 'assignment' | 'employee_location' | 'terms' | 'default' | null;
   assignmentId: number | null;
   overrideId: number | null;
-  overrideKind: ShiftOverrideKind | null;
+  overrideType: ShiftOverrideType | null;
   employmentTermsId: number | null;
   employmentTermsContractType: string | null;
   employmentTermsWeeklyContractMinutes: number | null;

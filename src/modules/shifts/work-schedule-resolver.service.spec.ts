@@ -297,7 +297,7 @@ describe('WorkScheduleResolverService', () => {
           id: 4,
           employee: createEmployee(),
           date: '2026-08-26',
-          kind: 'SHIFT',
+          type: 'SHIFT',
           shift: createShift(),
           workLocation: overrideLocation
         } as unknown as ShiftOverrideEntity

@@ -55,11 +55,29 @@ export class ShiftAssignmentEntity {
   @Column({ name: 'valid_to', type: 'date', nullable: true })
   validTo?: string | null;
 
+  @Column({ type: 'int', nullable: true })
+  priority?: number | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  source?: string | null;
+
+  @Column({ type: 'boolean', default: true })
+  published!: boolean;
+
+  @Column({ name: 'created_by', type: 'varchar', length: 100, nullable: true })
+  createdBy?: string | null;
+
+  @Column({ name: 'updated_by', type: 'varchar', length: 100, nullable: true })
+  updatedBy?: string | null;
+
   @Column({ type: 'text', nullable: true })
   notes?: string | null;
 
   @Column({ type: 'boolean', default: true })
   active!: boolean;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

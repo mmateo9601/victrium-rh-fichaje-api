@@ -21,6 +21,10 @@ import { PlanningPeriodsModule } from './modules/planning-periods/planning-perio
 import { ReportsModule } from './modules/reports/reports.module';
 import { WorkLocationsModule } from './modules/work-locations/work-locations.module';
 import { RolesGuard } from './common/auth/roles.guard';
+import { DepartmentsModule } from './modules/departments/departments.module';
+import { TeamsModule } from './modules/teams/teams.module';
+import { CompanySettingsModule } from './modules/company-settings/company-settings.module';
+import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 
 @Module({
   controllers: [AppController],
@@ -41,7 +45,11 @@ import { RolesGuard } from './common/auth/roles.guard';
     ShiftsModule,
     PlanningPeriodsModule,
     ReportsModule,
-    WorkLocationsModule
+    WorkLocationsModule,
+    DepartmentsModule,
+    TeamsModule,
+    CompanySettingsModule,
+    AuditLogsModule
   ],
   providers: [
     JwtAuthGuard,

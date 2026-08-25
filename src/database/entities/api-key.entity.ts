@@ -17,6 +17,12 @@ export class ApiKeyEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description?: string | null;
 
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  prefix?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  scopes?: Record<string, unknown> | null;
+
   @ManyToOne(() => UserEntity, (user) => user.apiKeys, {
     eager: true,
     nullable: false,
@@ -42,6 +48,15 @@ export class ApiKeyEntity {
   @Column({ name: 'last_used_at', type: 'datetime', nullable: true })
   lastUsedAt?: Date | null;
 
+  @Column({ name: 'last_used_ip', type: 'varchar', length: 64, nullable: true })
+  lastUsedIp?: string | null;
+
+  @Column({ name: 'rotated_at', type: 'datetime', nullable: true })
+  rotatedAt?: Date | null;
+
+  @Column({ name: 'revoked_at', type: 'datetime', nullable: true })
+  revokedAt?: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
@@ -50,6 +65,9 @@ export class ApiKeyEntity {
 
   @Column({ name: 'created_by', type: 'varchar', length: 100, nullable: true })
   createdBy?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
 
   isValid() {
     if (!this.active) {

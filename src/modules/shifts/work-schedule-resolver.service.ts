@@ -508,7 +508,7 @@ export class WorkScheduleResolverService {
 
     if (override) {
       return {
-        shift: override.kind === 'OFF' ? null : override.shift ?? null,
+        shift: override.type === 'OFF' ? null : override.shift ?? null,
         assignment: null,
         override
       };
@@ -571,7 +571,7 @@ export class WorkScheduleResolverService {
     } else if (isHoliday) {
       status = 'HOLIDAY';
       statusLabel = 'Festivo';
-    } else if (resolved.override?.kind === 'OFF' || (!shift && !shiftDay)) {
+    } else if (resolved.override?.type === 'OFF' || (!shift && !shiftDay)) {
       status = 'OFF';
       statusLabel = 'Libre';
     } else if (shift) {
@@ -596,7 +596,7 @@ export class WorkScheduleResolverService {
       workLocationSource: resolvedWorkLocation.source,
       assignmentId: resolved.assignment?.id ?? null,
       overrideId: resolved.override?.id ?? null,
-      overrideKind: resolved.override?.kind ?? null,
+      overrideType: resolved.override?.type ?? null,
       employmentTermsId: resolvedEmploymentTerms.id,
       employmentTermsContractType: resolvedEmploymentTerms.contractType,
       employmentTermsWeeklyContractMinutes: resolvedEmploymentTerms.weeklyContractMinutes,

@@ -40,6 +40,7 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['error', 'warn', 'log', 'verbose', 'debug']).default('log'),
   SWAGGER_ENABLED: optionalBoolean,
   TRUST_PROXY: optionalBoolean,
+  DATABASE_AUTO_MIGRATE: optionalBoolean,
   BOOTSTRAP_SUPER_ADMIN: optionalBoolean,
   SUPER_ADMIN_EMAIL: z.string().email().optional(),
   SUPER_ADMIN_PASSWORD: z
@@ -80,6 +81,7 @@ export type AppConfig = {
     name?: string;
     user?: string;
     password?: string;
+    autoMigrate?: boolean;
   };
   jwt: {
     accessSecret: string;
@@ -142,7 +144,8 @@ export function createAppConfig(env: NodeJS.ProcessEnv): AppConfig {
       port: parsed.DB_PORT,
       name: parsed.DB_NAME,
       user: parsed.DB_USER,
-      password: parsed.DB_PASSWORD
+      password: parsed.DB_PASSWORD,
+      autoMigrate: parsed.DATABASE_AUTO_MIGRATE ?? parsed.NODE_ENV !== 'test'
     },
     jwt: {
       accessSecret: parsed.JWT_ACCESS_SECRET,

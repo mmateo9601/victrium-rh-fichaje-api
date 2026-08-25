@@ -13,6 +13,18 @@ export class TimeEntrySessionEntity {
   @JoinColumn({ name: 'usuario_id' })
   usuario!: UserEntity;
 
+  @Column({ name: 'company_id', type: 'int', nullable: true })
+  companyId?: number | null;
+
+  @Column({ name: 'employee_id', type: 'int', nullable: true })
+  employeeId?: number | null;
+
+  @Column({ name: 'work_location_id', type: 'int', nullable: true })
+  workLocationId?: number | null;
+
+  @Column({ name: 'shift_id', type: 'int', nullable: true })
+  shiftId?: number | null;
+
   @Column({ type: 'datetime' })
   startedAt!: Date;
 
@@ -24,6 +36,36 @@ export class TimeEntrySessionEntity {
 
   @Column({ type: 'varchar', length: 32, default: 'web' })
   source!: string;
+
+  @Column({ name: 'device_id', type: 'varchar', length: 128, nullable: true })
+  deviceId?: string | null;
+
+  @Column({ type: 'varchar', length: 80, nullable: true })
+  timezone?: string | null;
+
+  @Column({ name: 'started_latitude', type: 'decimal', precision: 10, scale: 7, nullable: true })
+  startedLatitude?: string | null;
+
+  @Column({ name: 'started_longitude', type: 'decimal', precision: 10, scale: 7, nullable: true })
+  startedLongitude?: string | null;
+
+  @Column({ name: 'paused_minutes', type: 'int', nullable: true })
+  pausedMinutes?: number | null;
+
+  @Column({ name: 'worked_minutes', type: 'int', nullable: true })
+  workedMinutes?: number | null;
+
+  @Column({ name: 'expected_minutes', type: 'int', nullable: true })
+  expectedMinutes?: number | null;
+
+  @Column({ name: 'overtime_minutes', type: 'int', nullable: true })
+  overtimeMinutes?: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  notes?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
 
   @VersionColumn()
   version!: number;

@@ -551,7 +551,7 @@ export class ShiftsService {
         shift: shift ?? null,
         workLocation,
         date: normalizeDate(dto.date),
-        kind: dto.kind ?? (shift ? 'SHIFT' : 'OFF'),
+        type: dto.type ?? (shift ? 'SHIFT' : 'OFF'),
         notes: dto.notes ?? null
       });
       const saved = await manager.getRepository(ShiftOverrideEntity).save(override);
@@ -580,7 +580,7 @@ export class ShiftsService {
 
       const nextEmployeeId = dto.employeeId ?? override.employee.id;
       const nextDate = normalizeDate(dto.date ?? override.date);
-      const nextKind = dto.kind ?? override.kind;
+      const nextType = dto.type ?? override.type;
       const nextShiftId = dto.shiftId !== undefined ? dto.shiftId : override.shift?.id ?? null;
       const nextWorkLocationId = dto.workLocationId !== undefined ? dto.workLocationId : override.workLocation?.id ?? null;
       const employee = await manager.getRepository(EmployeeEntity).findOne({ where: { id: nextEmployeeId }, relations: { company: true } });
@@ -627,7 +627,7 @@ export class ShiftsService {
       override.employee = employee;
       override.company = employee.company!;
       override.date = nextDate;
-      override.kind = nextKind;
+      override.type = nextType;
       override.shift = shift ?? null;
       override.workLocation = workLocation;
       override.notes = dto.notes !== undefined ? dto.notes : override.notes ?? null;
@@ -1036,7 +1036,7 @@ export class ShiftsService {
       workLocationName: override.workLocation?.name ?? null,
       workLocationCode: override.workLocation?.code ?? null,
       date: override.date,
-      kind: override.kind,
+      type: override.type,
       notes: override.notes ?? null,
       createdAt: override.createdAt?.toISOString?.() ?? new Date().toISOString(),
       updatedAt: override.updatedAt?.toISOString?.() ?? new Date().toISOString()

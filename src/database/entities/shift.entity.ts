@@ -37,6 +37,9 @@ export class ShiftEntity {
   @Column()
   code!: string;
 
+  @Column({ name: 'short_name', type: 'varchar', length: 80, nullable: true })
+  shortName?: string | null;
+
   @Column({ type: 'text', nullable: true })
   description?: string | null;
 
@@ -46,11 +49,53 @@ export class ShiftEntity {
   @Column({ type: 'boolean', default: true })
   active!: boolean;
 
+  @Column({ type: 'varchar', length: 80, nullable: true })
+  timezone?: string | null;
+
+  @Column({ name: 'expected_minutes', type: 'int', nullable: true })
+  expectedMinutes?: number | null;
+
+  @Column({ name: 'break_minutes_default', type: 'int', nullable: true })
+  breakMinutesDefault?: number | null;
+
+  @Column({ name: 'allow_overtime', type: 'boolean', nullable: true })
+  allowOvertime?: boolean | null;
+
+  @Column({ name: 'grace_minutes_before', type: 'int', nullable: true })
+  graceMinutesBefore?: number | null;
+
+  @Column({ name: 'grace_minutes_after', type: 'int', nullable: true })
+  graceMinutesAfter?: number | null;
+
+  @Column({ name: 'rest_between_shifts_minutes', type: 'int', nullable: true })
+  restBetweenShiftsMinutes?: number | null;
+
+  @Column({ name: 'is_night_shift', type: 'boolean', nullable: true })
+  isNightShift?: boolean | null;
+
+  @Column({ name: 'workday_type', type: 'varchar', length: 40, nullable: true })
+  workdayType?: string | null;
+
   @Column({ name: 'rotation_start_date', type: 'date', nullable: true })
   rotationStartDate?: string | null;
 
   @Column({ name: 'rotation_pattern', type: 'json', nullable: true })
   rotationPattern?: ShiftRotationStepValue[] | null;
+
+  @Column({ type: 'text', nullable: true })
+  notes?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
+
+  @Column({ name: 'deleted_at', type: 'datetime', nullable: true })
+  deletedAt?: Date | null;
+
+  @Column({ name: 'created_by', type: 'varchar', length: 100, nullable: true })
+  createdBy?: string | null;
+
+  @Column({ name: 'updated_by', type: 'varchar', length: 100, nullable: true })
+  updatedBy?: string | null;
 
   @ManyToOne(() => CompanyEntity, { eager: true, nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'company_id' })

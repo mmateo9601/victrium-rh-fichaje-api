@@ -22,6 +22,15 @@ export class TimeEntryBreakEntity {
   @Column({ type: 'datetime', nullable: true })
   endedAt!: Date | null;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  reason?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  notes?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

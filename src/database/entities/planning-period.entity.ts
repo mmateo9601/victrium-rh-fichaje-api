@@ -22,6 +22,12 @@ export class PlanningPeriodEntity {
   @Column()
   name!: string;
 
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  code?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  description?: string | null;
+
   @Column({ name: 'start_date', type: 'date' })
   startDate!: string;
 
@@ -41,8 +47,27 @@ export class PlanningPeriodEntity {
   @JoinColumn({ name: 'published_by_id' })
   publishedBy?: UserEntity | null;
 
+  @Column({ name: 'locked_at', type: 'datetime', nullable: true })
+  lockedAt?: Date | null;
+
+  @ManyToOne(() => UserEntity, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'locked_by_id' })
+  lockedBy?: UserEntity | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  scope?: string | null;
+
+  @Column({ name: 'created_by', type: 'varchar', length: 100, nullable: true })
+  createdBy?: string | null;
+
+  @Column({ name: 'updated_by', type: 'varchar', length: 100, nullable: true })
+  updatedBy?: string | null;
+
   @Column({ type: 'text', nullable: true })
   notes?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
 
   @OneToMany(() => PlanningPeriodAuditEntity, (audit) => audit.planningPeriod)
   audits!: PlanningPeriodAuditEntity[];

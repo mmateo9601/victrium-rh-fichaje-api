@@ -2,6 +2,9 @@ import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOpti
 
 import { AppConfig } from '../config/env.validation';
 import { ApiKeyEntity } from './entities/api-key.entity';
+import { AuditLogEntity } from './entities/audit-log.entity';
+import { CompanySettingEntity } from './entities/company-setting.entity';
+import { DepartmentEntity } from './entities/department.entity';
 import { CompanyEntity } from './entities/company.entity';
 import { CalendarDayEntity } from './entities/calendar-day.entity';
 import { CalendarEntity } from './entities/calendar.entity';
@@ -24,6 +27,7 @@ import { TimeEntryEntity } from './entities/time-entry.entity';
 import { TimeEntrySessionEntity } from './entities/time-entry-session.entity';
 import { UserEntity } from './entities/user.entity';
 import { VacationEntity } from './entities/vacation.entity';
+import { TeamEntity } from './entities/team.entity';
 import { WorkLocationEntity } from './entities/work-location.entity';
 import { CreateApiKeysTable1724172000000 } from './migrations/1724172000000-CreateApiKeysTable';
 import { CreateTimeEntrySessionsTable1724172100000 } from './migrations/1724172100000-CreateTimeEntrySessionsTable';
@@ -41,6 +45,7 @@ import { AddEmployeePrimaryWorkLocation1724173200000 } from './migrations/172417
 import { HardenDatabaseIntegrity1724173300000 } from './migrations/1724173300000-HardenDatabaseIntegrity';
 import { ExpandRolesEnum1724173400000 } from './migrations/1724173400000-ExpandRolesEnum';
 import { AddUserLastLoginAt1724173500000 } from './migrations/1724173500000-AddUserLastLoginAt';
+import { ExpandCorporateSchema1724173600000 } from './migrations/1724173600000-ExpandCorporateSchema';
 import { CreateCoreBootstrapSchema1724171900000 } from './migrations/1724171900000-CreateCoreBootstrapSchema';
 
 export function createTypeOrmOptions(config: AppConfig): MysqlConnectionOptions {
@@ -70,7 +75,11 @@ export function createTypeOrmOptions(config: AppConfig): MysqlConnectionOptions 
       ShiftAssignmentEntity,
       ShiftOverrideEntity,
       WorkLocationEntity,
-      EmployeeLocationAssignmentEntity
+      EmployeeLocationAssignmentEntity,
+      DepartmentEntity,
+      TeamEntity,
+      CompanySettingEntity,
+      AuditLogEntity
     ],
     migrations: [
       CreateCoreBootstrapSchema1724171900000,
@@ -89,7 +98,8 @@ export function createTypeOrmOptions(config: AppConfig): MysqlConnectionOptions 
       AddEmployeePrimaryWorkLocation1724173200000,
       HardenDatabaseIntegrity1724173300000,
       ExpandRolesEnum1724173400000,
-      AddUserLastLoginAt1724173500000
+      AddUserLastLoginAt1724173500000,
+      ExpandCorporateSchema1724173600000
     ],
     migrationsRun: false,
     dropSchema: false,

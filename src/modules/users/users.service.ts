@@ -440,7 +440,7 @@ export class UsersService {
     manager: EntityManager,
     email: string,
     numero: string,
-    dni: string,
+    dni?: string | null,
     excludeId?: number
   ) {
     const qb = manager.getRepository(UserEntity).createQueryBuilder('user');
@@ -448,7 +448,9 @@ export class UsersService {
       new Brackets((subQuery) => {
         subQuery.where('LOWER(user.email) = :email', { email: email.trim().toLowerCase() });
         subQuery.orWhere('user.numero = :numero', { numero });
-        subQuery.orWhere('user.dni = :dni', { dni });
+        if (dni) {
+          subQuery.orWhere('user.dni = :dni', { dni });
+        }
       })
     );
     if (excludeId !== undefined) {

@@ -5,11 +5,19 @@ import { DataSource, Repository } from 'typeorm';
 import { AppError } from '../../common/errors/app-error';
 import { buildPaginatedResult, PaginationQueryDto } from '../../common/pagination/pagination.dto';
 import { TenantScopeService, PrincipalTenantContext } from '../../common/tenant/tenant-scope.service';
+import { ApiKeyEntity } from '../../database/entities/api-key.entity';
+import { AuthSessionEntity } from '../../database/entities/auth-session.entity';
 import { CalendarEntity } from '../../database/entities/calendar.entity';
 import { CompanyEntity } from '../../database/entities/company.entity';
+import { EmployeeEntity } from '../../database/entities/employee.entity';
+import { CompanySettingEntity } from '../../database/entities/company-setting.entity';
+import { DepartmentEntity } from '../../database/entities/department.entity';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { CompanyResponseDto } from './dto/company-response.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { UserEntity } from '../../database/entities/user.entity';
+import { WorkLocationEntity } from '../../database/entities/work-location.entity';
+import { TeamEntity } from '../../database/entities/team.entity';
 
 @Injectable()
 export class CompaniesService {
@@ -128,6 +136,38 @@ export class CompaniesService {
     return this.toDto(saved);
   }
 
+  async setActive(id: number, active: boolean, context: PrincipalTenantContext) {
+    const company = await this.findByIdOrFail(id);
+    this.tenantScope.assertResourceAccess(company.id, context);
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(CompanyEntity).update({ id: company.id }, { active });
+      await manager.getRepository(WorkLocationEntity).createQueryBuilder().update().set({ active }).where('company_id = :companyId', { companyId: company.id }).execute();
+      await manager
+        .getRepository(EmployeeEntity)
+        .createQueryBuilder()
+        .update()
+        .set({ deBaja: !active, working: active })
+        .where('company_id = :companyId', { companyId: company.id })
+        .execute();
+      await manager.getRepository(CalendarEntity).createQueryBuilder().update().set({ active }).where('company_id = :companyId', { companyId: company.id }).execute();
+      await manager.getRepository(UserEntity).createQueryBuilder().update().set({ deBaja: !active }).where('company_id = :companyId', { companyId: company.id }).execute();
+      await manager.getRepository(ApiKeyEntity).createQueryBuilder().update().set({ active }).where('company_id = :companyId', { companyId: company.id }).execute();
+      await manager.getRepository(DepartmentEntity).createQueryBuilder().update().set({ active }).where('company_id = :companyId', { companyId: company.id }).execute();
+      await manager.getRepository(TeamEntity).createQueryBuilder().update().set({ active }).where('company_id = :companyId', { companyId: company.id }).execute();
+      await manager.getRepository(CompanySettingEntity).createQueryBuilder().update().set({ active }).where('company_id = :companyId', { companyId: company.id }).execute();
+      await manager
+        .getRepository(AuthSessionEntity)
+        .createQueryBuilder()
+        .update()
+        .set({ revokedAt: active ? null : new Date() })
+        .where('user_id IN (SELECT id FROM usuarios WHERE company_id = :companyId)', { companyId: company.id })
+        .execute();
+    });
+
+    return { message: active ? 'Empresa activada' : 'Empresa desactivada' };
+  }
+
   async delete(id: number, context: PrincipalTenantContext) {
     const company = await this.findByIdOrFail(id);
     this.tenantScope.assertResourceAccess(company.id, context);
@@ -150,6 +190,10 @@ export class CompaniesService {
       await manager.query('DELETE FROM turnos WHERE company_id = ?', [company.id]);
       await manager.query('DELETE FROM work_locations WHERE company_id = ?', [company.id]);
       await manager.query('DELETE FROM calendarios WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM company_settings WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM teams WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM departments WHERE company_id = ?', [company.id]);
+      await manager.query('DELETE FROM audit_logs WHERE company_id = ?', [company.id]);
       await manager.query('DELETE FROM usuarios WHERE company_id = ?', [company.id]);
       await manager.query('DELETE FROM employees WHERE company_id = ?', [company.id]);
       await manager.query('DELETE FROM companies WHERE id = ?', [company.id]);

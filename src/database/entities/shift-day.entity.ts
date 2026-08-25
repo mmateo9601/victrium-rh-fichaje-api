@@ -40,6 +40,12 @@ export class ShiftDayEntity {
   @Column({ name: 'segments', type: 'json', nullable: true })
   segments?: ShiftSegmentValue[] | null;
 
+  @Column({ type: 'text', nullable: true })
+  notes?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
+
   @ManyToOne(() => ShiftEntity, (shift) => shift.days, {
     eager: false,
     nullable: false,

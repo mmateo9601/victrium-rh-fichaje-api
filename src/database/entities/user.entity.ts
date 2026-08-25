@@ -33,11 +33,59 @@ export class UserEntity {
   @Column({ unique: true })
   numero!: string;
 
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  nombre?: string | null;
+
+  @Column({ type: 'varchar', length: 180, nullable: true })
+  apellidos?: string | null;
+
   @Column()
   nombreEmpleado!: string;
 
-  @Column({ unique: true })
-  dni!: string;
+  @Column({ type: 'varchar', length: 64, unique: true, nullable: true })
+  dni?: string | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  telefono?: string | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  movil?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  direccion?: string | null;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  ciudad?: string | null;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  provincia?: string | null;
+
+  @Column({ name: 'codigo_postal', type: 'varchar', length: 20, nullable: true })
+  codigoPostal?: string | null;
+
+  @Column({ type: 'varchar', length: 2, nullable: true })
+  pais?: string | null;
+
+  @Column({ name: 'avatar_url', type: 'varchar', length: 255, nullable: true })
+  avatarUrl?: string | null;
+
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  locale?: string | null;
+
+  @Column({ type: 'varchar', length: 80, nullable: true })
+  timezone?: string | null;
+
+  @Column({ name: 'email_verified_at', type: 'datetime', nullable: true })
+  emailVerifiedAt?: Date | null;
+
+  @Column({ name: 'password_changed_at', type: 'datetime', nullable: true })
+  passwordChangedAt?: Date | null;
+
+  @Column({ name: 'must_change_password', type: 'boolean', default: false })
+  mustChangePassword!: boolean;
+
+  @Column({ name: 'last_login_ip', type: 'varchar', length: 64, nullable: true })
+  lastLoginIp?: string | null;
 
   @ManyToOne(() => CompanyEntity, (company) => company.users, {
     eager: true,
@@ -70,6 +118,21 @@ export class UserEntity {
 
   @Column({ name: 'last_login_at', type: 'datetime', nullable: true, select: false })
   lastLoginAt?: Date | null;
+
+  @Column({ type: 'json', nullable: true })
+  preferences?: Record<string, unknown> | null;
+
+  @Column({ type: 'text', nullable: true })
+  notes?: string | null;
+
+  @Column({ name: 'deleted_at', type: 'datetime', nullable: true })
+  deletedAt?: Date | null;
+
+  @Column({ name: 'created_by', type: 'varchar', length: 100, nullable: true })
+  createdBy?: string | null;
+
+  @Column({ name: 'updated_by', type: 'varchar', length: 100, nullable: true })
+  updatedBy?: string | null;
 
   @OneToOne(() => EmployeeEntity, (employee) => employee.user, {
     eager: true,

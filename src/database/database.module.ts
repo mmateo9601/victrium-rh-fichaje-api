@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { createAppConfig } from '../config/env.validation';
+import { DatabaseBootstrapService } from './database-bootstrap.service';
 import { createTypeOrmOptions } from './typeorm.options';
 
 @Module({
@@ -12,6 +13,7 @@ import { createTypeOrmOptions } from './typeorm.options';
       useFactory: () => createTypeOrmOptions(createAppConfig(process.env))
     })
   ],
+  providers: [DatabaseBootstrapService],
   exports: [TypeOrmModule]
 })
 export class DatabaseModule {}

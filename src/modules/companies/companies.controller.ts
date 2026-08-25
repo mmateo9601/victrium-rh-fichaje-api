@@ -63,6 +63,24 @@ export class CompaniesController {
     return this.companiesService.update(id, dto, this.tenantScope.toContext(user));
   }
 
+  @Patch(':id/activate')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN')
+  activate(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    return this.companiesService.setActive(id, true, this.tenantScope.toContext(user));
+  }
+
+  @Patch(':id/deactivate')
+  @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN')
+  deactivate(
+    @CurrentUser() user: { sub: number; companyId?: number | null; employeeId?: number | null; roles?: string[] },
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    return this.companiesService.setActive(id, false, this.tenantScope.toContext(user));
+  }
+
   @Delete(':id')
   @ApiRoles('ROLE_SUPER_ADMIN', 'ROLE_COMPANY_ADMIN')
   delete(

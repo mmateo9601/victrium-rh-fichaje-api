@@ -14,6 +14,18 @@ export class AuthSessionEntity {
   @Column({ name: 'refresh_token_hash' })
   refreshTokenHash!: string;
 
+  @Column({ name: 'ip_address', type: 'varchar', length: 64, nullable: true })
+  ipAddress?: string | null;
+
+  @Column({ name: 'device_fingerprint', type: 'varchar', length: 255, nullable: true })
+  deviceFingerprint?: string | null;
+
+  @Column({ name: 'session_name', type: 'varchar', length: 100, nullable: true })
+  sessionName?: string | null;
+
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, unknown> | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

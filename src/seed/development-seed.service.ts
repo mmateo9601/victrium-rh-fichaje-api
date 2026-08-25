@@ -1599,7 +1599,7 @@ export class DevelopmentSeedService {
         employee: laura.employee,
         shift: night,
         date: formatMadridDate(addDays(today, 1)),
-        kind: 'SHIFT',
+        type: 'SHIFT',
         notes: 'Cobertura nocturna puntual'
       }),
       overrideRepository.create({
@@ -1607,7 +1607,7 @@ export class DevelopmentSeedService {
         employee: carlos.employee,
         shift: null,
         date: formatMadridDate(addDays(today, 2)),
-        kind: 'OFF',
+        type: 'OFF',
         notes: 'Descanso excepcional'
       })
     ]);
