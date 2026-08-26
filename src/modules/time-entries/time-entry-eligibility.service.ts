@@ -23,6 +23,37 @@ type EligibilitySnapshot = {
 
 type PolicyRecord = Record<string, unknown> | null | undefined;
 
+function buildFallbackEligibility(
+  user: UserEntity,
+  now: Date,
+  reason: TimeEntryEligibilityReason,
+  message: string,
+  scheduledStart: string | null = null,
+  scheduledEnd: string | null = null
+): TimeEntryEligibilityDto {
+  const timeZone = user.company?.timezone ?? user.employee?.company?.timezone ?? 'Europe/Madrid';
+  const evaluatedAt = formatTimeZoneDateTime(now, timeZone);
+  return {
+    canStart: false,
+    reason,
+    message,
+    evaluatedAt,
+    allowedFrom: null,
+    allowedUntil: null,
+    scheduledStart,
+    scheduledEnd,
+    earlyClockInMinutes: null,
+    companyId: user.company?.id ?? user.employee?.company?.id ?? null,
+    companyName: user.company?.name ?? user.employee?.company?.name ?? null,
+    workLocationId: null,
+    workLocationName: null,
+    workLocationCode: null,
+    shiftId: null,
+    shiftName: null,
+    shiftCode: null
+  };
+}
+
 function toNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
@@ -82,13 +113,33 @@ export class TimeEntryEligibilityService {
     const timeZone = user.company?.timezone ?? user.employee?.company?.timezone ?? 'Europe/Madrid';
     const evaluatedAt = formatTimeZoneDateTime(now, timeZone);
     const dayBounds = getTimeZoneDayBounds(now, timeZone);
-    const schedule = await this.shiftsService.getMySchedule(context, {
-      from: dayBounds.dateString,
-      to: dayBounds.dateString
-    });
+    const employeeId = user.employee?.id ?? context.employeeId ?? null;
+
+    if (!employeeId) {
+      return buildFallbackEligibility(
+        user,
+        now,
+        'NO_SCHEDULE',
+        'No tienes un empleado vinculado para mostrar tu planificación de hoy.'
+      );
+    }
+
+    let schedule;
+    try {
+      schedule = await this.shiftsService.getMySchedule(context, {
+        from: dayBounds.dateString,
+        to: dayBounds.dateString
+      });
+    } catch {
+      return buildFallbackEligibility(
+        user,
+        now,
+        'NO_SCHEDULE',
+        'No hemos podido resolver tu planificación de hoy. La jornada seguirá disponible si tu empresa lo permite.'
+      );
+    }
 
     const day = schedule.rows[0]?.days[0] ?? null;
-    const employeeId = user.employee?.id ?? context.employeeId ?? null;
     const locationAssignment = employeeId
       ? await this.locationAssignmentsRepository
           .createQueryBuilder('assignment')
