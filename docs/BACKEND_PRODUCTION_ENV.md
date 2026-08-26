@@ -8,9 +8,9 @@
 | `SWAGGER_ENABLED` | No | No | Enable Swagger UI in runtime | `true` / `false` | Runtime |
 | `TRUST_PROXY` | No | No | Express proxy trust for Hostinger/reverse proxy | `true` / `false` | Runtime |
 | `BOOTSTRAP_SUPER_ADMIN` | No | No | Enables the explicit super admin bootstrap command | `true` / `false` | Runtime |
-| `SUPER_ADMIN_EMAIL` | Conditional | No | Bootstrap identity email when bootstrap is enabled | `superadmin@example.com` | Runtime |
-| `SUPER_ADMIN_PASSWORD` | Conditional | Yes | Bootstrap password when bootstrap is enabled | secure password | Runtime |
-| `SUPER_ADMIN_NAME` | No | No | Optional display name for the bootstrap account | `Victrium RH Admin` | Runtime |
+| `SUPER_ADMIN_EMAIL` | Conditional | No | Bootstrap identity email when bootstrap is enabled | `bootstrap-admin@example.com` | Runtime |
+| `SUPER_ADMIN_PASSWORD` | Conditional | Yes | Bootstrap password when bootstrap is enabled | `replace-with-strong-password` | Runtime |
+| `SUPER_ADMIN_NAME` | No | No | Optional display name for the bootstrap account | `Bootstrap Admin` | Runtime |
 | `DATABASE_URL` | No | Yes | Single MySQL connection string | `mysql://user:pass@host:3306/db` | Runtime |
 | `DB_HOST` | Conditional | No | MySQL host when not using `DATABASE_URL` | `localhost` / hostname | Runtime |
 | `DB_PORT` | Conditional | No | MySQL port | `3306` | Runtime |
@@ -36,3 +36,4 @@ Notes:
 - `SWAGGER_ENABLED` defaults to off in production.
 - `BOOTSTRAP_SUPER_ADMIN=true` requires `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD`.
 - The bootstrap password is used only by `npm run bootstrap:super-admin`; it is not printed to logs.
+- Never commit real credentials, tokens, or production mail settings to the repository.

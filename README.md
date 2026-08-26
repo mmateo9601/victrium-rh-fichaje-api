@@ -34,10 +34,8 @@ Variables clave:
 - `CORS_ORIGINS`
 - `TZ`
 - `SWAGGER_ENABLED`
-- `BOOTSTRAP_SUPER_ADMIN`
-- `SUPER_ADMIN_EMAIL`
-- `SUPER_ADMIN_PASSWORD`
-- `SUPER_ADMIN_NAME`
+
+Para bootstrap de super admin y otros detalles sensibles, consulta la documentación de entorno y despliegue dentro de `docs/`.
 
 ## Desarrollo
 
@@ -116,3 +114,4 @@ npm run build
 - No contiene infraestructura Docker.
 - `synchronize` permanece desactivado.
 - La base documental refleja el modelo corporativo actual y las relaciones jerárquicas del sistema.
+- No se documentan credenciales reales ni secretos operativos en este archivo.
