@@ -4,23 +4,23 @@ This matrix summarizes the API permissions expected by the workforce app.
 
 | Role | Scope | Main capabilities |
 | --- | --- | --- |
-| `ROLE_SUPER_ADMIN` | All tenants | CRUD global on companies, users, employees, work locations, calendars, planning, policies and integrations |
-| `ROLE_COMPANY_ADMIN` | Own tenant | CRUD company users, employees, work locations, schedules and operational configuration |
-| `ROLE_RRHH` | Own tenant | HR operations, employee records, work-location read access, absences, permissions, incidents and reporting |
+| `ROLE_SUPER_ADMIN` | All tenants | Full CRUD on companies, users, employees, work locations, calendars, schedules, policies, and integrations |
+| `ROLE_COMPANY_ADMIN` | Own tenant | CRUD company users, employees, work locations, schedules, and operational configuration |
+| `ROLE_RRHH` | Own tenant | HR operations, employee records, work-location read access, absences, permissions, incidents, and reporting |
 | `ROLE_MANAGER` | Scoped tenant data | Read/write within assigned operational scope, without cross-tenant access |
-| `ROLE_USER` | Own identity / own employee context | Self service, time entries, personal absences and schedule views |
+| `ROLE_USER` | Own identity / own employee context | Self service, time entries, personal absences, and schedule views |
 | `ROLE_AUDITOR` | Read-only scope defined by assignment | Auditing and reporting without write access |
 | `ROLE_WORKFORCE_REPRESENTATIVE` | Read-only scope defined by assignment | Workforce representation and consultation without write access |
 
 ## Backend rules already enforced
 
-- tenant scoping is always applied before data access
-- `ROLE_SUPER_ADMIN` bypass is explicit and audited
-- company-scoped users require `companyId`
-- work locations cannot exist without a company
-- employees cannot point to a primary work location from another company
-- user/employee cross-company links are rejected
-- deactivation preserves historical data
+- Tenant scoping is always applied before data access.
+- `ROLE_SUPER_ADMIN` bypass is explicit and audited.
+- Company-scoped users require `companyId`.
+- Work locations cannot exist without a company.
+- Employees cannot point to a primary work location from another company.
+- User/employee cross-company links are rejected.
+- Deactivation preserves historical data.
 
 ## Frontend alignment
 
