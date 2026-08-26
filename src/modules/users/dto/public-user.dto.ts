@@ -29,9 +29,6 @@ export class PublicUserDto {
   roles!: string[];
 
   @ApiProperty()
-  admin!: boolean;
-
-  @ApiProperty()
   active!: boolean;
 
   @ApiProperty({ required: false, nullable: true })

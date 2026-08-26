@@ -96,7 +96,6 @@ export class SuperAdminBootstrapService {
       numero: payload.numero,
       nombreEmpleado: payload.name,
       dni: payload.dni,
-      admin: true,
       company: null,
       employee: null,
       roles: [superAdminRole]

@@ -132,7 +132,6 @@ export class UsersService {
       companyName: company?.name ?? null,
       employeeName: user.employee?.nombreEmpleado ?? null,
       roles: normalizeRoleNames((user.roles ?? []).map((role) => role.rolNombre)),
-      admin: Boolean(user.admin),
       active: !Boolean(user.deBaja),
       lastLoginAt: user.lastLoginAt?.toISOString?.() ?? null
     };
@@ -251,7 +250,6 @@ export class UsersService {
         company,
         employee: employee ?? null,
         deBaja: dto.active === undefined ? false : !dto.active,
-        admin: assignableRoleNames.includes(RoleName.ROLE_SUPER_ADMIN) || assignableRoleNames.includes(RoleName.ROLE_COMPANY_ADMIN),
         roles: assignableRoles
       });
 

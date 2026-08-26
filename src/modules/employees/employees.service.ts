@@ -103,7 +103,6 @@ export class EmployeesService {
         horasGeneradas: dto.horasGeneradas ?? 0,
         working: dto.working ?? false,
         enVacaciones: dto.enVacaciones ?? false,
-        admin: false,
         deBaja: nextDeBaja,
         roles: roleEntities,
         company

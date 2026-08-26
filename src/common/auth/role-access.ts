@@ -1,9 +1,5 @@
 import { RoleName } from '../../database/entities/role-name.enum';
 
-export const LEGACY_ROLE_ALIASES: Record<string, RoleName> = {
-  ROLE_ADMIN: RoleName.ROLE_COMPANY_ADMIN
-};
-
 export const CONTRACT_ROLES: RoleName[] = [
   RoleName.ROLE_SUPER_ADMIN,
   RoleName.ROLE_COMPANY_ADMIN,
@@ -29,7 +25,7 @@ export const COMPANY_PRIVILEGED_ROLES: RoleName[] = [
 ];
 
 export function normalizeRoleName(role: string): RoleName | string {
-  return LEGACY_ROLE_ALIASES[role] ?? role;
+  return role;
 }
 
 export function normalizeRoleNames(roles: readonly string[] | undefined | null): RoleName[] {
