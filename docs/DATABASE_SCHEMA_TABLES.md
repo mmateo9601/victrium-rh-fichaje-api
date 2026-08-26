@@ -27,8 +27,6 @@ The system only recognizes and authorizes these roles:
 - `ROLE_AUDITOR`
 - `ROLE_WORKFORCE_REPRESENTATIVE`
 
-`ROLE_ADMIN` is not part of the canonical authorization model and should be treated as legacy or unsupported unless a migration explicitly maps it to a current role.
-
 ## Enterprise table contract
 
 Every business table in the system should expose, when applicable, a consistent set of fields to support

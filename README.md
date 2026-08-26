@@ -15,6 +15,7 @@ API NestJS para la migracion de `fichaje-main` a un backend modular, versionado 
 - Paginacion base
 - Logging y error handling global
 - Sin Docker en este repositorio
+- Roles vigentes: `ROLE_SUPER_ADMIN`, `ROLE_COMPANY_ADMIN`, `ROLE_RRHH`, `ROLE_MANAGER`, `ROLE_USER`, `ROLE_AUDITOR`, `ROLE_WORKFORCE_REPRESENTATIVE`
 
 ## Requisitos
 
@@ -80,18 +81,8 @@ npm run seed:reset
 
 ## Credenciales de desarrollo
 
-Todas las cuentas seed usan la misma contraseña:
-
-`Victrium123!`
-
-| Email | Rol | Empresa |
-| --- | --- | --- |
-| `admin@victrium.local` | `ROLE_SUPER_ADMIN` | `Victrium RH Demo` |
-| `admin2@victrium.local` | `ROLE_ADMIN` | `Victrium RH Demo` |
-| `rrhh@victrium.local` | `ROLE_RRHH` | `Victrium RH Demo` |
-| `laura@victrium.local` | `ROLE_USER` | `Victrium RH Demo` |
-| `carlos@victrium.local` | `ROLE_USER` | `Victrium RH Demo` |
-| `admin@acme.local` | `ROLE_ADMIN` | `Acme Industrial` |
+Las cuentas seed se generan con `npm run seed:dev` y se mantienen alineadas con el estado actual del dominio.
+Consulta el seed vigente si necesitas los accesos demo concretos.
 
 ## Produccion
 
@@ -130,7 +121,6 @@ npm run build
 - `src/common`
 - `src/config`
 - `src/database`
-- `docs/adr`
 
 ## Endpoints principales
 
@@ -259,16 +249,11 @@ Operations:
 - JSON: `/api/docs-json`
 - Soporta `Bearer` JWT y `x-api-key`
 
-## Documentacion
+## Documentacion vigente
 
-- [Migration matrix](docs/MIGRATION_MATRIX.md)
-- [Nest/Next migration notes](docs/MIGRATION_NEST_NEXT.md)
+- [Database schema tables](docs/DATABASE_SCHEMA_TABLES.md)
 - [Organizational model](docs/ORGANIZATIONAL_MODEL.md)
+- [Organizational relationships QA](docs/ORGANIZATIONAL_RELATIONSHIPS_QA.md)
 - [Role access matrix](docs/ROLE_ACCESS_MATRIX.md)
-- [Scheduling domain](docs/SCHEDULING_DOMAIN.md)
-- [Shifts domain](docs/SHIFTS_DOMAIN.md)
-- [Settings domain](docs/SETTINGS_DOMAIN.md)
-- [UML implementation matrix](docs/UML_IMPLEMENTATION_MATRIX.md)
-- [UML test traceability](docs/UML_TEST_TRACEABILITY.md)
-- [QA test plan](docs/QA_TEST_PLAN.md)
-- [Tenant isolation ADR](docs/adr/004-tenant-isolation.md)
+- [Backend production env](docs/BACKEND_PRODUCTION_ENV.md)
+- [Production database bootstrap](docs/PRODUCTION_DATABASE_BOOTSTRAP.md)

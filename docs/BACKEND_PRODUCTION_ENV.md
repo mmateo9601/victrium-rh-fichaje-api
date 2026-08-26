@@ -8,7 +8,7 @@
 | `SWAGGER_ENABLED` | No | No | Enable Swagger UI in runtime | `true` / `false` | Runtime |
 | `TRUST_PROXY` | No | No | Express proxy trust for Hostinger/reverse proxy | `true` / `false` | Runtime |
 | `BOOTSTRAP_SUPER_ADMIN` | No | No | Enables the explicit super admin bootstrap command | `true` / `false` | Runtime |
-| `SUPER_ADMIN_EMAIL` | Conditional | No | Bootstrap identity email when bootstrap is enabled | `admin@example.com` | Runtime |
+| `SUPER_ADMIN_EMAIL` | Conditional | No | Bootstrap identity email when bootstrap is enabled | `superadmin@example.com` | Runtime |
 | `SUPER_ADMIN_PASSWORD` | Conditional | Yes | Bootstrap password when bootstrap is enabled | secure password | Runtime |
 | `SUPER_ADMIN_NAME` | No | No | Optional display name for the bootstrap account | `Victrium RH Admin` | Runtime |
 | `DATABASE_URL` | No | Yes | Single MySQL connection string | `mysql://user:pass@host:3306/db` | Runtime |
