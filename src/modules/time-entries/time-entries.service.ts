@@ -172,6 +172,8 @@ export class TimeEntriesService {
       const session = await manager.getRepository(TimeEntrySessionEntity).save(
         manager.getRepository(TimeEntrySessionEntity).create({
           usuario: user,
+          companyId: user.company?.id ?? user.employee?.company?.id ?? null,
+          employeeId: user.employee?.id ?? null,
           startedAt: now,
           finishedAt: null,
           state: 'WORKING',
@@ -211,7 +213,7 @@ export class TimeEntriesService {
       const now = this.clockService.now();
       const breakItem = await manager.getRepository(TimeEntryBreakEntity).save(
         manager.getRepository(TimeEntryBreakEntity).create({
-          session,
+          session: { id: session.id } as TimeEntrySessionEntity,
           startedAt: now,
           endedAt: null
         })
@@ -219,8 +221,10 @@ export class TimeEntriesService {
 
       session.state = 'PAUSED';
       await manager.getRepository(TimeEntrySessionEntity).save(session);
-      const user = await this.lockUser(manager, session.usuario.id);
-      await this.syncWorkingState(manager, user, false);
+      await manager.getRepository(UserEntity).update(session.usuario.id, { working: false });
+      if (session.employeeId) {
+        await manager.getRepository(EmployeeEntity).update(session.employeeId, { working: false });
+      }
 
       const refreshed = await this.findSessionByIdOrFail(session.id, manager);
       return this.toCurrentSessionDto(refreshed, breakItem);
@@ -262,8 +266,10 @@ export class TimeEntriesService {
 
       session.state = 'WORKING';
       await manager.getRepository(TimeEntrySessionEntity).save(session);
-      const user = await this.lockUser(manager, session.usuario.id);
-      await this.syncWorkingState(manager, user, true);
+      await manager.getRepository(UserEntity).update(session.usuario.id, { working: true });
+      if (session.employeeId) {
+        await manager.getRepository(EmployeeEntity).update(session.employeeId, { working: true });
+      }
 
       const refreshed = await this.findSessionByIdOrFail(session.id, manager);
       return this.toCurrentSessionDto(refreshed);
@@ -302,10 +308,12 @@ export class TimeEntriesService {
       session.state = 'COMPLETED';
       await manager.getRepository(TimeEntrySessionEntity).save(session);
 
-      const user = await this.lockUser(manager, session.usuario.id);
-      await this.syncWorkingState(manager, user, false);
-      user.ultimoFichaje = `${formatMadridDate(session.finishedAt)} ${formatMadridTime(session.finishedAt)} - SALIDA`;
-      await manager.getRepository(UserEntity).save(user);
+      const lastClockOut = `${formatMadridDate(session.finishedAt)} ${formatMadridTime(session.finishedAt)} - SALIDA`;
+      await manager.getRepository(UserEntity).update(session.usuario.id, { working: false });
+      if (session.employeeId) {
+        await manager.getRepository(EmployeeEntity).update(session.employeeId, { working: false });
+      }
+      await manager.getRepository(UserEntity).update(session.usuario.id, { ultimoFichaje: lastClockOut });
 
       const refreshed = await this.findSessionByIdOrFail(session.id, manager);
       return this.toCurrentSessionDto(refreshed);

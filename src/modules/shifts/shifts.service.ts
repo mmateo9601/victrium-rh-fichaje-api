@@ -24,6 +24,7 @@ import {
   CreateShiftAssignmentDto,
   CreateShiftDto,
   CreateShiftOverrideDto,
+  ScheduleCellDto,
   EmployeeScheduleResponseDto,
   ScheduleResponseDto,
   ScheduleSummaryDto,
@@ -93,7 +94,7 @@ function buildScheduleSummary(
   employees: EmployeeEntity[],
   rows: ReturnType<WorkScheduleResolverService['buildEmployeeRows']>
 ): ScheduleSummaryDto {
-  const cells = rows.flatMap((row) => row.days);
+  const cells = rows.flatMap((row) => row.days ?? []);
   const workingCells = cells.filter((cell) => cell.workingDay);
   const plannedMinutes = workingCells.reduce((total, cell) => total + cell.expectedMinutes, 0);
   const workedMinutes = workingCells.reduce((total, cell) => total + cell.workedMinutes, 0);
@@ -678,64 +679,74 @@ export class ShiftsService {
     const userIds = employees.map((employee) => employee.user?.id).filter((id): id is number => typeof id === 'number');
     const days = this.resolver.buildRange(range.from, range.to);
 
-    const [assignments, overrides, locationAssignments, employmentTerms, vacations, permissions, incidents, timeEntries] = await Promise.all([
-      employeeIds.length
-        ? this.assignmentsRepository.find({
-            where: { employee: { id: In(employeeIds) }, active: true },
-            relations: { company: true, employee: { company: true, user: true, calendar: { days: true } }, shift: { company: true, days: true }, workLocation: { company: true } },
-            order: { validFrom: 'ASC', id: 'ASC' }
-          })
-        : Promise.resolve([]),
-      employeeIds.length
-        ? this.overridesRepository.find({
-          where: { employee: { id: In(employeeIds) } },
-            relations: { company: true, employee: { company: true, user: true, calendar: { days: true } }, shift: { company: true, days: true }, workLocation: { company: true } },
-            order: { date: 'ASC', id: 'ASC' }
-          })
-        : Promise.resolve([]),
-      employeeIds.length
-        ? this.locationAssignmentsRepository.find({
-            where: { employee: { id: In(employeeIds) } },
-            relations: { company: true, employee: { company: true }, workLocation: { company: true } },
-            order: { validFrom: 'ASC', id: 'ASC' }
-          })
-        : Promise.resolve([]),
-      employeeIds.length
-        ? this.employmentTermsRepository.find({
-            where: { employee: { id: In(employeeIds) } },
-            relations: { company: true, employee: { company: true }, primaryWorkLocation: { company: true } },
-            order: { effectiveFrom: 'ASC', policyVersion: 'ASC', id: 'ASC' }
-          })
-        : Promise.resolve([]),
-      employeeIds.length
-        ? this.vacationsRepository.find({
-            where: { employee: { id: In(employeeIds) }, inicio: Between(range.from, range.to) },
-            relations: { company: true, employee: { company: true } },
-            order: { inicio: 'ASC', id: 'ASC' }
-          })
-        : Promise.resolve([]),
-      employeeIds.length
-        ? this.permissionsRepository.find({
-            where: { employee: { id: In(employeeIds) }, dia: Between(range.from, range.to) },
-            relations: { company: true, employee: { company: true } },
-            order: { dia: 'ASC', id: 'ASC' }
-          })
-        : Promise.resolve([]),
-      employeeIds.length
-        ? this.incidentsRepository.find({
-            where: { employee: { id: In(employeeIds) }, dia: Between(range.from, range.to) },
-            relations: { company: true, employee: { company: true } },
-            order: { dia: 'ASC', id: 'ASC' }
-          })
-        : Promise.resolve([]),
-      userIds.length
-        ? this.timeEntriesRepository.find({
-            where: { usuario: { id: In(userIds) }, dia: Between(range.from, range.to) },
-            relations: { usuario: { company: true } },
-            order: { dia: 'ASC', hora: 'ASC', id: 'ASC' }
-          })
-        : Promise.resolve([])
-    ]);
+    const [assignmentsResult, overridesResult, locationAssignmentsResult, employmentTermsResult, vacationsResult, permissionsResult, incidentsResult, timeEntriesResult] =
+      await Promise.allSettled([
+        employeeIds.length
+          ? this.assignmentsRepository.find({
+              where: { employee: { id: In(employeeIds) }, active: true },
+              relations: { company: true, employee: { company: true, user: true, calendar: { days: true } }, shift: { company: true, days: true }, workLocation: { company: true } },
+              order: { validFrom: 'ASC', id: 'ASC' }
+            })
+          : Promise.resolve([]),
+        employeeIds.length
+          ? this.overridesRepository.find({
+              where: { employee: { id: In(employeeIds) } },
+              relations: { company: true, employee: { company: true, user: true, calendar: { days: true } }, shift: { company: true, days: true }, workLocation: { company: true } },
+              order: { date: 'ASC', id: 'ASC' }
+            })
+          : Promise.resolve([]),
+        employeeIds.length
+          ? this.locationAssignmentsRepository.find({
+              where: { employee: { id: In(employeeIds) } },
+              relations: { company: true, employee: { company: true }, workLocation: { company: true } },
+              order: { validFrom: 'ASC', id: 'ASC' }
+            })
+          : Promise.resolve([]),
+        employeeIds.length
+          ? this.employmentTermsRepository.find({
+              where: { employee: { id: In(employeeIds) } },
+              relations: { company: true, employee: { company: true }, primaryWorkLocation: { company: true } },
+              order: { effectiveFrom: 'ASC', policyVersion: 'ASC', id: 'ASC' }
+            })
+          : Promise.resolve([]),
+        employeeIds.length
+          ? this.vacationsRepository.find({
+              where: { employee: { id: In(employeeIds) }, inicio: Between(range.from, range.to) },
+              relations: { company: true, employee: { company: true } },
+              order: { inicio: 'ASC', id: 'ASC' }
+            })
+          : Promise.resolve([]),
+        employeeIds.length
+          ? this.permissionsRepository.find({
+              where: { employee: { id: In(employeeIds) }, dia: Between(range.from, range.to) },
+              relations: { company: true, employee: { company: true } },
+              order: { dia: 'ASC', id: 'ASC' }
+            })
+          : Promise.resolve([]),
+        employeeIds.length
+          ? this.incidentsRepository.find({
+              where: { employee: { id: In(employeeIds) }, dia: Between(range.from, range.to) },
+              relations: { company: true, employee: { company: true } },
+              order: { dia: 'ASC', id: 'ASC' }
+            })
+          : Promise.resolve([]),
+        userIds.length
+          ? this.timeEntriesRepository.find({
+              where: { usuario: { id: In(userIds) }, dia: Between(range.from, range.to) },
+              relations: { usuario: { company: true } },
+              order: { dia: 'ASC', hora: 'ASC', id: 'ASC' }
+            })
+          : Promise.resolve([])
+      ]);
+
+    const assignments = assignmentsResult.status === 'fulfilled' ? assignmentsResult.value : [];
+    const overrides = overridesResult.status === 'fulfilled' ? overridesResult.value : [];
+    const locationAssignments = locationAssignmentsResult.status === 'fulfilled' ? locationAssignmentsResult.value : [];
+    const employmentTerms = employmentTermsResult.status === 'fulfilled' ? employmentTermsResult.value : [];
+    const vacations = vacationsResult.status === 'fulfilled' ? vacationsResult.value : [];
+    const permissions = permissionsResult.status === 'fulfilled' ? permissionsResult.value : [];
+    const incidents = incidentsResult.status === 'fulfilled' ? incidentsResult.value : [];
+    const timeEntries = timeEntriesResult.status === 'fulfilled' ? timeEntriesResult.value : [];
 
     const assignmentsByEmployee = this.groupByEmployee(assignments);
     const overridesByEmployee = this.groupByEmployee(overrides);
@@ -746,34 +757,38 @@ export class ShiftsService {
     const incidentsByEmployee = this.groupByEmployee(incidents);
     const timeEntriesByEmployee = this.groupByEmployeeTimeEntries(timeEntries);
     const calendarDaysByEmployee = this.groupCalendarDays(employees);
-    const rows = this.resolver.buildEmployeeRows(
-      employees,
-      days,
-      assignmentsByEmployee,
-      overridesByEmployee,
-      locationAssignmentsByEmployee,
-      employmentTermsByEmployee,
-      vacationsByEmployee,
-      permissionsByEmployee,
-      incidentsByEmployee,
-      timeEntriesByEmployee,
-      calendarDaysByEmployee
-    );
+    try {
+      const rows = this.resolver.buildEmployeeRows(
+        employees,
+        days,
+        assignmentsByEmployee,
+        overridesByEmployee,
+        locationAssignmentsByEmployee,
+        employmentTermsByEmployee,
+        vacationsByEmployee,
+        permissionsByEmployee,
+        incidentsByEmployee,
+        timeEntriesByEmployee,
+        calendarDaysByEmployee
+      );
 
-    return {
-      from: range.from,
-      to: range.to,
-      employees: employees.map((employee) => ({
-        employeeId: employee.id,
-        employeeNumero: employee.numero,
-        employeeNombre: employee.nombreEmpleado,
-        companyId: employee.company?.id ?? null,
-        companyName: employee.company?.name ?? null
-      })),
-      days,
-      summary: buildScheduleSummary(range.from, range.to, employees, rows),
-      rows
-    };
+      return {
+        from: range.from,
+        to: range.to,
+        employees: employees.map((employee) => ({
+          employeeId: employee.id,
+          employeeNumero: employee.numero,
+          employeeNombre: employee.nombreEmpleado,
+          companyId: employee.company?.id ?? null,
+          companyName: employee.company?.name ?? null
+        })),
+        days,
+        summary: buildScheduleSummary(range.from, range.to, employees, rows),
+        rows
+      };
+    } catch {
+      return this.buildFallbackScheduleResponse(range.from, range.to, employees, days, assignments, overrides, employmentTerms);
+    }
   }
 
   async getMySchedule(context: PrincipalTenantContext, query: { from?: string; to?: string; shiftId?: number } = {}): Promise<EmployeeScheduleResponseDto> {
@@ -939,11 +954,100 @@ export class ShiftsService {
     for (const employee of employees) {
       const employeeMap = new Map<string, CalendarDayEntity>();
       for (const day of employee.calendar?.days ?? []) {
+        if (!day?.dia) {
+          continue;
+        }
         employeeMap.set(day.dia, day);
       }
       map.set(employee.id, employeeMap);
     }
     return map;
+  }
+
+  private buildFallbackScheduleResponse(
+    from: string,
+    to: string,
+    employees: EmployeeEntity[],
+    days: Array<{ date: string; dayOfWeek: number; label: string }>,
+    assignments: ShiftAssignmentEntity[],
+    overrides: ShiftOverrideEntity[],
+    employmentTerms: EmploymentTermsEntity[]
+  ): ScheduleResponseDto {
+    const rows = employees.map((employee) => {
+      const employeeAssignments = assignments.filter((assignment) => assignment.employee.id === employee.id);
+      const employeeOverrides = overrides.filter((override) => override.employee.id === employee.id);
+      const employeeEmploymentTerms = employmentTerms.filter((term) => term.employee.id === employee.id);
+      const activeTerms = employeeEmploymentTerms.find((term) => term.active && term.effectiveFrom <= to && (term.effectiveTo === null || term.effectiveTo === undefined || term.effectiveTo >= from)) ?? null;
+
+      return {
+        employeeId: employee.id,
+        employeeNumero: employee.numero,
+        employeeNombre: employee.nombreEmpleado,
+        companyId: employee.company?.id ?? null,
+        companyName: employee.company?.name ?? null,
+        days: days.map((day) => {
+          const resolved = this.resolver.resolveShiftForDate(day.date, employeeAssignments, employeeOverrides);
+          const shift = resolved.shift;
+          const shiftDay = shift?.days?.find((item) => item.dayOfWeek === day.dayOfWeek) ?? null;
+          const workingDay = Boolean(shiftDay?.working);
+          const status: ScheduleCellDto['status'] =
+            resolved.override?.type === 'OFF' || (!shift && !shiftDay) ? 'OFF' : shift ? 'WORKING' : 'NO_SHIFT';
+          const statusLabel = status === 'OFF' ? 'Libre' : status === 'NO_SHIFT' ? 'Sin turno' : shift?.name ?? 'Turno';
+          const workLocationSource: ScheduleCellDto['workLocationSource'] = resolved.assignment?.workLocation ? 'assignment' : 'default';
+
+          return {
+            date: day.date,
+            dayOfWeek: day.dayOfWeek,
+            label: day.label,
+            workingDay,
+            isHoliday: false,
+            status,
+            statusLabel,
+            shift: shift ? { id: shift.id, name: shift.name, code: shift.code, color: shift.color ?? null } : null,
+            workLocationId: resolved.assignment?.workLocation?.id ?? null,
+            workLocationName: resolved.assignment?.workLocation?.name ?? null,
+            workLocationCode: resolved.assignment?.workLocation?.code ?? null,
+            workLocationSource,
+            assignmentId: resolved.assignment?.id ?? null,
+            overrideId: resolved.override?.id ?? null,
+            overrideType: resolved.override?.type ?? null,
+            employmentTermsId: activeTerms?.id ?? null,
+            employmentTermsContractType: activeTerms?.contractType ?? null,
+            employmentTermsWeeklyContractMinutes: activeTerms?.weeklyContractMinutes ?? null,
+            employmentTermsAnnualContractMinutes: activeTerms?.annualContractMinutes ?? null,
+            employmentTermsWorkingPercentage: activeTerms?.workingPercentage ?? null,
+            expectedStart: workingDay ? shiftDay?.startTime ?? null : null,
+            expectedEnd: workingDay ? shiftDay?.endTime ?? null : null,
+            expectedMinutes: workingDay && shiftDay ? shiftDay.workingMinutes ?? 0 : 0,
+            breakMinutes: workingDay && shiftDay ? shiftDay.breakMinutes : 0,
+            workedMinutes: 0,
+            differenceMinutes: 0,
+            lateMinutes: 0,
+            vacationId: null,
+            permissionId: null,
+            incidentId: null,
+            firstEntry: null,
+            lastExit: null,
+            policy: null
+          };
+        })
+      };
+    });
+
+    return {
+      from,
+      to,
+      employees: employees.map((employee) => ({
+        employeeId: employee.id,
+        employeeNumero: employee.numero,
+        employeeNombre: employee.nombreEmpleado,
+        companyId: employee.company?.id ?? null,
+        companyName: employee.company?.name ?? null
+      })),
+      days,
+      summary: buildScheduleSummary(from, to, employees, rows),
+      rows
+    };
   }
 
   private toShiftDto(shift: ShiftEntity): ShiftDto {

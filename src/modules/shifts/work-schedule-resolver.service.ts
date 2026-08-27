@@ -548,7 +548,9 @@ export class WorkScheduleResolverService {
     const vacation = vacations.find((item) => item.inicio <= date && item.fin >= date) ?? null;
     const permission = permissions.find((item) => item.dia === date) ?? null;
     const incident = incidents.find((item) => item.dia === date) ?? null;
-    const dayEntries = [...timeEntries].filter((entry) => entry.dia === date).sort((left, right) => left.hora.localeCompare(right.hora) || left.id - right.id);
+    const dayEntries = [...timeEntries]
+      .filter((entry) => entry.dia === date)
+      .sort((left, right) => (left.hora ?? '').localeCompare(right.hora ?? '') || left.id - right.id);
     const firstEntry = dayEntries.find((entry) => entry.tipo === 'ENTRADA') ?? null;
     const lastExit = [...dayEntries].reverse().find((entry) => entry.tipo === 'SALIDA') ?? null;
     const workedMinutes = this.calculateWorkedMinutes(dayEntries);

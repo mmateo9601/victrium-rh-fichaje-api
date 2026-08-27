@@ -68,6 +68,7 @@ describe('TimeEntriesService', () => {
       create: jest.fn().mockImplementation((value) => value),
       findOne: jest.fn().mockResolvedValue(null),
       save: jest.fn().mockImplementation(async (value) => value),
+      update: jest.fn().mockResolvedValue(undefined),
       createQueryBuilder: jest.fn().mockReturnValue({
         leftJoinAndSelect: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
@@ -85,7 +86,8 @@ describe('TimeEntriesService', () => {
     };
 
     const employeeRepo = {
-      save: jest.fn().mockImplementation(async (value) => value)
+      save: jest.fn().mockImplementation(async (value) => value),
+      update: jest.fn().mockResolvedValue(undefined)
     };
 
     const timeEntryRepo = {
@@ -104,7 +106,8 @@ describe('TimeEntriesService', () => {
 
     const userRepo = {
       findOne: jest.fn().mockResolvedValue(correctedBy),
-      save: jest.fn().mockImplementation(async (value) => value)
+      save: jest.fn().mockImplementation(async (value) => value),
+      update: jest.fn().mockResolvedValue(undefined)
     };
 
     const manager = {
@@ -221,6 +224,7 @@ describe('TimeEntriesService', () => {
   it('pauses a session and marks the user as not working', async () => {
     const session = {
       id: 11,
+      employeeId: 21,
       usuario: {
         id: 1,
         company: { id: 7, name: 'Victrium' }
@@ -252,8 +256,8 @@ describe('TimeEntriesService', () => {
     expect(user.working).toBe(false);
     expect(user.employee?.working).toBe(false);
     expect(breakRepo.save).toHaveBeenCalledTimes(1);
-    expect(employeeRepo.save).toHaveBeenCalledTimes(1);
-    expect(userRepo.save).toHaveBeenCalled();
+    expect(employeeRepo.update).toHaveBeenCalledWith(21, { working: false });
+    expect(userRepo.update).toHaveBeenCalledWith(1, { working: false });
   });
 
   it('returns a completed session snapshot when the latest session of the day is already closed', async () => {
