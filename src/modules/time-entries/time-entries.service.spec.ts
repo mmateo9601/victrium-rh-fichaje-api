@@ -82,7 +82,8 @@ describe('TimeEntriesService', () => {
     const breakRepo = {
       create: jest.fn().mockImplementation((value) => value),
       findOne: jest.fn().mockResolvedValue(null),
-      save: jest.fn().mockImplementation(async (value) => value)
+      save: jest.fn().mockImplementation(async (value) => value),
+      insert: jest.fn().mockResolvedValue(undefined)
     };
 
     const employeeRepo = {
@@ -249,13 +250,18 @@ describe('TimeEntriesService', () => {
         }
       ]
     });
+    breakRepo.findOne.mockResolvedValueOnce({
+      id: 90,
+      startedAt: new Date('2026-08-21T06:30:00.000Z'),
+      endedAt: null
+    });
 
     const result = await service.pauseSession(11);
 
     expect(result.state).toBe('PAUSED');
     expect(user.working).toBe(false);
     expect(user.employee?.working).toBe(false);
-    expect(breakRepo.save).toHaveBeenCalledTimes(1);
+    expect(breakRepo.insert).toHaveBeenCalledTimes(1);
     expect(employeeRepo.update).toHaveBeenCalledWith(21, { working: false });
     expect(userRepo.update).toHaveBeenCalledWith(1, { working: false });
   });

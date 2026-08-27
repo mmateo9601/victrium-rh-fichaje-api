@@ -211,16 +211,22 @@ export class TimeEntriesService {
       }
 
       const now = this.clockService.now();
-      const breakItem = await manager.getRepository(TimeEntryBreakEntity).save(
-        manager.getRepository(TimeEntryBreakEntity).create({
-          session: { id: session.id } as TimeEntrySessionEntity,
-          startedAt: now,
-          endedAt: null
-        })
-      );
+      const breakRepository = manager.getRepository(TimeEntryBreakEntity);
+      await breakRepository.insert({
+        session: { id: session.id } as any,
+        startedAt: now,
+        endedAt: null
+      });
+      const breakItem = await breakRepository.findOne({
+        where: { session: { id: session.id }, endedAt: IsNull() },
+        order: { startedAt: 'DESC', id: 'DESC' }
+      });
+      if (!breakItem) {
+        throw new AppError('SESSION_BREAK_NOT_FOUND', 'No se ha podido registrar la pausa', 500);
+      }
 
       session.state = 'PAUSED';
-      await manager.getRepository(TimeEntrySessionEntity).save(session);
+      await manager.getRepository(TimeEntrySessionEntity).update(session.id, { state: 'PAUSED' });
       await manager.getRepository(UserEntity).update(session.usuario.id, { working: false });
       if (session.employeeId) {
         await manager.getRepository(EmployeeEntity).update(session.employeeId, { working: false });
@@ -262,10 +268,10 @@ export class TimeEntriesService {
       }
 
       activeBreak.endedAt = this.clockService.now();
-      await manager.getRepository(TimeEntryBreakEntity).save(activeBreak);
+      await manager.getRepository(TimeEntryBreakEntity).update(activeBreak.id, { endedAt: activeBreak.endedAt });
 
       session.state = 'WORKING';
-      await manager.getRepository(TimeEntrySessionEntity).save(session);
+      await manager.getRepository(TimeEntrySessionEntity).update(session.id, { state: 'WORKING' });
       await manager.getRepository(UserEntity).update(session.usuario.id, { working: true });
       if (session.employeeId) {
         await manager.getRepository(EmployeeEntity).update(session.employeeId, { working: true });
@@ -301,12 +307,15 @@ export class TimeEntriesService {
 
       if (activeBreak) {
         activeBreak.endedAt = new Date();
-        await manager.getRepository(TimeEntryBreakEntity).save(activeBreak);
+        await manager.getRepository(TimeEntryBreakEntity).update(activeBreak.id, { endedAt: activeBreak.endedAt });
       }
 
       session.finishedAt = this.clockService.now();
       session.state = 'COMPLETED';
-      await manager.getRepository(TimeEntrySessionEntity).save(session);
+      await manager.getRepository(TimeEntrySessionEntity).update(session.id, {
+        finishedAt: session.finishedAt,
+        state: 'COMPLETED'
+      });
 
       const lastClockOut = `${formatMadridDate(session.finishedAt)} ${formatMadridTime(session.finishedAt)} - SALIDA`;
       await manager.getRepository(UserEntity).update(session.usuario.id, { working: false });
