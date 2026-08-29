@@ -14,6 +14,7 @@ This folder contains the source of truth for the current Victrium RH delivery.
 - `PRODUCTION_DATABASE_BOOTSTRAP.md` - bootstrap guidance for production data
 - `RELEASE_CHECKLIST.md` - publication checklist before pushing to GitHub or deploying
 - Swagger/OpenAPI live reference in running environments at `/api/docs`
+- `RELEASE_NOTES.md` - concise delivery summary for maintainers and reviewers
 
 ## Notes
 
