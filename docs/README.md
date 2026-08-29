@@ -12,6 +12,7 @@ This folder contains the source of truth for the current Victrium RH delivery.
 - `ORGANIZATIONAL_RELATIONSHIPS_QA.md` - relationship validation scenarios
 - `ROLE_ACCESS_MATRIX.md` - role and scope matrix
 - `PRODUCTION_DATABASE_BOOTSTRAP.md` - bootstrap guidance for production data
+- `RELEASE_CHECKLIST.md` - publication checklist before pushing to GitHub or deploying
 
 ## Notes
 

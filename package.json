@@ -2,7 +2,7 @@
   "name": "victrium-rh-fichaje-api",
   "version": "0.2.0",
   "private": true,
-  "description": "API NestJS para la migracion de Fichaje.",
+  "description": "NestJS API for the Victrium RH workforce management platform.",
   "scripts": {
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",

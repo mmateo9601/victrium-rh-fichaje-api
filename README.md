@@ -1,62 +1,65 @@
 # victrium-rh-fichaje-api
 
-API NestJS de `Victrium RH` para la gestión corporativa de personas, centros, turnos, fichajes y configuraciones de empresa.
+NestJS API for `Victrium RH`.
 
-## Resumen
+## Overview
 
-- NestJS + TypeScript
-- TypeORM + MySQL externo
-- API versionada en `/api/v1`
-- Swagger/OpenAPI en `/api/docs`
+API corporativa para gestión de usuarios, empresas, centros, empleados, turnos, planificación, fichajes y reglas de negocio multiempresa.
+
+## Stack
+
+- NestJS 10
+- TypeScript
+- TypeORM 0.3
+- MySQL externo o local
 - JWT access/refresh
-- Tenant isolation centralizado
-- Migraciones en lugar de `synchronize`
-- Sin Docker
+- Swagger/OpenAPI
+- Migrations-first database flow
 
-## Requisitos
+## Requirements
 
 - Node.js 20 o superior
 - npm
 - MySQL accesible por red o instancia local
 
-## Entorno
+## Environment
 
-1. Copia `.env.example` a `.env`.
-2. Completa las credenciales de base de datos y secretos JWT.
-3. Configura `CORS_ORIGINS` con los dominios reales del frontend.
-
-Variables clave:
+Copy `.env.example` to `.env` and fill in:
 
 - `PORT`
-- `DATABASE_URL` o `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD`
+- `DATABASE_URL` or the `DB_*` variables
 - `JWT_ACCESS_SECRET`
 - `JWT_REFRESH_SECRET`
 - `CORS_ORIGINS`
 - `TZ`
-- `SWAGGER_ENABLED`
+- `BOOTSTRAP_SUPER_ADMIN`
 
-Para bootstrap de super admin y otros detalles sensibles, consulta la documentación de entorno y despliegue dentro de `docs/`.
+Notes:
 
-## Desarrollo
+- Keep production secrets out of the repository.
+- `CORS_ORIGINS` must match the deployed frontend domains.
+- The bootstrap account is only for controlled deployment/setup flows.
+
+## Quick Start
 
 ```bash
 npm install
 npm run start:dev
 ```
 
-Seed de desarrollo:
+## Development Seed
 
 ```bash
 npm run seed:dev
 ```
 
-Reinicialización del seed:
+Reset seed:
 
 ```bash
 npm run seed:reset
 ```
 
-## Producción
+## Production
 
 ```bash
 npm ci
@@ -64,7 +67,7 @@ npm run build
 npm run start:prod
 ```
 
-## Verificación
+## Quality Gates
 
 ```bash
 npm run lint
@@ -73,16 +76,21 @@ npm run test:e2e
 npm run build
 ```
 
-## Documentación principal
+## Database Bootstrap
 
-- [Backend production env](docs/BACKEND_PRODUCTION_ENV.md)
-- [Database schema tables](docs/DATABASE_SCHEMA_TABLES.md)
-- [Organizational model](docs/ORGANIZATIONAL_MODEL.md)
-- [Organizational relationships QA](docs/ORGANIZATIONAL_RELATIONSHIPS_QA.md)
-- [Role access matrix](docs/ROLE_ACCESS_MATRIX.md)
+Use the documented production flow to create a database from zero:
+
+```bash
+npm run migration:run
+npm run bootstrap:super-admin
+```
+
+See:
+
 - [Production database bootstrap](docs/PRODUCTION_DATABASE_BOOTSTRAP.md)
+- [Release checklist](docs/RELEASE_CHECKLIST.md)
 
-## Endpoints clave
+## Main API Areas
 
 - Auth: `/api/v1/auth/*`
 - Users: `/api/v1/users/*`
@@ -100,7 +108,21 @@ npm run build
 - Reports: `/api/v1/reports/*`
 - Health: `/api/v1/health`
 
-## Estructura principal
+## Documentation
+
+- [Backend production env](docs/BACKEND_PRODUCTION_ENV.md)
+- [Database schema tables](docs/DATABASE_SCHEMA_TABLES.md)
+- [Organizational model](docs/ORGANIZATIONAL_MODEL.md)
+- [Organizational relationships QA](docs/ORGANIZATIONAL_RELATIONSHIPS_QA.md)
+- [Role access matrix](docs/ROLE_ACCESS_MATRIX.md)
+- [Production database bootstrap](docs/PRODUCTION_DATABASE_BOOTSTRAP.md)
+- [Release checklist](docs/RELEASE_CHECKLIST.md)
+
+## Related Repository
+
+- Frontend: [victrium-rh-fichaje-web](https://github.com/mmateo9601/victrium-rh-fichaje-web)
+
+## Project Structure
 
 - `src/modules`
 - `src/common`
@@ -108,10 +130,12 @@ npm run build
 - `src/database`
 - `src/seed`
 - `docs`
+- `test`
+- `scripts`
 
-## Notas de entrega
+## Publication Notes
 
-- No contiene infraestructura Docker.
-- `synchronize` permanece desactivado.
-- La base documental refleja el modelo corporativo actual y las relaciones jerárquicas del sistema.
-- No se documentan credenciales reales ni secretos operativos en este archivo.
+- No Docker files or Docker scripts are included.
+- `synchronize` stays disabled.
+- Database migrations are the canonical schema mechanism.
+- The repository is ready for GitHub publication with a clear environment contract and deployment checklist.
