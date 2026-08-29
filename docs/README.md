@@ -13,6 +13,7 @@ This folder contains the source of truth for the current Victrium RH delivery.
 - `ROLE_ACCESS_MATRIX.md` - role and scope matrix
 - `PRODUCTION_DATABASE_BOOTSTRAP.md` - bootstrap guidance for production data
 - `RELEASE_CHECKLIST.md` - publication checklist before pushing to GitHub or deploying
+- Swagger/OpenAPI live reference in running environments at `/api/docs`
 
 ## Notes
 
